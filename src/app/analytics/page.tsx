@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,31 +12,23 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   ArrowLeft, 
   TrendingUp, 
-  TrendingDown,
-  BarChart3,
-  PieChart,
-  Users,
   Video,
   Clock,
   Target,
   Download,
-  Filter,
-  Calendar,
   Eye,
-  Heart,
-  Share,
-  MessageCircle
+  Heart
 } from 'lucide-react';
 import Link from 'next/link';
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 import { mockAnalytics, formatNumber } from '@/lib/mock-data';
 
 export default function AnalyticsPage() {
   const { user, isLoading } = useAuth();
   const [timeRange, setTimeRange] = useState('30d');
-  const [selectedPlatform, setSelectedPlatform] = useState('all');
-  const [selectedProject, setSelectedProject] = useState('all');
+  const [_selectedPlatform, _setSelectedPlatform] = useState('all');
+  const [_selectedProject, _setSelectedProject] = useState('all');
 
   if (isLoading) {
     return (
@@ -258,7 +250,7 @@ export default function AnalyticsPage() {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {mockAnalytics.platforms.map((platform, index) => (
+                  {mockAnalytics.platforms.map((platform, _index) => (
                     <div key={platform.name} className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <div className="w-2 h-2 bg-white" />
@@ -284,7 +276,7 @@ export default function AnalyticsPage() {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2">
-                    {mockAnalytics.audienceInsights.demographics.map((demo, index) => (
+                    {mockAnalytics.audienceInsights.demographics.map((demo, _index) => (
                       <div key={demo.name} className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div className="w-2 h-2 bg-white" />

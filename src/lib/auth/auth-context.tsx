@@ -2,30 +2,21 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
-import { supabase } from '@/lib/supabase/client';
-import { authService } from '@/lib/supabase/auth';
-import { UsersService } from '@/lib/supabase/services/users';
+import { createClient } from '@/lib/supabase/client';
 import type { Tables } from '@/lib/supabase/types';
 
-type UserProfile = Tables<'users'> & {
-  organizations?: {
-    id: string;
-    name: string;
-    slug: string;
-    plan_id: string;
-    credits_balance: number;
-  };
-};
+type UserProfile = Tables<'users'>;
 
 interface AuthContextType {
   user: SupabaseUser | null;
   profile: UserProfile | null;
   session: Session | null;
   isLoading: boolean;
-  signIn: (email: string, password: string) => Promise<void>;
-  signUp: (email: string, password: string, name?: string) => Promise<void>;
+  signIn: (email: string, password: string) => Promise<{ error: any }>;
+  signUp: (email: string, password: string, name?: string) => Promise<{ error: any }>;
   signOut: () => Promise<void>;
-  resetPassword: (email: string) => Promise<void>;
+  signInWithOAuth: (provider: 'google' | 'github') => Promise<{ error: any }>;
+  resetPassword: (email: string) => Promise<{ error: any }>;
   refreshProfile: () => Promise<void>;
 }
 
@@ -36,6 +27,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const supabase = createClient();
 
   // Load user profile
   const loadUserProfile = async (currentUser: SupabaseUser | null) => {
@@ -45,7 +37,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
 
     try {
-      const profileData = await UsersService.getCurrentProfile();
+      const { data: profileData, error } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', currentUser.id)
+        .single();
+
+      if (error) {
+        console.error('Error loading user profile:', error);
+        setProfile(null);
+        return;
+      }
+
       setProfile(profileData);
     } catch (error) {
       console.error('Error loading user profile:', error);
@@ -96,48 +99,75 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase]);
 
   const signIn = async (email: string, password: string) => {
-    setIsLoading(true);
     try {
-      await authService.signIn({ email, password });
-      // State will be updated by the auth state change listener
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      return { error };
     } catch (error) {
-      setIsLoading(false);
-      throw error;
+      return { error };
     }
   };
 
   const signUp = async (email: string, password: string, name?: string) => {
-    setIsLoading(true);
     try {
-      const result = await authService.signUp({ email, password, name });
-      
-      if (result.needsEmailConfirmation) {
-        setIsLoading(false);
-        throw new Error('Please check your email and click the confirmation link to continue.');
-      }
-      // State will be updated by the auth state change listener
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: {
+            name: name || email.split('@')[0],
+          },
+          emailRedirectTo: `${window.location.origin}/auth/callback`,
+        },
+      });
+      return { error };
     } catch (error) {
-      setIsLoading(false);
-      throw error;
+      return { error };
     }
   };
 
   const signOut = async () => {
     setIsLoading(true);
+    const { error } = await supabase.auth.signOut();
+    
+    if (error) {
+      console.error('Error signing out:', error);
+    }
+    
+    setUser(null);
+    setProfile(null);
+    setSession(null);
+    setIsLoading(false);
+  };
+
+  const signInWithOAuth = async (provider: 'google' | 'github') => {
     try {
-      await authService.signOut();
-      // State will be updated by the auth state change listener
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+        },
+      });
+      return { error };
     } catch (error) {
-      setIsLoading(false);
-      throw error;
+      return { error };
     }
   };
 
   const resetPassword = async (email: string) => {
-    await authService.resetPassword(email);
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/auth/reset-password`,
+    });
+    return { error };
   };
 
   const value = {
@@ -148,6 +178,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signUp,
     signOut,
+    signInWithOAuth,
     resetPassword,
     refreshProfile,
   };

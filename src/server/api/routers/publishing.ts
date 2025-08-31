@@ -17,7 +17,7 @@ export const publishingRouter = createTRPCRouter({
       const asset = await ctx.db.asset.findFirst({
         where: {
           id: input.assetId,
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
         },
       });
 
@@ -31,7 +31,7 @@ export const publishingRouter = createTRPCRouter({
       // Create a publishing job
       const publishingJob = await ctx.db.job.create({
         data: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           projectId: asset.projectId,
           type: 'publishing',
           status: 'pending',
@@ -49,7 +49,7 @@ export const publishingRouter = createTRPCRouter({
       // Create the post record
       const post = await ctx.db.post.create({
         data: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           projectId: asset.projectId,
           assetId: asset.id,
           jobId: publishingJob.id,
@@ -126,7 +126,7 @@ export const publishingRouter = createTRPCRouter({
       const asset = await ctx.db.asset.findFirst({
         where: {
           id: input.assetId,
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
         },
       });
 
@@ -143,7 +143,7 @@ export const publishingRouter = createTRPCRouter({
       for (const platformData of input.platforms) {
         const publishingJob = await ctx.db.job.create({
           data: {
-            userId: ctx.session.user.id,
+            userId: ctx.user.id,
             projectId: asset.projectId,
             type: 'publishing',
             status: 'pending',
@@ -160,7 +160,7 @@ export const publishingRouter = createTRPCRouter({
 
         const post = await ctx.db.post.create({
           data: {
-            userId: ctx.session.user.id,
+            userId: ctx.user.id,
             projectId: asset.projectId,
             assetId: asset.id,
             jobId: publishingJob.id,
@@ -230,64 +230,8 @@ export const publishingRouter = createTRPCRouter({
       platform: z.string().optional(),
     }))
     .query(async ({ ctx, input }) => {
-      if (process.env.NODE_ENV === 'development') {
-        // Generate mock scheduled posts
-        const mockPosts = [];
-        const platforms = ['tiktok', 'youtube', 'instagram'];
-        const now = new Date();
-        
-        for (let i = 0; i < 5; i++) {
-          const scheduledDate = new Date(now);
-          scheduledDate.setDate(scheduledDate.getDate() + i + 1);
-          scheduledDate.setHours(10 + (i % 12), Math.floor(Math.random() * 60));
-          
-          const platform = platforms[i % platforms.length];
-          
-          mockPosts.push({
-            id: `mock-post-${i}`,
-            userId: ctx.session.user.id,
-            projectId: `mock-project-${i % 3}`,
-            assetId: `mock-asset-${i}`,
-            jobId: `mock-job-${i}`,
-            title: `Content for ${platform} #${i + 1}`,
-            description: `Mock scheduled content for ${platform}. This is a sample description with hashtags.`,
-            hashtags: [`#${platform}`, '#content', '#viral', '#trending'],
-            platforms: [platform],
-            scheduledAt: scheduledDate,
-            publishedAt: null,
-            status: 'scheduled',
-            seoOptimized: true,
-            platformData: null,
-            createdAt: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)),
-            updatedAt: new Date(),
-            asset: {
-              id: `mock-asset-${i}`,
-              filename: `video_${i + 1}.mp4`,
-              duration: 30 + (i * 15), // 30, 45, 60, 75, 90 seconds
-            },
-          });
-        }
-        
-        // Filter by platform if specified
-        const filteredPosts = input.platform 
-          ? mockPosts.filter(post => post.platforms.includes(input.platform!))
-          : mockPosts;
-        
-        // Filter by date range if specified
-        let dateFilteredPosts = filteredPosts;
-        if (input.startDate || input.endDate) {
-          dateFilteredPosts = filteredPosts.filter(post => {
-            const postDate = post.scheduledAt;
-            if (input.startDate && postDate < input.startDate) return false;
-            if (input.endDate && postDate > input.endDate) return false;
-            return true;
-          });
-        }
-        
-        return dateFilteredPosts.sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
-      }
       const whereClause: any = {
-        userId: ctx.session.user.id,
+        userId: ctx.user.id,
         status: 'scheduled',
       };
 
@@ -323,7 +267,7 @@ export const publishingRouter = createTRPCRouter({
       const post = await ctx.db.post.findFirst({
         where: {
           id: input.postId,
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           status: 'scheduled',
         },
       });

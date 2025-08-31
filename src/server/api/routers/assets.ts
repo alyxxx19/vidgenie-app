@@ -11,38 +11,9 @@ export const assetsRouter = createTRPCRouter({
       status: z.enum(['processing', 'ready', 'failed']).optional(),
     }))
     .query(async ({ ctx, input }) => {
-      // Return mock data in development
-      if (process.env.NODE_ENV === 'development') {
-        return {
-          assets: [
-            {
-              id: 'mock-asset-1',
-              filename: 'viral-morning-routine.mp4',
-              status: 'ready',
-              duration: 30,
-              createdAt: new Date(),
-              prompt: 'Routine matinale productive et motivante',
-              aiConfig: { platforms: ['tiktok', 'instagram'] },
-              posts: [],
-            },
-            {
-              id: 'mock-asset-2', 
-              filename: 'tech-tips-shortcuts.mp4',
-              status: 'ready',
-              duration: 45,
-              createdAt: new Date(Date.now() - 86400000),
-              prompt: 'Astuces tech pour gagner du temps',
-              aiConfig: { platforms: ['youtube', 'tiktok'] },
-              posts: [],
-            },
-          ],
-          nextCursor: undefined,
-        };
-      }
-
       const assets = await ctx.db.asset.findMany({
         where: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           ...(input.status && { status: input.status }),
         },
         orderBy: { createdAt: 'desc' },
@@ -75,41 +46,10 @@ export const assetsRouter = createTRPCRouter({
   get: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      if (process.env.NODE_ENV === 'development') {
-        return {
-          id: input.id,
-          userId: ctx.session.user.id,
-          projectId: 'mock-project-1',
-          filename: `mock-asset-${input.id}.mp4`,
-          status: 'ready',
-          duration: 30,
-          publicUrl: `/mock-video-${input.id}.mp4`,
-          thumbnail: `/mock-thumb-${input.id}.jpg`,
-          s3Key: `mock-s3-key-${input.id}`,
-          prompt: 'Mock content generation prompt',
-          aiConfig: {
-            platforms: ['tiktok', 'instagram'],
-            style: 'viral',
-            seoData: {
-              descriptions: {
-                tiktok: 'Mock TikTok description',
-                instagram: 'Mock Instagram description',
-              },
-              hashtags: {
-                tiktok: ['#viral', '#tiktok', '#content'],
-                instagram: ['#viral', '#instagram', '#reel'],
-              },
-            },
-          },
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          posts: [],
-        };
-      }
       const asset = await ctx.db.asset.findFirst({
         where: {
           id: input.id,
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
         },
         include: {
           posts: true,
@@ -130,41 +70,10 @@ export const assetsRouter = createTRPCRouter({
   getById: protectedProcedure
     .input(z.object({ id: z.string() }))
     .query(async ({ ctx, input }) => {
-      if (process.env.NODE_ENV === 'development') {
-        return {
-          id: input.id,
-          userId: ctx.session.user.id,
-          projectId: 'mock-project-1',
-          filename: `mock-asset-${input.id}.mp4`,
-          status: 'ready',
-          duration: 30,
-          publicUrl: `/mock-video-${input.id}.mp4`,
-          thumbnail: `/mock-thumb-${input.id}.jpg`,
-          s3Key: `mock-s3-key-${input.id}`,
-          prompt: 'Mock content generation prompt',
-          aiConfig: {
-            platforms: ['tiktok', 'instagram'],
-            style: 'viral',
-            seoData: {
-              descriptions: {
-                tiktok: 'Mock TikTok description',
-                instagram: 'Mock Instagram description',
-              },
-              hashtags: {
-                tiktok: ['#viral', '#tiktok', '#content'],
-                instagram: ['#viral', '#instagram', '#reel'],
-              },
-            },
-          },
-          createdAt: new Date(),
-          updatedAt: new Date(),
-          posts: [],
-        };
-      }
       const asset = await ctx.db.asset.findFirst({
         where: {
           id: input.id,
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
         },
         include: {
           posts: true,
@@ -194,7 +103,7 @@ export const assetsRouter = createTRPCRouter({
       const asset = await ctx.db.asset.findFirst({
         where: { 
           id: input.id,
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
         },
       });
 
@@ -237,7 +146,7 @@ export const assetsRouter = createTRPCRouter({
       const asset = await ctx.db.asset.findFirst({
         where: { 
           id: input.id,
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
         },
       });
 
@@ -263,7 +172,7 @@ export const assetsRouter = createTRPCRouter({
       const asset = await ctx.db.asset.findFirst({
         where: {
           id: input.id,
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
         },
       });
 

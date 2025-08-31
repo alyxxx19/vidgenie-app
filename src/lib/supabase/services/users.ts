@@ -1,8 +1,8 @@
 import { supabase } from '../client';
 import { supabaseAdmin } from '../server';
-import type { Database, Tables, TablesInsert, TablesUpdate } from '../types';
+import type { Tables, TablesInsert, TablesUpdate } from '../types';
 
-type User = Tables<'users'>;
+type _User = Tables<'users'>;
 type UserInsert = TablesInsert<'users'>;
 type UserUpdate = TablesUpdate<'users'>;
 

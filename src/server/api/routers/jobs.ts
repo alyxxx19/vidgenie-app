@@ -13,26 +13,26 @@ export const jobsRouter = createTRPCRouter({
       projectId: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const { session, db } = ctx;
+      const { user, db } = ctx;
       
       // Check user credits
-      const user = await db.user.findUnique({
-        where: { id: session.user.id },
+      const userRecord = await db.user.findUnique({
+        where: { id: user.id },
         select: { creditsBalance: true },
       });
 
       const GENERATION_COST = 10;
-      if (!user || user.creditsBalance < GENERATION_COST) {
+      if (!userRecord || userRecord.creditsBalance < GENERATION_COST) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: `Insufficient credits. You have ${user?.creditsBalance || 0} credits but need ${GENERATION_COST}.`,
+          message: `Insufficient credits. You have ${userRecord?.creditsBalance || 0} credits but need ${GENERATION_COST}.`,
         });
       }
 
       // Deduct credits and log transaction
       await db.creditLedger.create({
         data: {
-          userId: session.user.id,
+          userId: user.id,
           amount: -GENERATION_COST,
           type: 'generation',
           description: `Content generation: ${input.prompt.slice(0, 50)}...`,
@@ -40,14 +40,14 @@ export const jobsRouter = createTRPCRouter({
       });
 
       await db.user.update({
-        where: { id: session.user.id },
+        where: { id: user.id },
         data: { creditsBalance: { decrement: GENERATION_COST } },
       });
 
       // Create job
       const job = await db.job.create({
         data: {
-          userId: session.user.id,
+          userId: user.id,
           projectId: input.projectId,
           type: 'generation',
           prompt: input.prompt,
@@ -63,7 +63,7 @@ export const jobsRouter = createTRPCRouter({
       // Log usage event
       await db.usageEvent.create({
         data: {
-          userId: session.user.id,
+          userId: user.id,
           jobId: job.id,
           event: 'generation_started',
           metadata: { prompt: input.prompt, duration: input.duration },
@@ -83,26 +83,10 @@ export const jobsRouter = createTRPCRouter({
   getStatus: protectedProcedure
     .input(z.object({ jobId: z.string() }))
     .query(async ({ ctx, input }) => {
-      if (process.env.NODE_ENV === 'development') {
-        return {
-          id: input.jobId,
-          status: 'completed',
-          progress: 100,
-          estimatedTimeRemaining: 0,
-          resultAsset: {
-            id: `mock-asset-${input.jobId}`,
-            filename: 'mock-generated-content.mp4',
-            publicUrl: '/mock-video.mp4',
-            thumbnail: '/mock-thumb.jpg',
-          },
-          resultPost: null,
-          errorMessage: null,
-        };
-      }
       const job = await ctx.db.job.findFirst({
         where: {
           id: input.jobId,
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
         },
         include: {
           resultAsset: true,
@@ -137,33 +121,9 @@ export const jobsRouter = createTRPCRouter({
       status: z.enum(['pending', 'running', 'completed', 'failed']).optional(),
     }))
     .query(async ({ ctx, input }) => {
-      // Return mock data in development
-      if (process.env.NODE_ENV === 'development') {
-        return {
-          jobs: [
-            {
-              id: 'mock-job-1',
-              type: 'generation',
-              status: 'completed',
-              prompt: 'Routine matinale productive et motivante',
-              createdAt: new Date(),
-              config: { duration: 30, platforms: ['tiktok'] },
-              resultAsset: {
-                id: 'mock-asset-1',
-                filename: 'viral-morning-routine.mp4',
-                publicUrl: '/mock-video.mp4',
-                thumbnail: '/mock-thumb.jpg',
-              },
-              resultPost: null,
-            },
-          ],
-          nextCursor: undefined,
-        };
-      }
-
       const jobs = await ctx.db.job.findMany({
         where: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           ...(input.status && { status: input.status }),
         },
         include: {

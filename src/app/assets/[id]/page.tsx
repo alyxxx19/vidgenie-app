@@ -1,30 +1,23 @@
 'use client';
 
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { 
   Download, 
-  Share2, 
-  Edit3, 
-  Calendar, 
-  Eye,
-  Hash,
   Sparkles,
   Play,
-  Copy,
-  CheckCircle,
-  ExternalLink
+  Copy
 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/app/providers';
 import { toast } from '@/components/ui/use-toast';
 import { useState } from 'react';
 import SEOEditor from '@/components/seo-editor';
+import { formatBytes, formatDuration } from '@/lib/utils/format';
 
 interface AssetPageProps {
   params: { id: string };
@@ -32,8 +25,8 @@ interface AssetPageProps {
 
 export default function AssetPage({ params }: AssetPageProps) {
   const { user, isLoading } = useAuth();
-  const [editingDescription, setEditingDescription] = useState<string | null>(null);
-  const [editingHashtags, setEditingHashtags] = useState<string | null>(null);
+  const [_editingDescription, _setEditingDescription] = useState<string | null>(null);
+  const [_editingHashtags, _setEditingHashtags] = useState<string | null>(null);
   
   if (isLoading) {
     return (
@@ -64,7 +57,7 @@ export default function AssetPage({ params }: AssetPageProps) {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-2">Asset non trouvé</h1>
-          <p className="text-slate-600 mb-4">Cet asset n'existe pas ou vous n'y avez pas accès.</p>
+          <p className="text-slate-600 mb-4">Cet asset n&apos;existe pas ou vous n&apos;y avez pas accès.</p>
           <Button asChild>
             <Link href="/dashboard">Retour au dashboard</Link>
           </Button>
@@ -154,7 +147,9 @@ export default function AssetPage({ params }: AssetPageProps) {
                   Aperçu vidéo
                 </CardTitle>
                 <CardDescription>
-                  {asset.width}x{asset.height} • {asset.duration}s • {(asset.fileSize / 1024 / 1024).toFixed(1)}MB
+                  {asset.width && asset.height ? `${asset.width}x${asset.height}` : 'Dimensions inconnues'} • 
+                  {asset.duration ? ` ${formatDuration(asset.duration)}` : ' Durée inconnue'} • 
+                  {asset.fileSize ? ` ${formatBytes(asset.fileSize)}` : ' Taille inconnue'}
                 </CardDescription>
               </CardHeader>
               <CardContent>

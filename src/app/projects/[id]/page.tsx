@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { redirect, useParams } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,20 +12,14 @@ import { Input } from '@/components/ui/input';
 import { 
   ArrowLeft, 
   Video, 
-  Calendar, 
   Users, 
   Settings, 
   Plus,
   Search,
-  Filter,
   MoreVertical,
   Play,
-  Clock,
   CheckCircle,
-  AlertCircle,
-  TrendingUp,
-  Target,
-  Share2
+  TrendingUp
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -112,7 +106,7 @@ export default function ProjectDetailPage() {
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
           <h2 className="text-2xl font-bold mb-2">Projet introuvable</h2>
-          <p className="text-slate-600 mb-4">Le projet demandé n'existe pas</p>
+          <p className="text-slate-600 mb-4">Le projet demandé n&apos;existe pas</p>
           <Button asChild>
             <Link href="/projects">Retour aux projets</Link>
           </Button>

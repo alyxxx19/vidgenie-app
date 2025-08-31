@@ -36,7 +36,7 @@ export default function DevLoginPage() {
       } else {
         throw new Error('Erreur de connexion');
       }
-    } catch (error) {
+    } catch (_error) {
       toast.error('Impossible de se connecter');
     } finally {
       setIsLoading(false);
@@ -49,7 +49,7 @@ export default function DevLoginPage() {
         <CardHeader className="text-center">
           <CardTitle className="text-2xl">Connexion Dev</CardTitle>
           <CardDescription>
-            Mode développement - Pas d'OAuth requis
+            Mode développement - Pas d&apos;OAuth requis
           </CardDescription>
         </CardHeader>
         <CardContent>

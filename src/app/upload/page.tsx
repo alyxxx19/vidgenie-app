@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -139,7 +139,7 @@ export default function UploadPage() {
       setDescription('');
       setTags('');
       setSelectedProject('');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la sauvegarde');
     }
   };

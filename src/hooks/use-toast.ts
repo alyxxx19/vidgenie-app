@@ -31,6 +31,9 @@ function genId() {
 
 type ActionType = typeof actionTypes
 
+// Use actionTypes in actions
+type _ActionKeys = keyof typeof actionTypes
+
 type Action =
   | {
       type: ActionType["ADD_TOAST"]

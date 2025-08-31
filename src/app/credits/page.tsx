@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -322,7 +322,7 @@ export default function CreditsPage() {
                       <div>
                         <p className="font-medium text-blue-900">Bonus de fidélité</p>
                         <p className="text-sm text-blue-700">
-                          Utilisez l'app 7 jours consécutifs pour gagner 50 crédits bonus
+                          Utilisez l&apos;app 7 jours consécutifs pour gagner 50 crédits bonus
                         </p>
                       </div>
                     </div>

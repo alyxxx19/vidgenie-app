@@ -22,7 +22,7 @@ export function decrypt(encryptedData: string): string {
   }
   
   const [ivHex, authTagHex, encrypted] = parts;
-  const iv = Buffer.from(ivHex!, 'hex');
+  const _iv = Buffer.from(ivHex!, 'hex');
   const authTag = Buffer.from(authTagHex!, 'hex');
   
   const decipher = crypto.createDecipher(ALGORITHM, ENCRYPTION_KEY);

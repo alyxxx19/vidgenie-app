@@ -90,7 +90,7 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {features.map((feature, index) => {
+            {features.map((feature, _index) => {
               const Icon = feature.icon;
               return (
                 <Card key={feature.title} className="bg-card border-border hover:border-foreground/20 transition-colors group">

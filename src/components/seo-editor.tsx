@@ -6,17 +6,14 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { 
   Hash, 
   Copy, 
   Save, 
   RefreshCw, 
-  Sparkles,
   TrendingUp,
   Eye,
-  BarChart3,
   Calendar,
   Share2,
   ExternalLink
@@ -36,7 +33,7 @@ interface SEOEditorProps {
   onPublish?: (platform: string, data: { description: string; hashtags: string[] }) => void;
 }
 
-export default function SEOEditor({ assetId, initialSEOData, platforms, onSave, onPublish }: SEOEditorProps) {
+export default function SEOEditor({ assetId: _assetId, initialSEOData, platforms, onSave, onPublish }: SEOEditorProps) {
   const [activeTab, setActiveTab] = useState(platforms[0] || 'tiktok');
   const [editedData, setEditedData] = useState<Record<string, { description: string; hashtags: string[] }>>(() => {
     const initial: Record<string, { description: string; hashtags: string[] }> = {};

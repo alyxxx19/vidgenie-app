@@ -1,12 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Switch } from '@/components/ui/switch';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -21,7 +20,6 @@ import {
   ExternalLink,
   Key,
   Zap,
-  Smartphone,
   Globe,
   Share2,
   BarChart3,
@@ -126,7 +124,7 @@ const mockIntegrations: Integration[] = [
 
 export default function IntegrationsPage() {
   const { user, isLoading } = useAuth();
-  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedCategory, _setSelectedCategory] = useState('all');
   const [isApiDialogOpen, setIsApiDialogOpen] = useState(false);
   const [apiKeys, setApiKeys] = useState({
     tiktok: '',
@@ -146,23 +144,23 @@ export default function IntegrationsPage() {
     redirect('/auth/signin');
   }
 
-  const filteredIntegrations = mockIntegrations.filter(integration => {
+  const _filteredIntegrations = mockIntegrations.filter(integration => {
     if (selectedCategory === 'all') return true;
     return integration.category === selectedCategory;
   });
 
-  const handleConnect = async (integrationId: string) => {
+  const handleConnect = async (_integrationId: string) => {
     try {
       // Simulate OAuth flow
       toast.success('Redirection vers l\'authentification...');
       await new Promise(resolve => setTimeout(resolve, 2000));
       toast.success('Intégration connectée avec succès!');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la connexion');
     }
   };
 
-  const handleDisconnect = async (integrationId: string) => {
+  const handleDisconnect = async (_integrationId: string) => {
     if (!confirm('Êtes-vous sûr de vouloir déconnecter cette intégration?')) {
       return;
     }
@@ -170,7 +168,7 @@ export default function IntegrationsPage() {
     try {
       await new Promise(resolve => setTimeout(resolve, 1000));
       toast.success('Intégration déconnectée');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la déconnexion');
     }
   };
@@ -201,7 +199,7 @@ export default function IntegrationsPage() {
     }
   };
 
-  const getCategoryIcon = (category: string) => {
+  const _getCategoryIcon = (category: string) => {
     switch (category) {
       case 'social':
         return <Share2 className="w-4 h-4" />;

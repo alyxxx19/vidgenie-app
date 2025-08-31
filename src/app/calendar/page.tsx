@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -22,8 +22,8 @@ import {
   Trash2,
   ChevronLeft,
   ChevronRight,
-  Filter,
-  Download
+  Download,
+  Users
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -202,7 +202,7 @@ export default function CalendarPage() {
         priority: 'medium',
         project: '',
       });
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la création de l\'événement');
     }
   };
@@ -268,7 +268,7 @@ export default function CalendarPage() {
                       <Label htmlFor="event-description">Description</Label>
                       <Input
                         id="event-description"
-                        placeholder="Détails de l'événement..."
+                        placeholder="Détails de l&apos;événement..."
                         value={newEvent.description}
                         onChange={(e) => setNewEvent(prev => ({ ...prev, description: e.target.value }))}
                       />
@@ -338,7 +338,7 @@ export default function CalendarPage() {
                         Annuler
                       </Button>
                       <Button onClick={handleCreateEvent}>
-                        Créer l'événement
+                        Créer l&apos;événement
                       </Button>
                     </div>
                   </div>
@@ -372,7 +372,7 @@ export default function CalendarPage() {
                       size="sm"
                       onClick={() => setCurrentMonth(new Date())}
                     >
-                      Aujourd'hui
+                      Aujourd&apos;hui
                     </Button>
                     <Button 
                       variant="outline" 
@@ -412,7 +412,7 @@ export default function CalendarPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label>Type d'événement</Label>
+                  <Label>Type d&apos;événement</Label>
                   <Select value={typeFilter} onValueChange={setTypeFilter}>
                     <SelectTrigger>
                       <SelectValue />

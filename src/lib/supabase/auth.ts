@@ -138,7 +138,7 @@ export const authService = {
       // Redirect to our custom Google OAuth endpoint
       const authUrl = `/api/auth/google?${params.toString()}`;
       window.location.href = authUrl;
-    } catch (error) {
+    } catch (_error) {
       throw new AuthError('Google authentication initiation failed');
     }
   },

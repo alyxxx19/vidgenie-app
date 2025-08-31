@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,7 +19,6 @@ import {
   Play,
   FileText,
   Users,
-  Zap,
   Settings,
   CreditCard
 } from 'lucide-react';
@@ -31,7 +30,7 @@ const faqData = [
     questions: [
       {
         q: 'Comment créer ma première vidéo?',
-        a: 'Rendez-vous sur la page "Créer", saisissez votre prompt, sélectionnez vos plateformes et cliquez sur "Générer". L\'IA créera votre vidéo en quelques minutes.',
+        a: 'Rendez-vous sur la page "Créer", saisissez votre prompt, sélectionnez vos plateformes et cliquez sur "Générer". L&apos;IA créera votre vidéo en quelques minutes.',
       },
       {
         q: 'Quels formats vidéo sont supportés?',
@@ -39,7 +38,7 @@ const faqData = [
       },
       {
         q: 'Combien de temps prend la génération?',
-        a: 'En moyenne 2-5 minutes selon la complexité. Vous recevrez une notification quand c\'est prêt.',
+        a: 'En moyenne 2-5 minutes selon la complexité. Vous recevrez une notification quand c&apos;est prêt.',
       },
     ],
   },
@@ -96,7 +95,7 @@ const tutorialVideos = [
   },
   {
     id: '3',
-    title: 'Gestion d\'équipe',
+    title: 'Gestion d&apos;équipe',
     description: 'Collaborer efficacement avec votre équipe',
     duration: '6:45',
     thumbnail: '/api/placeholder/300/169',
@@ -131,7 +130,7 @@ const helpTopics = [
 ];
 
 export default function HelpPage() {
-  const { user, isLoading } = useAuth();
+  const { user: _user, isLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
 
@@ -169,7 +168,7 @@ export default function HelpPage() {
               </Link>
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">Centre d'aide</h1>
+              <h1 className="text-2xl font-bold">Centre d&apos;aide</h1>
               <p className="text-slate-600">Trouvez des réponses et apprenez à utiliser VidGenie</p>
             </div>
           </div>
@@ -183,7 +182,7 @@ export default function HelpPage() {
             <div className="relative max-w-2xl mx-auto">
               <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-slate-400 w-5 h-5" />
               <Input
-                placeholder="Recherchez dans l'aide... Ex: comment créer une vidéo"
+                placeholder="Recherchez dans l&apos;aide... Ex: comment créer une vidéo"
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-12 h-12 text-lg"
@@ -289,7 +288,7 @@ export default function HelpPage() {
                     'Guide de démarrage complet',
                     'Optimiser ses prompts pour de meilleurs résultats',
                     'Stratégies de publication multi-plateformes',
-                    'Gestion d\'équipe et collaboration',
+                    'Gestion d&apos;équipe et collaboration',
                     'Analytics et métriques de performance',
                   ].map((guide, index) => (
                     <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">

@@ -6,17 +6,9 @@ export const creditsRouter = createTRPCRouter({
   // Get user's current credit balance and usage
   getBalance: protectedProcedure
     .query(async ({ ctx }) => {
-      // Return mock data in development
-      if (process.env.NODE_ENV === 'development') {
-        return {
-          balance: 1000,
-          planId: 'pro',
-          usedThisMonth: 150,
-        };
-      }
 
       const user = await ctx.db.user.findUnique({
-        where: { id: ctx.session.user.id },
+        where: { id: ctx.user.id },
         select: {
           creditsBalance: true,
           planId: true,
@@ -37,7 +29,7 @@ export const creditsRouter = createTRPCRouter({
 
       const monthlyUsage = await ctx.db.creditLedger.aggregate({
         where: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           createdAt: { gte: startOfMonth },
           amount: { lt: 0 }, // Only debits
         },
@@ -60,76 +52,8 @@ export const creditsRouter = createTRPCRouter({
       type: z.enum(['all', 'purchase', 'generation', 'publishing', 'refund']).default('all'),
     }))
     .query(async ({ ctx, input }) => {
-      if (process.env.NODE_ENV === 'development') {
-        const mockTransactions = [
-          {
-            id: 'mock-tx-1',
-            userId: ctx.session.user.id,
-            amount: 500,
-            type: 'purchase',
-            description: 'Purchase of Pro plan',
-            costEur: 29.99,
-            createdAt: new Date(Date.now() - 5 * 24 * 60 * 60 * 1000),
-            jobId: null,
-            user: { name: 'John Doe', email: 'john@example.com' },
-          },
-          {
-            id: 'mock-tx-2',
-            userId: ctx.session.user.id,
-            amount: -10,
-            type: 'generation',
-            description: 'Content generation: Morning routine viral content',
-            costEur: null,
-            createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000),
-            jobId: 'mock-job-1',
-            user: { name: 'John Doe', email: 'john@example.com' },
-          },
-          {
-            id: 'mock-tx-3',
-            userId: ctx.session.user.id,
-            amount: -5,
-            type: 'publishing',
-            description: 'Content publishing to TikTok',
-            costEur: null,
-            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-            jobId: 'mock-job-2',
-            user: { name: 'John Doe', email: 'john@example.com' },
-          },
-          {
-            id: 'mock-tx-4',
-            userId: ctx.session.user.id,
-            amount: -10,
-            type: 'generation',
-            description: 'Content generation: Tech tips for productivity',
-            costEur: null,
-            createdAt: new Date(Date.now() - 1 * 24 * 60 * 60 * 1000),
-            jobId: 'mock-job-3',
-            user: { name: 'John Doe', email: 'john@example.com' },
-          },
-          {
-            id: 'mock-tx-5',
-            userId: ctx.session.user.id,
-            amount: 100,
-            type: 'bonus',
-            description: 'Welcome bonus credits',
-            costEur: null,
-            createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
-            jobId: null,
-            user: { name: 'John Doe', email: 'john@example.com' },
-          },
-        ];
-
-        // Filter by type if specified
-        const filteredTransactions = input.type === 'all' 
-          ? mockTransactions 
-          : mockTransactions.filter(tx => tx.type === input.type);
-
-        return filteredTransactions
-          .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
-          .slice(0, input.limit);
-      }
       const whereClause: any = {
-        userId: ctx.session.user.id,
+        userId: ctx.user.id,
       };
 
       if (input.type !== 'all') {
@@ -159,7 +83,7 @@ export const creditsRouter = createTRPCRouter({
     }))
     .mutation(async ({ ctx, input }) => {
       const user = await ctx.db.user.findUnique({
-        where: { id: ctx.session.user.id },
+        where: { id: ctx.user.id },
         select: { creditsBalance: true },
       });
 
@@ -180,7 +104,7 @@ export const creditsRouter = createTRPCRouter({
       // Create transaction record
       await ctx.db.creditLedger.create({
         data: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           amount: -input.amount, // Negative for debit
           type: input.type,
           description: input.description,
@@ -191,7 +115,7 @@ export const creditsRouter = createTRPCRouter({
 
       // Update user balance
       const updatedUser = await ctx.db.user.update({
-        where: { id: ctx.session.user.id },
+        where: { id: ctx.user.id },
         data: { creditsBalance: { decrement: input.amount } },
         select: { creditsBalance: true },
       });
@@ -215,7 +139,7 @@ export const creditsRouter = createTRPCRouter({
       // Create transaction record
       await ctx.db.creditLedger.create({
         data: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           amount: input.amount, // Positive for credit
           type: input.type,
           description: input.description,
@@ -225,7 +149,7 @@ export const creditsRouter = createTRPCRouter({
 
       // Update user balance
       const updatedUser = await ctx.db.user.update({
-        where: { id: ctx.session.user.id },
+        where: { id: ctx.user.id },
         data: { creditsBalance: { increment: input.amount } },
         select: { creditsBalance: true },
       });
@@ -277,7 +201,7 @@ export const creditsRouter = createTRPCRouter({
       // Add credits to user account
       await ctx.db.creditLedger.create({
         data: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           amount: plan.creditsPerMonth,
           type: 'purchase',
           description: `Purchase of ${plan.name} plan`,
@@ -286,7 +210,7 @@ export const creditsRouter = createTRPCRouter({
       });
 
       const updatedUser = await ctx.db.user.update({
-        where: { id: ctx.session.user.id },
+        where: { id: ctx.user.id },
         data: {
           creditsBalance: { increment: plan.creditsPerMonth },
           planId: plan.id,
@@ -308,41 +232,12 @@ export const creditsRouter = createTRPCRouter({
       days: z.number().min(1).max(365).default(30),
     }))
     .query(async ({ ctx, input }) => {
-      if (process.env.NODE_ENV === 'development') {
-        // Generate mock daily usage data
-        const dailyUsage: Record<string, { generation: number; publishing: number; total: number }> = {};
-        const today = new Date();
-        
-        for (let i = 0; i < input.days; i++) {
-          const date = new Date(today);
-          date.setDate(date.getDate() - i);
-          const dayKey = date.toISOString().split('T')[0];
-          
-          // Generate realistic usage patterns with some randomness
-          const generationUsage = Math.floor(Math.random() * 20) + 5; // 5-25 credits
-          const publishingUsage = Math.floor(Math.random() * 10) + 2; // 2-12 credits
-          
-          dailyUsage[dayKey] = {
-            generation: generationUsage,
-            publishing: publishingUsage,
-            total: generationUsage + publishingUsage,
-          };
-        }
-        
-        return {
-          dailyUsage,
-          totalUsed: 285,
-          totalAdded: 600,
-          avgDailyUsage: 9.5,
-          transactionCount: 15,
-        };
-      }
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - input.days);
 
       const transactions = await ctx.db.creditLedger.findMany({
         where: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           createdAt: { gte: startDate },
         },
         orderBy: { createdAt: 'desc' },

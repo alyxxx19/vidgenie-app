@@ -1,16 +1,15 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { 
   Search, 
-  Filter, 
   Play, 
   Download, 
   Trash2, 
@@ -18,9 +17,7 @@ import {
   Grid3X3,
   List,
   FileVideo,
-  Calendar,
-  Tag,
-  Clock
+  Calendar
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -47,7 +44,7 @@ export default function LibraryPage() {
   }
 
   // Filter and sort videos
-  let filteredVideos = mockVideos.filter(video => {
+  const filteredVideos = mockVideos.filter(video => {
     const matchesSearch = video.filename.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          video.description.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesProject = selectedProject === 'all' || video.project === selectedProject;

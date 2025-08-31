@@ -5,16 +5,7 @@ export const analyticsRouter = createTRPCRouter({
   // Get user activation metrics
   getUserActivation: protectedProcedure
     .query(async ({ ctx }) => {
-      if (process.env.NODE_ENV === 'development') {
-        return {
-          activationScore: 85,
-          daysSinceSignup: 14,
-          generationsCount: 12,
-          publishingCount: 8,
-          isActivated: true,
-        };
-      }
-      const userId = ctx.session.user.id;
+      const userId = ctx.user.id;
       const user = await ctx.db.user.findUnique({
         where: { id: userId },
         select: { createdAt: true },
@@ -75,23 +66,12 @@ export const analyticsRouter = createTRPCRouter({
       days: z.number().min(1).max(365).default(30),
     }))
     .query(async ({ ctx, input }) => {
-      if (process.env.NODE_ENV === 'development') {
-        return {
-          totalJobs: 45,
-          successfulJobs: 43,
-          failedJobs: 2,
-          successRate: 95.6,
-          avgGenerationTime: 420,
-          isAboveTarget: true,
-          isTimeWithinTarget: true,
-        };
-      }
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - input.days);
 
       const totalJobs = await ctx.db.job.count({
         where: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           type: 'generation',
           createdAt: { gte: startDate },
         },
@@ -99,7 +79,7 @@ export const analyticsRouter = createTRPCRouter({
 
       const successfulJobs = await ctx.db.job.count({
         where: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           type: 'generation',
           status: 'completed',
           createdAt: { gte: startDate },
@@ -108,7 +88,7 @@ export const analyticsRouter = createTRPCRouter({
 
       const failedJobs = await ctx.db.job.count({
         where: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           type: 'generation',
           status: 'failed',
           createdAt: { gte: startDate },
@@ -118,7 +98,7 @@ export const analyticsRouter = createTRPCRouter({
       // Average generation time
       const completedJobs = await ctx.db.job.findMany({
         where: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           type: 'generation',
           status: 'completed',
           actualTime: { not: null },
@@ -150,40 +130,12 @@ export const analyticsRouter = createTRPCRouter({
       days: z.number().min(1).max(365).default(30),
     }))
     .query(async ({ ctx, input }) => {
-      if (process.env.NODE_ENV === 'development') {
-        // Generate mock daily usage data for the requested time period
-        const dailyUsage: Record<string, { generation: number; publishing: number; total: number }> = {};
-        const today = new Date();
-        
-        for (let i = 0; i < input.days; i++) {
-          const date = new Date(today);
-          date.setDate(date.getDate() - i);
-          const dayKey = date.toISOString().split('T')[0];
-          
-          // Generate realistic daily patterns with some randomness
-          const generationCount = Math.floor(Math.random() * 5) + 1;
-          const publishingCount = Math.floor(Math.random() * 3) + 1;
-          
-          dailyUsage[dayKey] = {
-            generation: generationCount,
-            publishing: publishingCount,
-            total: generationCount + publishingCount,
-          };
-        }
-        
-        return {
-          dailyUsage,
-          weeklyContent: 8,
-          isAboveTarget: true,
-          avgDailyUsage: 3.2,
-        };
-      }
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - input.days);
 
       const usageEvents = await ctx.db.usageEvent.findMany({
         where: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           createdAt: { gte: startDate },
         },
         orderBy: { createdAt: 'desc' },
@@ -212,7 +164,7 @@ export const analyticsRouter = createTRPCRouter({
 
       const weeklyContent = await ctx.db.asset.count({
         where: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           createdAt: { gte: recentWeek },
         },
       });
@@ -237,7 +189,7 @@ export const analyticsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       await ctx.db.usageEvent.create({
         data: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           event: input.event,
           platform: input.platform,
           provider: input.provider,
@@ -252,24 +204,6 @@ export const analyticsRouter = createTRPCRouter({
   // Get system-wide KPIs (for admin/monitoring)
   getSystemKPIs: protectedProcedure
     .query(async ({ ctx }) => {
-      if (process.env.NODE_ENV === 'development') {
-        return {
-          activationRate: 68.5,
-          generationSuccessRate: 96.2,
-          contentPerUser: 4.8,
-          alerts: {
-            lowActivation: false,
-            lowSuccessRate: false,
-            lowUsage: false,
-          },
-          newUsers: 24,
-          activatedUsers: 18,
-          totalGenerations: 156,
-          successfulGenerations: 150,
-          activeUsers: 42,
-          contentCreated: 201,
-        };
-      }
       const now = new Date();
       const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
       const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);

@@ -1,11 +1,14 @@
+import { createServerClient } from '@supabase/ssr';
 import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { cookies } from 'next/headers';
+import { cache } from 'react';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-if (!supabaseUrl || !supabaseServiceKey) {
+if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
@@ -21,9 +24,9 @@ export const supabaseAdmin = createClient<Database>(supabaseUrl, supabaseService
 export async function createServerSupabaseClient() {
   const cookieStore = await cookies();
   
-  return createClient<Database>(
+  return createServerClient<Database>(
     supabaseUrl,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseAnonKey,
     {
       cookies: {
         get(name: string) {
@@ -39,3 +42,45 @@ export async function createServerSupabaseClient() {
     }
   );
 }
+
+// Cached user retrieval for server components
+export const getUser = cache(async () => {
+  const supabase = await createServerSupabaseClient();
+  try {
+    const { data: { user }, error } = await supabase.auth.getUser();
+    
+    if (error || !user) {
+      return null;
+    }
+    
+    return user;
+  } catch (error) {
+    console.error('Error getting user:', error);
+    return null;
+  }
+});
+
+// Cached user profile retrieval
+export const getUserProfile = cache(async () => {
+  const user = await getUser();
+  if (!user) return null;
+  
+  const supabase = await createServerSupabaseClient();
+  try {
+    const { data: profile, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', user.id)
+      .single();
+    
+    if (error) {
+      console.error('Error getting user profile:', error);
+      return { ...user, profile: null };
+    }
+    
+    return { ...user, profile };
+  } catch (error) {
+    console.error('Error getting user profile:', error);
+    return { ...user, profile: null };
+  }
+});

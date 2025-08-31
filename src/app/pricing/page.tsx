@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { api } from '@/app/providers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -215,7 +215,7 @@ export default function PricingPage() {
               </p>
             </div>
             <div>
-              <h3 className="font-semibold mb-2">Que se passe-t-il si j'annule ?</h3>
+              <h3 className="font-semibold mb-2">Que se passe-t-il si j&apos;annule ?</h3>
               <p className="text-muted-foreground text-sm">
                 Votre abonnement reste actif jusqu'à la fin de la période payée. 
                 Vous gardez accès à toutes vos créations.
@@ -232,7 +232,7 @@ export default function PricingPage() {
               <h3 className="font-semibold mb-2">Support client inclus ?</h3>
               <p className="text-muted-foreground text-sm">
                 Tous les plans incluent un support par email. Les plans Pro et Enterprise 
-                bénéficient d'un support prioritaire.
+                bénéficient d&apos;un support prioritaire.
               </p>
             </div>
           </div>

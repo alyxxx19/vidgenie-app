@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,17 +16,10 @@ import {
   Plus, 
   Search, 
   Folder, 
-  Video, 
   Calendar, 
   Users, 
   ArrowLeft,
-  MoreVertical,
-  Edit3,
-  Trash2,
-  Share2,
-  Target,
-  Clock,
-  TrendingUp
+  MoreVertical
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -69,7 +62,7 @@ export default function ProjectsPage() {
   });
 
 
-  const getPlatformIcon = (platform: string) => {
+  const _getPlatformIcon = (platform: string) => {
     // Return platform-specific styling
     return platform;
   };
@@ -94,7 +87,7 @@ export default function ProjectsPage() {
         startDate: '',
         endDate: '',
       });
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la création du projet');
     }
   };

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -154,8 +154,8 @@ export default function TeamPage() {
       toast.success(`Invitation envoyée à ${inviteData.email}`);
       setIsInviteDialogOpen(false);
       setInviteData({ email: '', role: 'viewer', message: '' });
-    } catch (error) {
-      toast.error('Erreur lors de l\'envoi de l\'invitation');
+    } catch (_error) {
+      toast.error('Erreur lors de l&apos;envoi de l&apos;invitation');
     }
   };
 
@@ -186,7 +186,7 @@ export default function TeamPage() {
                 </Link>
               </Button>
               <div>
-                <h1 className="text-2xl font-bold">Gestion d'équipe</h1>
+                <h1 className="text-2xl font-bold">Gestion d&apos;équipe</h1>
                 <p className="text-slate-600">Gérez les collaborateurs et leurs permissions</p>
               </div>
             </div>
@@ -236,7 +236,7 @@ export default function TeamPage() {
                   </div>
                   
                   <div>
-                    <Label htmlFor="invite-message">Message d'invitation (optionnel)</Label>
+                    <Label htmlFor="invite-message">Message d&apos;invitation (optionnel)</Label>
                     <Input
                       id="invite-message"
                       placeholder="Message personnalisé..."
@@ -251,7 +251,7 @@ export default function TeamPage() {
                     </Button>
                     <Button onClick={handleSendInvite}>
                       <Mail className="w-4 h-4 mr-2" />
-                      Envoyer l'invitation
+                      Envoyer l&apos;invitation
                     </Button>
                   </div>
                 </div>
@@ -474,7 +474,7 @@ export default function TeamPage() {
           <CardHeader>
             <CardTitle className="text-lg">Rôles et permissions</CardTitle>
             <CardDescription>
-              Explication des différents niveaux d'accès
+              Explication des différents niveaux d&apos;accès
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

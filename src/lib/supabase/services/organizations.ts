@@ -1,11 +1,10 @@
 import { supabase } from '../client';
-import { supabaseAdmin } from '../server';
-import type { Database, Tables, TablesInsert, TablesUpdate } from '../types';
+import type { Tables, TablesInsert, TablesUpdate } from '../types';
 
-type Organization = Tables<'organizations'>;
+type _Organization = Tables<'organizations'>;
 type OrganizationInsert = TablesInsert<'organizations'>;
 type OrganizationUpdate = TablesUpdate<'organizations'>;
-type OrganizationMember = Tables<'organization_members'>;
+type _OrganizationMember = Tables<'organization_members'>;
 
 export class OrganizationsService {
   // Get current organization
@@ -206,7 +205,7 @@ export class OrganizationsService {
   }
 
   // Get organization usage stats
-  static async getUsageStats(organizationId: string, days: number = 30) {
+  static async getUsageStats(organizationId: string, days = 30) {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 

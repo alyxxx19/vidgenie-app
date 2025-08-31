@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { 
   ChevronLeft, 
   ChevronRight, 
@@ -81,14 +80,14 @@ export default function ContentCalendar({ events = [], onDateSelect }: ContentCa
     });
   };
   
-  const getEventIcon = (type: string, status: string) => {
+  const getEventIcon = (type: string, _status: string) => {
     if (type === 'generated') return <Video className="w-3 h-3" />;
     if (type === 'scheduled') return <Clock className="w-3 h-3" />;
     if (type === 'published') return <CheckCircle className="w-3 h-3" />;
     return <AlertCircle className="w-3 h-3" />;
   };
   
-  const getEventColor = (type: string, status: string) => {
+  const getEventColor = (type: string, _status: string) => {
     if (type === 'generated') return 'bg-blue-100 text-blue-800';
     if (type === 'scheduled') return 'bg-yellow-100 text-yellow-800';
     if (type === 'published') return 'bg-green-100 text-green-800';

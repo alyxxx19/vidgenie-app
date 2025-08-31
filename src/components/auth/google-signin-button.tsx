@@ -33,7 +33,7 @@ export function GoogleSignInButton({
 }: GoogleSignInButtonProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const router = useRouter();
+  const _router = useRouter();
   const searchParams = useSearchParams();
 
   // Check for OAuth errors from URL params

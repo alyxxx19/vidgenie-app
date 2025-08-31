@@ -18,7 +18,7 @@ export const postsRouter = createTRPCRouter({
       const asset = await ctx.db.asset.findFirst({
         where: {
           id: input.assetId,
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           status: 'ready',
         },
       });
@@ -32,7 +32,7 @@ export const postsRouter = createTRPCRouter({
 
       const post = await ctx.db.post.create({
         data: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           assetId: input.assetId,
           title: input.title,
           description: input.description,
@@ -46,7 +46,7 @@ export const postsRouter = createTRPCRouter({
       // Log event
       await ctx.db.usageEvent.create({
         data: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           event: input.scheduledAt ? 'post_scheduled' : 'post_created',
           metadata: { 
             postId: post.id,
@@ -69,7 +69,7 @@ export const postsRouter = createTRPCRouter({
       const asset = await ctx.db.asset.findFirst({
         where: {
           id: input.assetId,
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
         },
         select: {
           id: true,
@@ -109,89 +109,9 @@ export const postsRouter = createTRPCRouter({
       status: z.enum(['draft', 'scheduled', 'publishing', 'published', 'failed']).optional(),
     }))
     .query(async ({ ctx, input }) => {
-      if (process.env.NODE_ENV === 'development') {
-        const mockPosts = [
-          {
-            id: 'mock-post-1',
-            userId: ctx.session.user.id,
-            assetId: 'mock-asset-1',
-            title: 'Morning Routine Viral Content',
-            description: 'Découvrez cette routine matinale qui va changer votre vie !',
-            hashtags: ['#routine', '#matinal', '#motivation', '#viral'],
-            platforms: ['tiktok', 'instagram'],
-            scheduledAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
-            publishedAt: null,
-            status: 'scheduled',
-            seoOptimized: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            asset: {
-              id: 'mock-asset-1',
-              filename: 'viral-morning-routine.mp4',
-              publicUrl: '/mock-video-1.mp4',
-              thumbnail: '/mock-thumb-1.jpg',
-              duration: 30,
-            },
-          },
-          {
-            id: 'mock-post-2',
-            userId: ctx.session.user.id,
-            assetId: 'mock-asset-2',
-            title: 'Tech Tips Published',
-            description: 'Les meilleurs raccourcis pour gagner du temps avec la tech',
-            hashtags: ['#tech', '#tips', '#productivity', '#shortcuts'],
-            platforms: ['youtube', 'tiktok'],
-            scheduledAt: new Date(Date.now() - 12 * 60 * 60 * 1000),
-            publishedAt: new Date(Date.now() - 10 * 60 * 60 * 1000),
-            status: 'published',
-            seoOptimized: true,
-            createdAt: new Date(Date.now() - 24 * 60 * 60 * 1000),
-            updatedAt: new Date(Date.now() - 10 * 60 * 60 * 1000),
-            asset: {
-              id: 'mock-asset-2',
-              filename: 'tech-tips-shortcuts.mp4',
-              publicUrl: '/mock-video-2.mp4',
-              thumbnail: '/mock-thumb-2.jpg',
-              duration: 45,
-            },
-          },
-          {
-            id: 'mock-post-3',
-            userId: ctx.session.user.id,
-            assetId: 'mock-asset-3',
-            title: 'Draft Content',
-            description: 'Contenu en cours de préparation',
-            hashtags: ['#draft', '#content', '#creation'],
-            platforms: ['instagram'],
-            scheduledAt: null,
-            publishedAt: null,
-            status: 'draft',
-            seoOptimized: false,
-            createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-            updatedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
-            asset: {
-              id: 'mock-asset-3',
-              filename: 'draft-content.mp4',
-              publicUrl: '/mock-video-3.mp4',
-              thumbnail: '/mock-thumb-3.jpg',
-              duration: 25,
-            },
-          },
-        ];
-
-        // Filter by status if specified
-        const filteredPosts = input.status 
-          ? mockPosts.filter(post => post.status === input.status)
-          : mockPosts;
-
-        return {
-          posts: filteredPosts.slice(0, input.limit),
-          nextCursor: undefined,
-        };
-      }
       const posts = await ctx.db.post.findMany({
         where: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           ...(input.status && { status: input.status }),
         },
         include: {
@@ -229,48 +149,9 @@ export const postsRouter = createTRPCRouter({
       endDate: z.date(),
     }))
     .query(async ({ ctx, input }) => {
-      if (process.env.NODE_ENV === 'development') {
-        const mockCalendarPosts = [];
-        const platforms = ['tiktok', 'youtube', 'instagram'];
-        
-        // Generate posts spread across the date range
-        const daysDiff = Math.ceil((input.endDate.getTime() - input.startDate.getTime()) / (1000 * 60 * 60 * 24));
-        const numPosts = Math.min(daysDiff, 10); // Max 10 posts
-        
-        for (let i = 0; i < numPosts; i++) {
-          const date = new Date(input.startDate);
-          date.setDate(date.getDate() + Math.floor(i * daysDiff / numPosts));
-          date.setHours(10 + (i % 12), Math.floor(Math.random() * 60));
-          
-          const platform = platforms[i % platforms.length];
-          const status = Math.random() > 0.3 ? 'scheduled' : 'published';
-          
-          mockCalendarPosts.push({
-            id: `mock-calendar-post-${i}`,
-            userId: ctx.session.user.id,
-            assetId: `mock-asset-${i}`,
-            title: `Calendar Content ${i + 1}`,
-            description: `Contenu programmé pour ${platform}`,
-            hashtags: [`#${platform}`, '#scheduled', '#content'],
-            platforms: [platform],
-            scheduledAt: date,
-            publishedAt: status === 'published' ? date : null,
-            status,
-            seoOptimized: true,
-            createdAt: new Date(Date.now() - (i * 24 * 60 * 60 * 1000)),
-            updatedAt: new Date(),
-            asset: {
-              thumbnail: `/mock-thumb-${i}.jpg`,
-              duration: 30 + (i * 10),
-            },
-          });
-        }
-        
-        return mockCalendarPosts.sort((a, b) => a.scheduledAt.getTime() - b.scheduledAt.getTime());
-      }
       const posts = await ctx.db.post.findMany({
         where: {
-          userId: ctx.session.user.id,
+          userId: ctx.user.id,
           scheduledAt: {
             gte: input.startDate,
             lte: input.endDate,

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,18 +19,15 @@ import {
   CheckCircle,
   XCircle,
   Search,
-  Filter,
   Download,
   Settings,
   Shield,
   Database,
   Server,
-  Zap,
-  Globe,
-  BarChart3
+  Zap
 } from 'lucide-react';
 import Link from 'next/link';
-import { LineChart, Line, AreaChart, Area, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { AreaChart, Area, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
 // Mock admin data
 const mockAdminData = {
@@ -143,7 +140,7 @@ export default function AdminPage() {
         <div className="text-center">
           <Shield className="w-16 h-16 text-slate-400 mx-auto mb-4" />
           <h2 className="text-2xl font-bold mb-2">Accès restreint</h2>
-          <p className="text-slate-600 mb-4">Vous n'avez pas les permissions d'admin</p>
+          <p className="text-slate-600 mb-4">Vous n&apos;avez pas les permissions d&apos;admin</p>
           <Button asChild>
             <Link href="/dashboard">Retour au dashboard</Link>
           </Button>
@@ -295,7 +292,7 @@ export default function AdminPage() {
 
         <Tabs defaultValue="overview" className="space-y-6">
           <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
+            <TabsTrigger value="overview">Vue d&apos;ensemble</TabsTrigger>
             <TabsTrigger value="users">Utilisateurs</TabsTrigger>
             <TabsTrigger value="system">Système</TabsTrigger>
             <TabsTrigger value="billing">Facturation</TabsTrigger>
@@ -480,7 +477,7 @@ export default function AdminPage() {
                   </div>
                   
                   <div className="flex justify-between">
-                    <span className="text-sm">Taux d'erreur</span>
+                    <span className="text-sm">Taux d&apos;erreur</span>
                     <span className="font-medium text-yellow-600">{mockAdminData.systemMetrics.errorRate}%</span>
                   </div>
                   

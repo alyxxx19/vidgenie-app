@@ -1,10 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { redirect, useRouter } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
@@ -19,9 +20,7 @@ import {
   Target,
   Palette,
   Sparkles,
-  Video,
-  Calendar,
-  TrendingUp
+  Video
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -154,7 +153,7 @@ export default function OnboardingPage() {
       
       toast.success('Configuration terminée! Bienvenue sur VidGenie 🎉');
       router.push('/dashboard');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la sauvegarde');
       setIsLoading2(false);
     }
@@ -256,7 +255,7 @@ export default function OnboardingPage() {
                 </div>
                 <CardTitle className="text-2xl">Tout est prêt!</CardTitle>
                 <CardDescription>
-                  Votre compte VidGenie est configuré et prêt à l'emploi
+                  Votre compte VidGenie est configuré et prêt à l&apos;emploi
                 </CardDescription>
               </>
             )}
@@ -290,7 +289,7 @@ export default function OnboardingPage() {
                 </div>
 
                 <div>
-                  <Label htmlFor="industry">Secteur d'activité *</Label>
+                  <Label htmlFor="industry">Secteur d&apos;activité *</Label>
                   <Select 
                     value={data.profile.industry}
                     onValueChange={(value) => setData(prev => ({
@@ -319,7 +318,7 @@ export default function OnboardingPage() {
                     }))}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Votre niveau d'expérience" />
+                      <SelectValue placeholder="Votre niveau d&apos;expérience" />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="beginner">Débutant (0-6 mois)</SelectItem>
@@ -401,7 +400,7 @@ export default function OnboardingPage() {
                         {data.platforms.selected.includes(platform.id) && (
                           <div className="mt-4">
                             <Label htmlFor={`username-${platform.id}`} className="text-sm">
-                              Nom d'utilisateur (optionnel)
+                              Nom d&apos;utilisateur (optionnel)
                             </Label>
                             <Input
                               id={`username-${platform.id}`}
@@ -673,7 +672,7 @@ export default function OnboardingPage() {
               onClick={() => router.push('/dashboard')}
               className="text-slate-500 hover:text-slate-700"
             >
-              Passer l'onboarding
+              Passer l&apos;onboarding
             </Button>
           </div>
         )}

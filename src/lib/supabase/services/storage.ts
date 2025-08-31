@@ -1,5 +1,4 @@
 import { supabase } from '../client';
-import { supabaseAdmin } from '../server';
 
 export interface UploadOptions {
   organizationId: string;
@@ -30,7 +29,7 @@ export class StorageService {
     const filePath = `${basePath}/${folder}/${fileName}`;
 
     // Upload to Supabase Storage
-    const { data: uploadData, error: uploadError } = await supabase.storage
+    const { data: _uploadData, error: uploadError } = await supabase.storage
       .from('assets')
       .upload(filePath, file, {
         cacheControl: '3600',
@@ -89,7 +88,7 @@ export class StorageService {
   }
 
   // Get signed URL for private file
-  static async getSignedUrl(path: string, expiresIn: number = 3600): Promise<string> {
+  static async getSignedUrl(path: string, expiresIn = 3600): Promise<string> {
     const { data, error } = await supabase.storage
       .from('assets')
       .createSignedUrl(path, expiresIn);

@@ -1,6 +1,6 @@
 'use client';
 
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { api } from '@/app/providers';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,7 +44,7 @@ export default function BillingPage() {
         returnUrl: `${window.location.origin}/account/billing`,
       });
       window.location.href = url;
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de l\'accès au portail client');
     }
   };
@@ -54,7 +54,7 @@ export default function BillingPage() {
       await cancelSubscription.mutateAsync();
       await refetchSubscription();
       toast.success('Abonnement programmé pour annulation');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de l\'annulation');
     }
   };
@@ -64,7 +64,7 @@ export default function BillingPage() {
       await reactivateSubscription.mutateAsync();
       await refetchSubscription();
       toast.success('Abonnement réactivé');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la réactivation');
     }
   };

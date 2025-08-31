@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,17 +19,12 @@ import {
   Bell, 
   Shield, 
   Palette, 
-  Globe,
   Download,
   Trash2,
   Save,
   Eye,
   EyeOff,
-  Key,
-  Smartphone,
-  Mail,
-  Calendar,
-  Clock
+  Key
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -126,7 +121,7 @@ export default function SettingsPage() {
       // Simulate saving settings
       await new Promise(resolve => setTimeout(resolve, 500));
       toast.success('Paramètres sauvegardés!');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la sauvegarde');
     }
   };
@@ -142,7 +137,7 @@ export default function SettingsPage() {
       toast.success('Mot de passe modifié avec succès');
       setNewPassword('');
       setConfirmPassword('');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la modification');
     }
   };
@@ -153,7 +148,7 @@ export default function SettingsPage() {
       // Simulate data export
       await new Promise(resolve => setTimeout(resolve, 2000));
       toast.success('Données exportées! Vérifiez vos emails.');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de l\'export');
     }
   };
@@ -166,7 +161,7 @@ export default function SettingsPage() {
     try {
       await new Promise(resolve => setTimeout(resolve, 2000));
       toast.success('Demande de suppression envoyée');
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la suppression');
     }
   };
@@ -434,7 +429,7 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-base">Analytics de contenu</Label>
-                      <p className="text-sm text-slate-500">Permettre l'analyse de vos performances</p>
+                      <p className="text-sm text-slate-500">Permettre l&apos;analyse de vos performances</p>
                     </div>
                     <Switch
                       checked={settings.privacy.contentAnalytics}
@@ -448,7 +443,7 @@ export default function SettingsPage() {
                   <div className="flex items-center justify-between">
                     <div>
                       <Label className="text-base">Collecte de données</Label>
-                      <p className="text-sm text-slate-500">Améliorer nos services avec vos données d'usage</p>
+                      <p className="text-sm text-slate-500">Améliorer nos services avec vos données d&apos;usage</p>
                     </div>
                     <Switch
                       checked={settings.privacy.dataCollection}
@@ -665,7 +660,7 @@ export default function SettingsPage() {
                   
                   <div>
                     <Label className="text-sm text-slate-500">Dernière connexion</Label>
-                    <p className="font-medium">Aujourd'hui à 14:32</p>
+                    <p className="font-medium">Aujourd&apos;hui à 14:32</p>
                   </div>
                   
                   <div>

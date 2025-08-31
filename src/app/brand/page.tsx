@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -84,7 +84,7 @@ const mockBrandAssets: BrandAsset[] = [
     name: 'Vert Accent',
     type: 'color',
     value: '#10B981',
-    description: 'Couleur d\'accent pour les CTA',
+    description: 'Couleur d&apos;accent pour les CTA',
     createdAt: new Date('2024-01-15'),
     usageCount: 34,
   },
@@ -134,7 +134,7 @@ export default function BrandPage() {
 
   const handleUploadAsset = async () => {
     if (!newAsset.name) {
-      toast.error('Veuillez saisir un nom pour l\'asset');
+      toast.error('Veuillez saisir un nom pour l&apos;asset');
       return;
     }
 
@@ -145,8 +145,8 @@ export default function BrandPage() {
       toast.success('Asset ajouté à votre brand kit!');
       setIsUploadDialogOpen(false);
       setNewAsset({ name: '', type: 'logo', description: '' });
-    } catch (error) {
-      toast.error('Erreur lors de l\'upload');
+    } catch (_error) {
+      toast.error('Erreur lors de l&apos;upload');
     }
   };
 
@@ -157,7 +157,7 @@ export default function BrandPage() {
       
       toast.success('Guidelines sauvegardées!');
       setIsGuidelinesEditOpen(false);
-    } catch (error) {
+    } catch (_error) {
       toast.error('Erreur lors de la sauvegarde');
     }
   };
@@ -216,7 +216,7 @@ export default function BrandPage() {
                 
                 <div className="space-y-4">
                   <div>
-                    <Label htmlFor="asset-name">Nom de l'asset *</Label>
+                    <Label htmlFor="asset-name">Nom de l&apos;asset *</Label>
                     <Input
                       id="asset-name"
                       placeholder="Ex: Logo principal"
@@ -276,7 +276,7 @@ export default function BrandPage() {
                       Annuler
                     </Button>
                     <Button onClick={handleUploadAsset}>
-                      Ajouter l'asset
+                      Ajouter l&apos;asset
                     </Button>
                   </div>
                 </div>
@@ -466,7 +466,7 @@ export default function BrandPage() {
               <CardHeader>
                 <CardTitle className="text-lg">Application de la marque</CardTitle>
                 <CardDescription>
-                  Exemples d'utilisation de votre identité visuelle
+                  Exemples d&apos;utilisation de votre identité visuelle
                 </CardDescription>
               </CardHeader>
               <CardContent>

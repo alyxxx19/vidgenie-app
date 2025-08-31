@@ -3,7 +3,7 @@ import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { stripe, SUBSCRIPTION_PLANS } from '@/lib/stripe';
 import { TRPCError } from '@trpc/server';
 import { db } from '@/server/api/db';
-import type { User } from '@prisma/client';
+import type { User as _User } from '@prisma/client';
 
 export const stripeRouter = createTRPCRouter({
   // Create Stripe customer and checkout session
@@ -14,7 +14,7 @@ export const stripeRouter = createTRPCRouter({
       cancelUrl: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const user = ctx.session.user;
+      const user = ctx.user;
       
       // Get or create Stripe customer
       let stripeCustomer = await db.stripeCustomer.findUnique({
@@ -73,7 +73,7 @@ export const stripeRouter = createTRPCRouter({
       returnUrl: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const user = ctx.session.user;
+      const user = ctx.user;
       
       if (!user.stripeCustomerId) {
         throw new TRPCError({
@@ -93,7 +93,7 @@ export const stripeRouter = createTRPCRouter({
   // Get subscription status
   getSubscription: protectedProcedure
     .query(async ({ ctx }) => {
-      const user = ctx.session.user;
+      const user = ctx.user;
       
       if (!user.stripeCustomerId) {
         return null;
@@ -129,7 +129,7 @@ export const stripeRouter = createTRPCRouter({
   // Cancel subscription
   cancelSubscription: protectedProcedure
     .mutation(async ({ ctx }) => {
-      const user = ctx.session.user;
+      const user = ctx.user;
       
       if (!user.stripeSubscriptionId) {
         throw new TRPCError({
@@ -154,7 +154,7 @@ export const stripeRouter = createTRPCRouter({
   // Reactivate subscription
   reactivateSubscription: protectedProcedure
     .mutation(async ({ ctx }) => {
-      const user = ctx.session.user;
+      const user = ctx.user;
       
       if (!user.stripeSubscriptionId) {
         throw new TRPCError({
@@ -183,7 +183,7 @@ export const stripeRouter = createTRPCRouter({
     }))
     .query(async ({ ctx, input }) => {
       const payments = await db.stripePayment.findMany({
-        where: { userId: ctx.session.user.id },
+        where: { userId: ctx.user.id },
         orderBy: { createdAt: 'desc' },
         take: input.limit,
       });

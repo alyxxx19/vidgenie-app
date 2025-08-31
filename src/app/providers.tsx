@@ -6,7 +6,7 @@ import { createTRPCReact } from '@trpc/react-query';
 import { useState } from 'react';
 import superjson from 'superjson';
 import { type AppRouter } from '@/server/api/root';
-import { AuthProvider } from '@/lib/auth-context';
+import { AuthProvider } from '@/lib/auth/auth-context';
 
 export const api = createTRPCReact<AppRouter>();
 

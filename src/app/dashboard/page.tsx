@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
@@ -14,11 +14,8 @@ import {
   TrendingUp, 
   Zap,
   Clock,
-  CheckCircle,
   AlertCircle,
-  BookOpen,
   LogOut,
-  Link as LinkIcon,
   CreditCard
 } from 'lucide-react';
 import Link from 'next/link';
@@ -30,10 +27,10 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function DashboardPage() {
   const { user, isLoading, signOut } = useAuth();
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null);
+  const [_selectedDate, _setSelectedDate] = useState<Date | null>(null);
   
   // Always call hooks, but conditionally enable them
-  const { data: recentJobs } = api.jobs.list.useQuery(
+  const { data: _recentJobs } = api.jobs.list.useQuery(
     { limit: 5 },
     { enabled: !!user }
   );
@@ -115,7 +112,7 @@ export default function DashboardPage() {
     views: Math.floor(Math.random() * 10000 + 100), // Mock views
   })) || [];
 
-  const getStatusBadge = (status: string) => {
+  const _getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
         return <Badge className="bg-green-100 text-green-800">Terminé</Badge>;
@@ -435,7 +432,7 @@ export default function DashboardPage() {
               <CardContent className="p-6">
                 <ContentCalendar
                   events={calendarEvents}
-                  onDateSelect={setSelectedDate}
+                  onDateSelect={_setSelectedDate}
                 />
               </CardContent>
             </Card>

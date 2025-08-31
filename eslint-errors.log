@@ -1,0 +1,380 @@
+
+> vidgenie-app@0.1.0 lint
+> eslint
+
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/coverage/lcov-report/block-navigation.js
+  1:1  warning  Unused eslint-disable directive (no problems were reported)
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/jest.config.js
+  1:18  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/account/billing/page.tsx
+  47:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  57:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+  67:14  warning  'error' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/admin/page.tsx
+   22:3   warning  'Filter' is defined but never used                               @typescript-eslint/no-unused-vars
+   29:3   warning  'Globe' is defined but never used                                @typescript-eslint/no-unused-vars
+   30:3   warning  'BarChart3' is defined but never used                            @typescript-eslint/no-unused-vars
+   33:10  warning  'LineChart' is defined but never used                            @typescript-eslint/no-unused-vars
+   33:44  warning  'BarChart' is defined but never used                             @typescript-eslint/no-unused-vars
+   33:54  warning  'Bar' is defined but never used                                  @typescript-eslint/no-unused-vars
+  146:52  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  146:79  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  298:48  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  483:53  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/analytics/page.tsx
+   15:3    warning  'TrendingDown' is defined but never used                  @typescript-eslint/no-unused-vars
+   16:3    warning  'BarChart3' is defined but never used                     @typescript-eslint/no-unused-vars
+   17:3    warning  'PieChart' is defined but never used                      @typescript-eslint/no-unused-vars
+   18:3    warning  'Users' is defined but never used                         @typescript-eslint/no-unused-vars
+   23:3    warning  'Filter' is defined but never used                        @typescript-eslint/no-unused-vars
+   24:3    warning  'Calendar' is defined but never used                      @typescript-eslint/no-unused-vars
+   27:3    warning  'Share' is defined but never used                         @typescript-eslint/no-unused-vars
+   28:3    warning  'MessageCircle' is defined but never used                 @typescript-eslint/no-unused-vars
+   31:27   warning  'AreaChart' is defined but never used                     @typescript-eslint/no-unused-vars
+   31:38   warning  'Area' is defined but never used                          @typescript-eslint/no-unused-vars
+   31:44   warning  'BarChart' is defined but never used                      @typescript-eslint/no-unused-vars
+   31:54   warning  'Bar' is defined but never used                           @typescript-eslint/no-unused-vars
+   31:71   warning  'RechartsPieChart' is defined but never used              @typescript-eslint/no-unused-vars
+   31:89   warning  'Pie' is defined but never used                           @typescript-eslint/no-unused-vars
+   31:94   warning  'Cell' is defined but never used                          @typescript-eslint/no-unused-vars
+   31:138  warning  'Legend' is defined but never used                        @typescript-eslint/no-unused-vars
+   38:10   warning  'selectedPlatform' is assigned a value but never used     @typescript-eslint/no-unused-vars
+   38:28   warning  'setSelectedPlatform' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   39:10   warning  'selectedProject' is assigned a value but never used      @typescript-eslint/no-unused-vars
+   39:27   warning  'setSelectedProject' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  261:59   warning  'index' is defined but never used                         @typescript-eslint/no-unused-vars
+  287:77   warning  'index' is defined but never used                         @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/api/stripe/webhooks/route.ts
+   38:27  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  103:7   warning  '_' is defined but never used             @typescript-eslint/no-unused-vars
+  111:57  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  122:51  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  123:43  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  186:36  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  207:36  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/api/trpc/[trpc]/route.ts
+  11:58  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  11:74  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  11:91  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/assets/[id]/page.tsx
+    8:10  warning  'Textarea' is defined but never used                             @typescript-eslint/no-unused-vars
+   12:3   warning  'Share2' is defined but never used                               @typescript-eslint/no-unused-vars
+   13:3   warning  'Edit3' is defined but never used                                @typescript-eslint/no-unused-vars
+   14:3   warning  'Calendar' is defined but never used                             @typescript-eslint/no-unused-vars
+   15:3   warning  'Eye' is defined but never used                                  @typescript-eslint/no-unused-vars
+   16:3   warning  'Hash' is defined but never used                                 @typescript-eslint/no-unused-vars
+   20:3   warning  'CheckCircle' is defined but never used                          @typescript-eslint/no-unused-vars
+   21:3   warning  'ExternalLink' is defined but never used                         @typescript-eslint/no-unused-vars
+   36:10  warning  'editingDescription' is assigned a value but never used          @typescript-eslint/no-unused-vars
+   36:30  warning  'setEditingDescription' is assigned a value but never used       @typescript-eslint/no-unused-vars
+   37:10  warning  'editingHashtags' is assigned a value but never used             @typescript-eslint/no-unused-vars
+   37:27  warning  'setEditingHashtags' is assigned a value but never used          @typescript-eslint/no-unused-vars
+   68:57  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+   68:78  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+   77:37  error    Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+   91:29  error    Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  100:29  error    Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/auth/dev-login/page.tsx
+  39:14  warning  'error' is defined but never used                                @typescript-eslint/no-unused-vars
+  52:39  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/auth/forgot-password/page.tsx
+  36:21  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/auth/signin/page.tsx
+   11:3   warning  'Mail' is defined but never used                   @typescript-eslint/no-unused-vars
+   12:3   warning  'Key' is defined but never used                    @typescript-eslint/no-unused-vars
+   13:3   warning  'Loader2' is defined but never used                @typescript-eslint/no-unused-vars
+   14:3   warning  'Sparkles' is defined but never used               @typescript-eslint/no-unused-vars
+   28:10  warning  'activeTab' is assigned a value but never used     @typescript-eslint/no-unused-vars
+   28:21  warning  'setActiveTab' is assigned a value but never used  @typescript-eslint/no-unused-vars
+   64:21  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+   94:21  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+  116:21  error    Unexpected any. Specify a different type           @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/brand/page.tsx
+  148:14  warning  'error' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+  160:14  warning  'error' is defined but never used                                                                            @typescript-eslint/no-unused-vars
+  173:16  warning  Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images  jsx-a11y/alt-text
+  179:16  warning  Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images  jsx-a11y/alt-text
+  219:57  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                              react/no-unescaped-entities
+  259:44  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                              react/no-unescaped-entities
+  279:32  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                              react/no-unescaped-entities
+  317:25  warning  Image elements must have an alt prop, either with meaningful text, or an empty string for decorative images  jsx-a11y/alt-text
+  469:29  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                              react/no-unescaped-entities
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/calendar/page.tsx
+   25:3   warning  'Filter' is defined but never used                               @typescript-eslint/no-unused-vars
+  150:17  error    'Users' is not defined                                           react/jsx-no-undef
+  205:14  warning  'error' is defined but never used                                @typescript-eslint/no-unused-vars
+  230:63  error    Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  341:32  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  375:30  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  415:32  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/create/page.tsx
+  16:3   warning  'ArrowRight' is defined but never used    @typescript-eslint/no-unused-vars
+  20:3   warning  'Loader2' is defined but never used       @typescript-eslint/no-unused-vars
+  95:31  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/credits/page.tsx
+  325:37  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/dashboard/page.tsx
+    6:29  warning  'CardDescription' is defined but never used                      @typescript-eslint/no-unused-vars
+   17:3   warning  'CheckCircle' is defined but never used                          @typescript-eslint/no-unused-vars
+   19:3   warning  'BookOpen' is defined but never used                             @typescript-eslint/no-unused-vars
+   21:11  warning  'LinkIcon' is defined but never used                             @typescript-eslint/no-unused-vars
+   33:10  warning  'selectedDate' is assigned a value but never used                @typescript-eslint/no-unused-vars
+   36:17  warning  'recentJobs' is assigned a value but never used                  @typescript-eslint/no-unused-vars
+   94:37  error    Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  113:35  error    Unexpected any. Specify a different type                         @typescript-eslint/no-explicit-any
+  118:9   warning  'getStatusBadge' is assigned a value but never used              @typescript-eslint/no-unused-vars
+  315:28  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/help/page.tsx
+   22:3   warning  'Zap' is defined but never used                                  @typescript-eslint/no-unused-vars
+  134:11  warning  'user' is assigned a value but never used                        @typescript-eslint/no-unused-vars
+  172:58  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/integrations/page.tsx
+    9:10  warning  'Switch' is defined but never used                         @typescript-eslint/no-unused-vars
+   24:3   warning  'Smartphone' is defined but never used                     @typescript-eslint/no-unused-vars
+  129:28  warning  'setSelectedCategory' is assigned a value but never used   @typescript-eslint/no-unused-vars
+  149:9   warning  'filteredIntegrations' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  154:32  warning  'integrationId' is defined but never used                  @typescript-eslint/no-unused-vars
+  160:14  warning  'error' is defined but never used                          @typescript-eslint/no-unused-vars
+  165:35  warning  'integrationId' is defined but never used                  @typescript-eslint/no-unused-vars
+  173:14  warning  'error' is defined but never used                          @typescript-eslint/no-unused-vars
+  204:9   warning  'getCategoryIcon' is assigned a value but never used       @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/layout.tsx
+  13:7  warning  'poppins' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/library/page.tsx
+   6:29  warning  'CardDescription' is defined but never used                @typescript-eslint/no-unused-vars
+   6:46  warning  'CardHeader' is defined but never used                     @typescript-eslint/no-unused-vars
+   6:58  warning  'CardTitle' is defined but never used                      @typescript-eslint/no-unused-vars
+  13:3   warning  'Filter' is defined but never used                         @typescript-eslint/no-unused-vars
+  22:3   warning  'Tag' is defined but never used                            @typescript-eslint/no-unused-vars
+  23:3   warning  'Clock' is defined but never used                          @typescript-eslint/no-unused-vars
+  50:7   error    'filteredVideos' is never reassigned. Use 'const' instead  prefer-const
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/onboarding/page.tsx
+   23:3   warning  'Calendar' is defined but never used                             @typescript-eslint/no-unused-vars
+   24:3   warning  'TrendingUp' is defined but never used                           @typescript-eslint/no-unused-vars
+  157:14  warning  'error' is defined but never used                                @typescript-eslint/no-unused-vars
+  259:66  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  293:54  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  404:36  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  593:26  error    'Badge' is not defined                                           react/jsx-no-undef
+  676:23  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/page.tsx
+  93:37  warning  'index' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/pricing/page.tsx
+  218:72  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  220:51  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  235:30  error  `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/projects/[id]/page.tsx
+    6:29  warning  'CardDescription' is defined but never used                      @typescript-eslint/no-unused-vars
+   15:3   warning  'Calendar' is defined but never used                             @typescript-eslint/no-unused-vars
+   20:3   warning  'Filter' is defined but never used                               @typescript-eslint/no-unused-vars
+   23:3   warning  'Clock' is defined but never used                                @typescript-eslint/no-unused-vars
+   25:3   warning  'AlertCircle' is defined but never used                          @typescript-eslint/no-unused-vars
+   27:3   warning  'Target' is defined but never used                               @typescript-eslint/no-unused-vars
+   28:3   warning  'Share2' is defined but never used                               @typescript-eslint/no-unused-vars
+  115:65  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/projects/page.tsx
+  19:3   warning  'Video' is defined but never used                     @typescript-eslint/no-unused-vars
+  24:3   warning  'Edit3' is defined but never used                     @typescript-eslint/no-unused-vars
+  25:3   warning  'Trash2' is defined but never used                    @typescript-eslint/no-unused-vars
+  26:3   warning  'Share2' is defined but never used                    @typescript-eslint/no-unused-vars
+  27:3   warning  'Target' is defined but never used                    @typescript-eslint/no-unused-vars
+  28:3   warning  'Clock' is defined but never used                     @typescript-eslint/no-unused-vars
+  29:3   warning  'TrendingUp' is defined but never used                @typescript-eslint/no-unused-vars
+  72:9   warning  'getPlatformIcon' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  97:14  warning  'error' is defined but never used                     @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/prompts/page.tsx
+   6:29  warning  'CardDescription' is defined but never used  @typescript-eslint/no-unused-vars
+  19:3   warning  'Edit3' is defined but never used            @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/settings/page.tsx
+   22:3    warning  'Globe' is defined but never used                                @typescript-eslint/no-unused-vars
+   29:3    warning  'Smartphone' is defined but never used                           @typescript-eslint/no-unused-vars
+   30:3    warning  'Mail' is defined but never used                                 @typescript-eslint/no-unused-vars
+   31:3    warning  'Calendar' is defined but never used                             @typescript-eslint/no-unused-vars
+   32:3    warning  'Clock' is defined but never used                                @typescript-eslint/no-unused-vars
+  124:37   warning  'section' is defined but never used                              @typescript-eslint/no-unused-vars
+  129:14   warning  'error' is defined but never used                                @typescript-eslint/no-unused-vars
+  145:14   warning  'error' is defined but never used                                @typescript-eslint/no-unused-vars
+  156:14   warning  'error' is defined but never used                                @typescript-eslint/no-unused-vars
+  169:14   warning  'error' is defined but never used                                @typescript-eslint/no-unused-vars
+  437:72   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  451:102  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  668:55   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/team/page.tsx
+   20:3   warning  'Trash2' is defined but never used                               @typescript-eslint/no-unused-vars
+   24:3   warning  'UserX' is defined but never used                                @typescript-eslint/no-unused-vars
+  157:14  warning  'error' is defined but never used                                @typescript-eslint/no-unused-vars
+  189:61  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  239:62  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  254:32  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  477:51  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/app/upload/page.tsx
+   16:3   warning  'Video' is defined but never used                                                                                                                                                              @typescript-eslint/no-unused-vars
+   22:3   warning  'Pause' is defined but never used                                                                                                                                                              @typescript-eslint/no-unused-vars
+   23:3   warning  'RotateCcw' is defined but never used                                                                                                                                                          @typescript-eslint/no-unused-vars
+   56:18  error    React Hook "useCallback" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+  110:57  error    React Hook "useDropzone" is called conditionally. React Hooks must be called in the exact same order in every component render. Did you accidentally call a React Hook after an early return?  react-hooks/rules-of-hooks
+  142:14  warning  'error' is defined but never used                                                                                                                                                              @typescript-eslint/no-unused-vars
+  199:43  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`                                                                                                                                react/no-unescaped-entities
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/components/auth/google-signin-button.tsx
+  36:9   warning  'router' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  54:19  error    Unexpected any. Specify a different type     @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/components/auth/signin-form.tsx
+   34:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+   45:19  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  132:31  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/components/calendar.tsx
+  55:25  warning  '_props' is defined but never used  @typescript-eslint/no-unused-vars
+  56:26  warning  '_props' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/components/chart.tsx
+  70:7  warning  '_' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/components/command.tsx
+  24:11  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/components/content-calendar.tsx
+   6:10  warning  'Badge' is defined but never used   @typescript-eslint/no-unused-vars
+  84:39  warning  'status' is defined but never used  @typescript-eslint/no-unused-vars
+  91:40  warning  'status' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/components/content-history.tsx
+   10:3   warning  'Clock' is defined but never used                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+   11:3   warning  'CheckCircle' is defined but never used                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   12:3   warning  'AlertCircle' is defined but never used                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   14:3   warning  'Share2' is defined but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   16:3   warning  'Filter' is defined but never used                                                                                                                                                                                                                                                       @typescript-eslint/no-unused-vars
+   17:3   warning  'MoreHorizontal' is defined but never used                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+  169:21  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/components/seo-editor.tsx
+   9:10  warning  'Input' is defined but never used      @typescript-eslint/no-unused-vars
+  16:3   warning  'Sparkles' is defined but never used   @typescript-eslint/no-unused-vars
+  19:3   warning  'BarChart3' is defined but never used  @typescript-eslint/no-unused-vars
+  39:37  warning  'assetId' is defined but never used    @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/components/textarea.tsx
+  5:18  error  An interface declaring no members is equivalent to its supertype  @typescript-eslint/no-empty-object-type
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/components/ui/calendar.tsx
+  55:25  warning  '_props' is defined but never used  @typescript-eslint/no-unused-vars
+  56:26  warning  '_props' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/hooks/use-toast.ts
+  18:7  warning  'actionTypes' is assigned a value but only used as a type  @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/inngest/generation.ts
+  183:32  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/lib/auth/auth-context.tsx
+   15:65  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+   16:80  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+   18:72  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+   19:54  error    Unexpected any. Specify a different type                                                                            @typescript-eslint/no-explicit-any
+  102:6   warning  React Hook useEffect has a missing dependency: 'loadUserProfile'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/lib/crypto.ts
+  25:9  warning  'iv' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/lib/supabase/auth.ts
+  141:14  warning  'error' is defined but never used         @typescript-eslint/no-unused-vars
+  194:56  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/lib/supabase/server.ts
+  35:51  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  38:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/lib/supabase/services/organizations.ts
+  2:10  warning  'supabaseAdmin' is defined but never used       @typescript-eslint/no-unused-vars
+  3:15  warning  'Database' is defined but never used            @typescript-eslint/no-unused-vars
+  5:6   warning  'Organization' is defined but never used        @typescript-eslint/no-unused-vars
+  8:6   warning  'OrganizationMember' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/lib/supabase/services/storage.ts
+    2:10  warning  'supabaseAdmin' is defined but never used        @typescript-eslint/no-unused-vars
+    9:29  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+   33:19  warning  'uploadData' is assigned a value but never used  @typescript-eslint/no-unused-vars
+  117:76  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+  161:33  error    Unexpected any. Specify a different type         @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/lib/supabase/services/users.ts
+  3:15  warning  'Database' is defined but never used  @typescript-eslint/no-unused-vars
+  5:6   warning  'User' is defined but never used      @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/middleware.ts
+  116:10  warning  'isPublicRoute' is defined but never used  @typescript-eslint/no-unused-vars
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/server/api/routers/analytics.ts
+  244:39  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/server/api/routers/assets.ts
+  265:49  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/server/api/routers/credits.ts
+  131:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/server/api/routers/publishing.ts
+  289:26  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/server/api/routers/stripe.ts
+    6:15  warning  'User' is defined but never used          @typescript-eslint/no-unused-vars
+  116:55  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  120:15  warning  '_' is defined but never used             @typescript-eslint/no-unused-vars
+  120:37  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/src/server/api/trpc.ts
+  11:9   error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  22:41  warning  'opts' is defined but never used          @typescript-eslint/no-unused-vars
+  36:53  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+  39:41  error    Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/tests/auth/google-oauth.test.ts
+  101:31  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  108:28  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  123:31  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  132:28  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  155:42  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+/Users/alyx19/Desktop/ccc/vidgenie-app/tests/integration/google-oauth-flow.test.ts
+   7:46  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  16:46  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  30:28  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  52:46  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  62:28  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  72:46  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+  84:25  error  A `require()` style import is forbidden  @typescript-eslint/no-require-imports
+
+✖ 258 problems (97 errors, 161 warnings)
+  1 error and 1 warning potentially fixable with the `--fix` option.
+
