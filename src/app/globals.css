@@ -404,9 +404,56 @@
     background: linear-gradient(
       90deg,
       transparent 0%,
-      rgba(255, 255, 255, 0.05) 50%,
+      rgba(255, 255, 255, 0.08) 50%,
       transparent 100%
     );
-    animation: shimmer 3s ease-in-out infinite;
+    animation: shimmer 4s ease-in-out infinite;
+    z-index: 1;
+  }
+
+  .pricing-card-featured > * {
+    position: relative;
+    z-index: 2;
+  }
+
+  @keyframes badgePulse {
+    0%, 100% {
+      transform: scale(1);
+      opacity: 1;
+    }
+    50% {
+      transform: scale(1.05);
+      opacity: 0.9;
+    }
+  }
+
+  .animate-badge-pulse {
+    animation: badgePulse 2s ease-in-out infinite;
+  }
+
+  @keyframes priceGlow {
+    0%, 100% {
+      text-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    }
+    50% {
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.3), 0 0 30px rgba(255, 255, 255, 0.1);
+    }
+  }
+
+  .animate-price-glow {
+    animation: priceGlow 2s ease-in-out infinite;
+  }
+
+  .pricing-grid-container {
+    perspective: 1000px;
+  }
+
+  .pricing-card-3d {
+    transform-style: preserve-3d;
+    transition: transform 0.3s ease;
+  }
+
+  .pricing-card-3d:hover {
+    transform: rotateY(5deg) rotateX(5deg);
   }
 }
