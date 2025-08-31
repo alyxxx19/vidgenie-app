@@ -9,11 +9,6 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      fontFamily: {
-        sans: ['var(--font-mono)', 'ui-monospace', 'monospace'],
-        mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
-        display: ['var(--font-mono)', 'ui-monospace', 'monospace'],
-      },
       fontSize: {
         'xs': ['0.75rem', { lineHeight: '1rem' }],
         'sm': ['0.875rem', { lineHeight: '1.25rem' }],
@@ -28,29 +23,6 @@ const config: Config = {
         '7xl': ['4.5rem', { lineHeight: '1' }],
         '8xl': ['6rem', { lineHeight: '1' }],
         '9xl': ['8rem', { lineHeight: '1' }],
-      },
-      animation: {
-        'slide-in': 'slideIn 0.3s ease-out',
-        'minimal-pulse': 'pulse 2s ease-in-out infinite',
-        'loader': 'loader 1.5s ease-in-out infinite',
-      },
-      keyframes: {
-        slideIn: {
-          '0%': { transform: 'translateY(8px)', opacity: '0' },
-          '100%': { transform: 'translateY(0)', opacity: '1' },
-        },
-        pulse: {
-          '0%, 100%': { opacity: '1' },
-          '50%': { opacity: '0.7' },
-        },
-        loader: {
-          '0%': { width: '0%' },
-          '100%': { width: '100%' },
-        },
-      },
-      boxShadow: {
-        'minimal': '0 1px 3px rgba(255, 255, 255, 0.1)',
-        'card': '0 4px 6px rgba(255, 255, 255, 0.05)',
       },
       backgroundImage: {
         'minimal-gradient': 'linear-gradient(180deg, #000000 0%, #111111 100%)',
