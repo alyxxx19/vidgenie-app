@@ -3,8 +3,9 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
-import { ArrowRight, Play, Check } from 'lucide-react';
-import { useEffect, useState, useRef } from 'react';
+import { ArrowRight, Play } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import PricingSection from '@/components/pricing-section';
 
 const StatsCounter = ({ value, label }: { value: string; label: string }) => {
   const [count, setCount] = useState(0);
@@ -60,150 +61,9 @@ const StatsCounter = ({ value, label }: { value: string; label: string }) => {
   );
 };
 
-const PricingCard = ({ plan, index, billingCycle }: { plan: any; index: number; billingCycle: 'monthly' | 'yearly' }) => {
-  const [isVisible, setIsVisible] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [priceAnimated, setPriceAnimated] = useState(false);
-  const [prevBillingCycle, setPrevBillingCycle] = useState(billingCycle);
-  const cardRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (billingCycle !== prevBillingCycle) {
-      setPriceAnimated(false);
-      setTimeout(() => setPriceAnimated(true), 100);
-      setPrevBillingCycle(billingCycle);
-    }
-  }, [billingCycle, prevBillingCycle]);
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            setTimeout(() => {
-              setIsVisible(true);
-              setTimeout(() => setPriceAnimated(true), 300);
-            }, index * 200);
-            observer.unobserve(entry.target);
-          }
-        });
-      },
-      { threshold: 0.3 }
-    );
-
-    if (cardRef.current) observer.observe(cardRef.current);
-    return () => observer.disconnect();
-  }, [index]);
-
-  return (
-    <div 
-      ref={cardRef}
-      className={`relative transition-all duration-700 transform pricing-card-3d ${
-        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
-      } ${
-        plan.featured 
-          ? 'bg-card border border-foreground scale-105 shadow-2xl pricing-card-featured animate-float' 
-          : 'bg-background hover:bg-card border-0'
-      } p-8 cursor-pointer ${
-        isHovered ? 'scale-[1.02]' : ''
-      } group`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-      style={{
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        boxShadow: plan.featured && isHovered 
-          ? '0 0 40px rgba(255, 255, 255, 0.1), 0 0 80px rgba(255, 255, 255, 0.05)' 
-          : plan.featured 
-          ? '0 0 20px rgba(255, 255, 255, 0.1)' 
-          : 'none'
-      }}
-    >
-      {plan.featured && (
-        <div className="absolute -top-px -left-px -right-px bg-foreground text-background py-2 text-center text-xs font-mono uppercase tracking-wider relative overflow-hidden">
-          <span className="animate-pulse relative z-10">
-            {plan.badge || 'most popular'}
-          </span>
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent animate-shimmer" />
-        </div>
-      )}
-      
-      {billingCycle === 'yearly' && !plan.featured && (
-        <div className="absolute -top-2 -right-2 bg-muted text-foreground text-xs px-2 py-1 font-mono animate-bounce">
-          save €{Math.round(parseInt(plan.price.replace('€', '')) * 12 * 0.2)}
-        </div>
-      )}
-      
-      <div className={plan.featured ? 'mt-8' : ''}>
-        <h3 className="text-xl font-mono mb-4 text-foreground uppercase tracking-wide">
-          {plan.name}
-        </h3>
-        <div className="mb-4">
-          {plan.originalPrice && billingCycle === 'yearly' && (
-            <div className="text-lg font-mono text-muted-foreground line-through mb-1">
-              {plan.originalPrice}
-            </div>
-          )}
-          <div className={`text-3xl font-mono text-foreground transition-all duration-500 ${
-            priceAnimated ? 'animate-price-scale' : 'scale-75 opacity-0'
-          } ${plan.featured ? 'animate-price-glow' : ''}`}>
-            <span className="inline-block">{plan.price}</span>
-            <span className="text-base text-muted-foreground">
-              /{billingCycle === 'monthly' ? 'month' : 'year'}
-            </span>
-          </div>
-        </div>
-        <p className="text-muted-foreground mb-6 text-sm">{plan.description}</p>
-        
-        {billingCycle === 'yearly' && plan.originalPrice && (
-          <div className="mb-4 px-3 py-1 bg-muted/20 border border-border text-center">
-            <span className="text-xs font-mono text-foreground">
-              save €{parseInt(plan.originalPrice.replace('€', '')) - parseInt(plan.price.replace('€', ''))} per year
-            </span>
-          </div>
-        )}
-        
-        <ul className="space-y-3 mb-8">
-          {plan.features.map((feature: string, idx: number) => (
-            <li 
-              key={feature} 
-              className={`flex items-center gap-3 text-sm text-muted-foreground border-b border-border pb-3 transition-all duration-300 hover:text-foreground hover:border-foreground/20 cursor-default group ${
-                isVisible ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'
-              }`}
-              style={{ transitionDelay: `${(index * 200) + (idx * 100)}ms` }}
-            >
-              <Check className={`w-4 h-4 text-foreground transition-all duration-300 group-hover:scale-110 ${
-                isVisible ? 'rotate-0 scale-100' : 'rotate-180 scale-0'
-              }`} style={{ transitionDelay: `${(index * 200) + (idx * 150)}ms` }} />
-              <span className="group-hover:translate-x-1 transition-transform duration-200">
-                {feature}
-              </span>
-            </li>
-          ))}
-        </ul>
-        
-        <Button 
-          asChild 
-          className={`w-full transition-all duration-300 font-mono lowercase bg-foreground text-background hover:bg-transparent hover:text-foreground hover:border-foreground border border-transparent hover:scale-105 group-hover:shadow-lg ${
-            plan.featured ? 'animate-shimmer' : ''
-          }`}
-        >
-          <Link href="/auth/signin" className="flex items-center justify-center">
-            {plan.cta}
-            {plan.cta === 'get started' && (
-              <ArrowRight className={`ml-2 h-4 w-4 transition-transform duration-300 ${
-                isHovered ? 'translate-x-1' : ''
-              }`} />
-            )}
-          </Link>
-        </Button>
-      </div>
-    </div>
-  );
-};
 
 export default function HomePage() {
   const [navScrolled, setNavScrolled] = useState(false);
-  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
   const [scrollY, setScrollY] = useState(0);
 
   useEffect(() => {
@@ -382,104 +242,7 @@ export default function HomePage() {
       </section>
 
       {/* Pricing Section */}
-      <section 
-        className="py-20 px-8 relative" 
-        id="pricing" 
-        style={{ 
-          padding: '5rem 2rem',
-          transform: `translateY(${scrollY * 0.1}px)` 
-        }}
-      >
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-20">
-            <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-6">Pricing</p>
-            <h2 className="text-4xl md:text-5xl font-normal tracking-tight mb-6" style={{ letterSpacing: '-0.02em' }}>Choose your plan</h2>
-            <p className="text-lg text-muted-foreground mb-12 max-w-2xl mx-auto">Flexible options for creators at every level</p>
-            
-            {/* Billing Toggle */}
-            <div className="inline-flex items-center gap-1 p-1 bg-card border border-border mb-12 rounded-none">
-              <button
-                onClick={() => setBillingCycle('monthly')}
-                className={`px-6 py-3 text-sm font-mono lowercase transition-all duration-300 ${
-                  billingCycle === 'monthly'
-                    ? 'bg-foreground text-background'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                monthly
-              </button>
-              <button
-                onClick={() => setBillingCycle('yearly')}
-                className={`px-6 py-3 text-sm font-mono lowercase transition-all duration-300 relative ${
-                  billingCycle === 'yearly'
-                    ? 'bg-foreground text-background'
-                    : 'text-muted-foreground hover:text-foreground'
-                }`}
-              >
-                yearly
-                <span className="absolute -top-2 -right-2 bg-foreground text-background text-xs px-2 py-1 font-mono animate-badge-pulse">
-                  save 20%
-                </span>
-              </button>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-px bg-border border border-border pricing-grid-container">
-            {[
-              {
-                name: "Starter",
-                price: billingCycle === 'monthly' ? "€9" : "€72",
-                originalPrice: billingCycle === 'monthly' ? null : "€108",
-                description: "Perfect for getting started",
-                features: [
-                  "30 videos/month",
-                  "Basic templates", 
-                  "2 platforms",
-                  "Basic analytics",
-                  "Email support"
-                ],
-                cta: "get started",
-                featured: false
-              },
-              {
-                name: "Professional", 
-                price: billingCycle === 'monthly' ? "€29" : "€232",
-                originalPrice: billingCycle === 'monthly' ? null : "€348",
-                description: "For serious creators",
-                features: [
-                  "150 videos/month",
-                  "All templates",
-                  "All platforms", 
-                  "Advanced analytics",
-                  "Custom AI models",
-                  "Priority support"
-                ],
-                cta: "get started",
-                featured: true,
-                badge: "best value"
-              },
-              {
-                name: "Enterprise",
-                price: billingCycle === 'monthly' ? "€99" : "€792", 
-                originalPrice: billingCycle === 'monthly' ? null : "€1188",
-                description: "For teams and agencies",
-                features: [
-                  "Unlimited videos",
-                  "Custom templates",
-                  "API access",
-                  "Team management", 
-                  "Dedicated training",
-                  "24/7 support"
-                ],
-                cta: "contact us",
-                featured: false
-              }
-            ].map((plan, index) => (
-              <PricingCard key={plan.name} plan={plan} index={index} billingCycle={billingCycle} />
-            ))}
-          </div>
-        </div>
-      </section>
+      <PricingSection />
 
       {/* Testimonials Section */}
       <section className="py-20 px-8 bg-card border-t border-border" id="testimonials" style={{ padding: '5rem 2rem' }}>
