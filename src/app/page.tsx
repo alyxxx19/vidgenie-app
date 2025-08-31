@@ -185,11 +185,6 @@ export default function HomePage() {
                 <ArrowRight className="ml-2 h-4 w-4" />
               </Link>
             </Button>
-            <Button asChild variant="outline" className="border-border hover:bg-card font-mono lowercase transition-all duration-300 hover:border-foreground hover:scale-105">
-              <Link href="/auth/dev-login">
-                developer access
-              </Link>
-            </Button>
           </div>
 
           {/* Video Demo */}
