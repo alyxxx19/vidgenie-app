@@ -8,6 +8,11 @@ interface User {
   id: string;
   email: string;
   name?: string;
+  stripeCustomerId?: string;
+  stripeSubscriptionId?: string;
+  stripeCurrentPeriodEnd?: Date;
+  stripePriceId?: string;
+  stripePaymentMethodId?: string;
 }
 
 interface Session {

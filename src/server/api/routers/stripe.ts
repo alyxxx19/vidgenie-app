@@ -3,6 +3,7 @@ import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
 import { stripe, SUBSCRIPTION_PLANS } from '@/lib/stripe';
 import { TRPCError } from '@trpc/server';
 import { db } from '@/server/api/db';
+import type { User } from '@prisma/client';
 
 export const stripeRouter = createTRPCRouter({
   // Create Stripe customer and checkout session
@@ -13,7 +14,7 @@ export const stripeRouter = createTRPCRouter({
       cancelUrl: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const user = ctx.user;
+      const user = ctx.session.user;
       
       // Get or create Stripe customer
       let stripeCustomer = await db.stripeCustomer.findUnique({
@@ -72,7 +73,7 @@ export const stripeRouter = createTRPCRouter({
       returnUrl: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
-      const user = ctx.user;
+      const user = ctx.session.user;
       
       if (!user.stripeCustomerId) {
         throw new TRPCError({
@@ -92,7 +93,7 @@ export const stripeRouter = createTRPCRouter({
   // Get subscription status
   getSubscription: protectedProcedure
     .query(async ({ ctx }) => {
-      const user = ctx.user;
+      const user = ctx.session.user;
       
       if (!user.stripeCustomerId) {
         return null;
@@ -112,11 +113,11 @@ export const stripeRouter = createTRPCRouter({
         return {
           id: subscription.id,
           status: subscription.status,
-          currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+          currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
           cancelAtPeriodEnd: subscription.cancel_at_period_end,
           priceId: subscription.items.data[0]?.price.id,
           planName: Object.entries(SUBSCRIPTION_PLANS).find(
-            ([_, plan]) => plan.stripePriceId === subscription.items.data[0]?.price.id
+            ([_, plan]) => (plan as any).stripePriceId === subscription.items.data[0]?.price.id
           )?.[0] || 'unknown',
         };
       } catch (error) {
@@ -128,7 +129,7 @@ export const stripeRouter = createTRPCRouter({
   // Cancel subscription
   cancelSubscription: protectedProcedure
     .mutation(async ({ ctx }) => {
-      const user = ctx.user;
+      const user = ctx.session.user;
       
       if (!user.stripeSubscriptionId) {
         throw new TRPCError({
@@ -153,7 +154,7 @@ export const stripeRouter = createTRPCRouter({
   // Reactivate subscription
   reactivateSubscription: protectedProcedure
     .mutation(async ({ ctx }) => {
-      const user = ctx.user;
+      const user = ctx.session.user;
       
       if (!user.stripeSubscriptionId) {
         throw new TRPCError({
@@ -182,7 +183,7 @@ export const stripeRouter = createTRPCRouter({
     }))
     .query(async ({ ctx, input }) => {
       const payments = await db.stripePayment.findMany({
-        where: { userId: ctx.user.id },
+        where: { userId: ctx.session.user.id },
         orderBy: { createdAt: 'desc' },
         take: input.limit,
       });

@@ -180,7 +180,7 @@ export default function PricingPage() {
                     ) : plan.id === 'free' ? (
                       'Commencer gratuitement'
                     ) : (
-                      'S\'abonner'
+                      'S&apos;abonner'
                     )}
                   </Button>
                 </CardContent>

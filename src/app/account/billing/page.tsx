@@ -158,7 +158,7 @@ export default function BillingPage() {
                     className="flex items-center gap-2"
                   >
                     <ExternalLink className="w-4 h-4" />
-                    Gérer l'abonnement
+                    Gérer l&apos;abonnement
                   </Button>
                   
                   {subscription.cancelAtPeriodEnd ? (
@@ -167,7 +167,7 @@ export default function BillingPage() {
                       onClick={handleReactivateSubscription}
                       disabled={reactivateSubscription.isPending}
                     >
-                      Réactiver l'abonnement
+                      Réactiver l&apos;abonnement
                     </Button>
                   ) : (
                     <Button 
@@ -175,7 +175,7 @@ export default function BillingPage() {
                       onClick={handleCancelSubscription}
                       disabled={cancelSubscription.isPending}
                     >
-                      Annuler l'abonnement
+                      Annuler l&apos;abonnement
                     </Button>
                   )}
                 </div>

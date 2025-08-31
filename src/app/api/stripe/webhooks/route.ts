@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { stripe, STRIPE_CONFIG } from '@/lib/stripe';
+import { stripe, STRIPE_CONFIG, SUBSCRIPTION_PLANS } from '@/lib/stripe';
 import { db } from '@/server/api/db';
 import Stripe from 'stripe';
 
@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
     create: {
       stripeEventId: event.id,
       eventType: event.type,
-      data: event.data,
+      data: event.data as any,
     },
     update: {
       attempts: { increment: 1 },
@@ -108,7 +108,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
     where: { stripeCustomerId: customerId },
     data: {
       stripeSubscriptionId: subscription.id,
-      stripeCurrentPeriodEnd: new Date(subscription.current_period_end * 1000),
+      stripeCurrentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
       stripePriceId: priceId,
       planId: planKey || 'free',
     },
@@ -119,8 +119,8 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
     data: {
       subscriptionId: subscription.id,
       subscriptionStatus: subscription.status,
-      currentPeriodEnd: new Date(subscription.current_period_end * 1000),
-      cancelAtPeriodEnd: subscription.cancel_at_period_end,
+      currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
+      cancelAtPeriodEnd: (subscription as any).cancel_at_period_end,
     },
   });
 
@@ -183,7 +183,7 @@ async function handlePaymentSucceeded(invoice: Stripe.Invoice) {
   await db.stripePayment.create({
     data: {
       userId: user.id,
-      stripePaymentId: invoice.payment_intent as string,
+      stripePaymentId: (invoice as any).payment_intent || 'unknown',
       stripeInvoiceId: invoice.id,
       amount: invoice.amount_paid,
       currency: invoice.currency,
@@ -204,7 +204,7 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
   await db.stripePayment.create({
     data: {
       userId: user.id,
-      stripePaymentId: invoice.payment_intent as string || 'failed',
+      stripePaymentId: (invoice as any).payment_intent || 'failed',
       stripeInvoiceId: invoice.id,
       amount: invoice.amount_due,
       currency: invoice.currency,
