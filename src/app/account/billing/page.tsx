@@ -40,12 +40,11 @@ export default function BillingPage() {
 
   const handlePortalAccess = async () => {
     try {
-      const { url } = await createPortal.mutateAsync({
-        returnUrl: `${window.location.origin}/account/billing`,
-      });
+      const { url } = await createPortal.mutateAsync();
       window.location.href = url;
-    } catch (_error) {
-      toast.error('Erreur lors de l\'accès au portail client');
+    } catch (error) {
+      console.error('Portal access error:', error);
+      toast.error('Erreur lors de l&apos;accès au portail client');
     }
   };
 
@@ -207,7 +206,7 @@ export default function BillingPage() {
           <CardContent>
             {paymentHistory && paymentHistory.length > 0 ? (
               <div className="space-y-4">
-                {paymentHistory.map((payment) => (
+                {paymentHistory.map((payment: any) => (
                   <div key={payment.id} className="flex items-center justify-between py-3 border-b border-border last:border-0">
                     <div>
                       <p className="font-medium">{payment.description}</p>

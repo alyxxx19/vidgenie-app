@@ -1,93 +1,94 @@
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '@/server/api/trpc';
-import { stripe, SUBSCRIPTION_PLANS } from '@/lib/stripe';
+import { StripeCustomerService } from '@/lib/stripe/customer-service';
+import { StripeSubscriptionService } from '@/lib/stripe/subscription-service';
+import { PRICING_CONFIG, getPlanByPriceId, stripe } from '@/lib/stripe/config';
 import { TRPCError } from '@trpc/server';
-import { db } from '@/server/api/db';
-import type { User as _User } from '@prisma/client';
 
 export const stripeRouter = createTRPCRouter({
-  // Create Stripe customer and checkout session
+  // Create Stripe customer and checkout session  
   createCheckoutSession: protectedProcedure
     .input(z.object({
-      priceId: z.string(),
-      successUrl: z.string(),
-      cancelUrl: z.string(),
+      plan: z.enum(['STARTER', 'PRO', 'ENTERPRISE']),
+      interval: z.enum(['month', 'year']),
     }))
     .mutation(async ({ ctx, input }) => {
-      const user = ctx.user;
-      
-      // Get or create Stripe customer
-      let stripeCustomer = await db.stripeCustomer.findUnique({
-        where: { userId: user.id }
+      const user = await ctx.db.user.findUnique({
+        where: { id: ctx.user.id },
       });
 
-      if (!stripeCustomer) {
-        const customer = await stripe.customers.create({
-          email: user.email,
-          name: user.name || undefined,
-          metadata: {
-            userId: user.id,
-          },
-        });
-
-        stripeCustomer = await db.stripeCustomer.create({
-          data: {
-            userId: user.id,
-            stripeCustomerId: customer.id,
-            email: user.email,
-            name: user.name,
-          },
-        });
-
-        // Update user with Stripe customer ID
-        await db.user.update({
-          where: { id: user.id },
-          data: { stripeCustomerId: customer.id },
+      if (!user) {
+        throw new TRPCError({
+          code: 'NOT_FOUND',
+          message: 'User not found',
         });
       }
 
-      // Create checkout session
-      const session = await stripe.checkout.sessions.create({
-        customer: stripeCustomer.stripeCustomerId,
-        payment_method_types: ['card'],
-        line_items: [
-          {
-            price: input.priceId,
-            quantity: 1,
-          },
-        ],
-        mode: 'subscription',
-        success_url: input.successUrl,
-        cancel_url: input.cancelUrl,
-        metadata: {
-          userId: user.id,
-        },
+      // Créer ou récupérer le customer Stripe
+      const customerId = await StripeCustomerService.getOrCreateCustomer(user);
+
+      // Mettre à jour l'utilisateur avec le customer ID si nécessaire
+      if (customerId !== user.stripeCustomerId) {
+        await ctx.db.user.update({
+          where: { id: user.id },
+          data: { stripeCustomerId: customerId },
+        });
+      }
+
+      // Obtenir l'ID du prix
+      const planConfig = PRICING_CONFIG[input.plan];
+      const priceId = input.interval === 'month' ? planConfig.priceIdMonthly : planConfig.priceIdYearly;
+
+      if (!priceId) {
+        throw new TRPCError({
+          code: 'BAD_REQUEST',
+          message: 'Price ID not configured for this plan',
+        });
+      }
+
+      // URLs de redirection
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      
+      // Créer la session de checkout
+      const session = await StripeSubscriptionService.createCheckoutSession({
+        customerId,
+        priceId,
+        userId: user.id,
+        successUrl: `${baseUrl}/account/billing`,
+        cancelUrl: `${baseUrl}/pricing`,
       });
 
-      return { sessionId: session.id, url: session.url };
+      return { 
+        sessionId: session.id, 
+        url: session.url,
+        customerId,
+        priceId,
+      };
     }),
 
   // Create customer portal session
   createPortalSession: protectedProcedure
-    .input(z.object({
-      returnUrl: z.string(),
-    }))
-    .mutation(async ({ ctx, input }) => {
-      const user = ctx.user;
-      
-      if (!user.stripeCustomerId) {
+    .mutation(async ({ ctx }) => {
+      const user = await ctx.db.user.findUnique({
+        where: { id: ctx.user.id },
+        select: { stripeCustomerId: true },
+      });
+
+      if (!user?.stripeCustomerId) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
-          message: 'No Stripe customer found',
+          message: 'No Stripe customer found. Please subscribe to a plan first.',
         });
       }
 
-      const session = await stripe.billingPortal.sessions.create({
-        customer: user.stripeCustomerId,
-        return_url: input.returnUrl,
-      });
+      const returnUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/account/billing`;
+      
+      const portalUrl = await StripeSubscriptionService.createCustomerPortalSession(
+        user.stripeCustomerId,
+        returnUrl
+      );
 
-      return { url: session.url };
+      return { url: portalUrl };
     }),
 
   // Get subscription status
@@ -99,7 +100,7 @@ export const stripeRouter = createTRPCRouter({
         return null;
       }
 
-      const stripeCustomer = await db.stripeCustomer.findUnique({
+      const stripeCustomer = await ctx.db.stripeCustomer.findUnique({
         where: { userId: user.id }
       });
 
@@ -116,9 +117,7 @@ export const stripeRouter = createTRPCRouter({
           currentPeriodEnd: new Date((subscription as any).current_period_end * 1000),
           cancelAtPeriodEnd: subscription.cancel_at_period_end,
           priceId: subscription.items.data[0]?.price.id,
-          planName: Object.entries(SUBSCRIPTION_PLANS).find(
-            ([_, plan]) => (plan as any).stripePriceId === subscription.items.data[0]?.price.id
-          )?.[0] || 'unknown',
+          planName: getPlanByPriceId(subscription.items.data[0]?.price.id || '') || 'unknown',
         };
       } catch (error) {
         console.error('Failed to retrieve subscription:', error);
@@ -131,19 +130,24 @@ export const stripeRouter = createTRPCRouter({
     .mutation(async ({ ctx }) => {
       const user = ctx.user;
       
-      if (!user.stripeSubscriptionId) {
+      // Get subscription ID from Stripe customer
+      const stripeCustomer = await ctx.db.stripeCustomer.findUnique({
+        where: { userId: user.id }
+      });
+      
+      if (!stripeCustomer?.subscriptionId) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'No subscription found',
         });
       }
 
-      const subscription = await stripe.subscriptions.update(user.stripeSubscriptionId, {
+      const subscription = await stripe.subscriptions.update(stripeCustomer.subscriptionId, {
         cancel_at_period_end: true,
       });
 
       // Update local data
-      await db.stripeCustomer.update({
+      await ctx.db.stripeCustomer.update({
         where: { userId: user.id },
         data: { cancelAtPeriodEnd: true },
       });
@@ -156,19 +160,24 @@ export const stripeRouter = createTRPCRouter({
     .mutation(async ({ ctx }) => {
       const user = ctx.user;
       
-      if (!user.stripeSubscriptionId) {
+      // Get subscription ID from Stripe customer
+      const stripeCustomer = await ctx.db.stripeCustomer.findUnique({
+        where: { userId: user.id }
+      });
+      
+      if (!stripeCustomer?.subscriptionId) {
         throw new TRPCError({
           code: 'BAD_REQUEST',
           message: 'No subscription found',
         });
       }
 
-      const subscription = await stripe.subscriptions.update(user.stripeSubscriptionId, {
+      const subscription = await stripe.subscriptions.update(stripeCustomer.subscriptionId, {
         cancel_at_period_end: false,
       });
 
       // Update local data
-      await db.stripeCustomer.update({
+      await ctx.db.stripeCustomer.update({
         where: { userId: user.id },
         data: { cancelAtPeriodEnd: false },
       });
@@ -182,7 +191,7 @@ export const stripeRouter = createTRPCRouter({
       limit: z.number().min(1).max(100).default(10),
     }))
     .query(async ({ ctx, input }) => {
-      const payments = await db.stripePayment.findMany({
+      const payments = await ctx.db.stripePayment.findMany({
         where: { userId: ctx.user.id },
         orderBy: { createdAt: 'desc' },
         take: input.limit,
@@ -194,7 +203,7 @@ export const stripeRouter = createTRPCRouter({
   // Get available plans
   getPlans: protectedProcedure
     .query(async () => {
-      return Object.entries(SUBSCRIPTION_PLANS).map(([key, plan]) => ({
+      return Object.entries(PRICING_CONFIG).map(([key, plan]) => ({
         id: key,
         ...plan,
       }));
