@@ -159,20 +159,55 @@
   
   /* Minimal scrollbar */
   ::-webkit-scrollbar {
-    width: 1px;
+    width: 8px;
   }
   
   ::-webkit-scrollbar-track {
-    background: #000000;
+    background: var(--background);
   }
   
   ::-webkit-scrollbar-thumb {
-    background: #404040;
-    border-radius: 0;
+    background: var(--muted);
+    border: 1px solid var(--border);
   }
   
   ::-webkit-scrollbar-thumb:hover {
-    background: #ffffff;
+    background: var(--accent);
+  }
+
+  /* Smooth scrolling */
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Backdrop blur support */
+  .backdrop-blur-sm {
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+  }
+
+  .backdrop-blur-md {
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  /* Enhanced grid pattern */
+  .bg-grid-enhanced {
+    background-image: 
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 39px,
+        rgba(38, 38, 38, 0.5) 39px,
+        rgba(38, 38, 38, 0.5) 40px
+      ),
+      repeating-linear-gradient(
+        90deg,
+        transparent,
+        transparent 39px,
+        rgba(38, 38, 38, 0.5) 39px,
+        rgba(38, 38, 38, 0.5) 40px
+      );
   }
 }
 
