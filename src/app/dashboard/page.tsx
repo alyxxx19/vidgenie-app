@@ -18,7 +18,8 @@ import {
   AlertCircle,
   BookOpen,
   LogOut,
-  Link as LinkIcon
+  Link as LinkIcon,
+  CreditCard
 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/app/providers';
@@ -54,6 +55,10 @@ export default function DashboardPage() {
   );
   const { data: usagePatterns } = api.analytics.getUsagePatterns.useQuery(
     { days: 7 },
+    { enabled: !!user }
+  );
+  const { data: subscription } = api.stripe.getSubscription.useQuery(
+    undefined,
     { enabled: !!user }
   );
   
@@ -162,6 +167,11 @@ export default function DashboardPage() {
                     analytics
                   </Link>
                 </Button>
+                <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-white hover:bg-secondary text-xs font-mono">
+                  <Link href="/account/billing">
+                    billing
+                  </Link>
+                </Button>
               </div>
               
               <Button asChild className="bg-white hover:bg-white/90 text-black font-mono text-xs px-4 h-8 ml-2">
@@ -265,6 +275,79 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Subscription Status */}
+        {subscription && (
+          <Card className="mb-8 bg-card/80 backdrop-blur-sm border-secondary animate-fade-in-up">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-white font-mono">
+                <div className="p-2 bg-primary/20 rounded-lg">
+                  <CreditCard className="w-6 h-6 text-primary" />
+                </div>
+                ABONNEMENT {subscription.planName.toUpperCase()}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <Badge 
+                      className={
+                        subscription.status === 'active' 
+                          ? "bg-green-100 text-green-800" 
+                          : "bg-yellow-100 text-yellow-800"
+                      }
+                    >
+                      {subscription.status === 'active' ? 'Actif' : subscription.status}
+                    </Badge>
+                    {subscription.cancelAtPeriodEnd && (
+                      <Badge variant="outline" className="text-warning">
+                        Annulation programmée
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-cyber-textMuted">
+                    Prochaine facturation : {subscription.currentPeriodEnd.toLocaleDateString('fr-FR')}
+                  </p>
+                </div>
+                <Button asChild variant="outline" size="sm" className="text-xs font-mono">
+                  <Link href="/account/billing">
+                    Gérer l'abonnement
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Upgrade Prompt for Free Users */}
+        {(!subscription || subscription.planName === 'free') && (
+          <Card className="mb-8 bg-primary/10 border-primary/30 backdrop-blur-sm animate-fade-in-up">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3 text-primary font-mono">
+                <div className="p-2 bg-primary/20 rounded-lg">
+                  <Zap className="w-6 h-6" />
+                </div>
+                PASSEZ AU NIVEAU SUPÉRIEUR
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div>
+                  <p className="text-white font-semibold mb-1">Débloquez plus de fonctionnalités</p>
+                  <p className="text-sm text-cyber-textMuted">
+                    Plus de crédits, génération avancée, analytics détaillées
+                  </p>
+                </div>
+                <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-mono">
+                  <Link href="/pricing">
+                    Voir les plans
+                  </Link>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* KPI Alerts */}
         {((stats.successRate < 90) || (stats.weeklyContent < 3) || (stats.avgGenerationTime > 10)) && (

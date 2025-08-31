@@ -30,6 +30,13 @@ model User {
   planId         String @default("free")
   creditsBalance Int    @default(100)
   subscriptionId String?
+  
+  // Stripe integration
+  stripeCustomerId       String? @unique
+  stripeSubscriptionId   String? @unique
+  stripeCurrentPeriodEnd DateTime?
+  stripePriceId          String?
+  stripePaymentMethodId  String?
 
   // Relations
   apiCredentials ApiCredential[]
@@ -41,6 +48,8 @@ model User {
   prompts        Prompt[]
   usageEvents    UsageEvent[]
   creditLedger   CreditLedger[]
+  stripeCustomer StripeCustomer?
+  stripePayments StripePayment[]
 
   @@map("users")
 }
@@ -265,6 +274,10 @@ model Plan {
   price       Int    // cents
   currency    String @default("EUR")
   
+  // Stripe integration
+  stripePriceId   String? @unique
+  stripeProductId String?
+  
   // Limits
   creditsPerMonth     Int
   maxGenerationsDay   Int
@@ -322,4 +335,63 @@ model UsageEvent {
   @@index([event, createdAt])
   @@index([userId, createdAt])
   @@map("usage_events")
+}
+
+// Stripe webhooks tracking
+model StripeWebhook {
+  id            String   @id @default(cuid())
+  stripeEventId String   @unique
+  eventType     String   // customer.subscription.created, invoice.payment_succeeded, etc.
+  processed     Boolean  @default(false)
+  attempts      Int      @default(0)
+  lastError     String?
+  data          Json?    // stripe event data
+  createdAt     DateTime @default(now())
+  processedAt   DateTime?
+
+  @@index([processed, createdAt])
+  @@map("stripe_webhooks")
+}
+
+// Stripe customer data sync
+model StripeCustomer {
+  id               String   @id @default(cuid())
+  userId           String   @unique
+  stripeCustomerId String   @unique
+  email            String
+  name             String?
+  
+  // Subscription info
+  subscriptionId     String?
+  subscriptionStatus String? // active, past_due, canceled, etc.
+  currentPeriodEnd   DateTime?
+  cancelAtPeriodEnd  Boolean @default(false)
+  
+  // Payment info
+  defaultPaymentMethodId String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("stripe_customers")
+}
+
+// Stripe payment history
+model StripePayment {
+  id               String   @id @default(cuid())
+  userId           String
+  stripePaymentId  String   @unique
+  stripeInvoiceId  String?
+  amount           Int      // cents
+  currency         String   @default("eur")
+  status           String   // succeeded, pending, failed
+  description      String?
+  createdAt        DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@map("stripe_payments")
 }

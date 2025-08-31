@@ -6,6 +6,7 @@ import { promptsRouter } from './routers/prompts';
 import { publishingRouter } from './routers/publishing';
 import { creditsRouter } from './routers/credits';
 import { analyticsRouter } from './routers/analytics';
+import { stripeRouter } from './routers/stripe';
 
 export const appRouter = createTRPCRouter({
   jobs: jobsRouter,
@@ -15,6 +16,7 @@ export const appRouter = createTRPCRouter({
   publishing: publishingRouter,
   credits: creditsRouter,
   analytics: analyticsRouter,
+  stripe: stripeRouter,
 });
 
 export type AppRouter = typeof appRouter;

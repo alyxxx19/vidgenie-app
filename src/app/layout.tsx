@@ -34,7 +34,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="fr">
-      <body className={`${inter.variable} ${poppins.variable} ${jetbrainsMono.variable} font-mono antialiased`}>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans antialiased`}>
         <Providers>
           {children}
           <Toaster />

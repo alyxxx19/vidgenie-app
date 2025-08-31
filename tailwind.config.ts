@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: ["class"],
+  darkMode: "class",
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -26,7 +26,6 @@ const config: Config = {
       },
       backgroundImage: {
         'minimal-gradient': 'linear-gradient(180deg, #000000 0%, #111111 100%)',
-        'grid-minimal': 'url("data:image/svg+xml,%3Csvg width="40" height="40" viewBox="0 0 40 40" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="none" fill-rule="evenodd"%3E%3Cg fill="%23262626" fill-opacity="0.3"%3E%3Ccircle cx="20" cy="20" r="0.5"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")',
       },
       backdropBlur: {
         'xs': '2px',
