@@ -3,8 +3,8 @@
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import Link from 'next/link';
-import { ArrowRight, Play } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { ArrowRight, Play, Check } from 'lucide-react';
+import { useEffect, useState, useRef } from 'react';
 
 const StatsCounter = ({ value, label }: { value: string; label: string }) => {
   const [count, setCount] = useState(0);
@@ -60,8 +60,112 @@ const StatsCounter = ({ value, label }: { value: string; label: string }) => {
   );
 };
 
+const PricingCard = ({ plan, index }: { plan: any; index: number }) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+  const [priceAnimated, setPriceAnimated] = useState(false);
+  const cardRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            setTimeout(() => {
+              setIsVisible(true);
+              setTimeout(() => setPriceAnimated(true), 300);
+            }, index * 200);
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.3 }
+    );
+
+    if (cardRef.current) observer.observe(cardRef.current);
+    return () => observer.disconnect();
+  }, [index]);
+
+  return (
+    <div 
+      ref={cardRef}
+      className={`relative transition-all duration-700 transform ${
+        isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
+      } ${
+        plan.featured 
+          ? 'bg-card border border-foreground scale-105 shadow-2xl' 
+          : 'bg-background hover:bg-card border-0'
+      } p-8 cursor-pointer ${
+        isHovered ? 'scale-[1.02]' : ''
+      }`}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+      style={{
+        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        boxShadow: plan.featured && isHovered 
+          ? '0 0 40px rgba(255, 255, 255, 0.1), 0 0 80px rgba(255, 255, 255, 0.05)' 
+          : plan.featured 
+          ? '0 0 20px rgba(255, 255, 255, 0.1)' 
+          : 'none'
+      }}
+    >
+      {plan.featured && (
+        <div className="absolute -top-px -left-px -right-px bg-foreground text-background py-2 text-center text-xs font-mono uppercase tracking-wider animate-pulse">
+          most popular
+        </div>
+      )}
+      
+      <div className={plan.featured ? 'mt-8' : ''}>
+        <h3 className="text-xl font-mono mb-4 text-foreground uppercase tracking-wide">
+          {plan.name}
+        </h3>
+        <div className={`text-3xl font-mono mb-2 text-foreground transition-all duration-500 ${
+          priceAnimated ? 'animate-price-scale' : 'scale-75 opacity-0'
+        }`}>
+          <span className="inline-block">{plan.price}</span>
+          <span className="text-base text-muted-foreground">
+            /{billingCycle === 'monthly' ? 'month' : 'year'}
+          </span>
+        </div>
+        <p className="text-muted-foreground mb-6 text-sm">{plan.description}</p>
+        
+        <ul className="space-y-3 mb-8">
+          {plan.features.map((feature: string, idx: number) => (
+            <li 
+              key={feature} 
+              className={`flex items-center gap-3 text-sm text-muted-foreground border-b border-border pb-3 transition-all duration-300 ${
+                isVisible ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'
+              }`}
+              style={{ transitionDelay: `${(index * 200) + (idx * 100)}ms` }}
+            >
+              <Check className={`w-4 h-4 text-foreground transition-all duration-300 ${
+                isVisible ? 'rotate-0 scale-100' : 'rotate-180 scale-0'
+              }`} style={{ transitionDelay: `${(index * 200) + (idx * 150)}ms` }} />
+              {feature}
+            </li>
+          ))}
+        </ul>
+        
+        <Button 
+          asChild 
+          className={`w-full transition-all duration-300 font-mono lowercase ${
+            plan.featured
+              ? 'bg-foreground text-background hover:bg-transparent hover:text-foreground hover:border-foreground'
+              : 'bg-foreground text-background hover:bg-transparent hover:text-foreground hover:border-foreground'
+          } border border-transparent hover:scale-105 ${
+            isHovered ? 'shadow-lg' : ''
+          }`}
+        >
+          <Link href="/auth/signin">{plan.cta}</Link>
+        </Button>
+      </div>
+    </div>
+  );
+};
+
 export default function HomePage() {
   const [navScrolled, setNavScrolled] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   useEffect(() => {
     const handleScroll = () => {
@@ -243,85 +347,85 @@ export default function HomePage() {
           <div className="text-center mb-16">
             <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-4">Pricing</p>
             <h2 className="text-3xl md:text-4xl font-normal tracking-tight mb-4">Choose your plan</h2>
-            <p className="text-muted-foreground">Flexible options for creators at every level</p>
+            <p className="text-muted-foreground mb-8">Flexible options for creators at every level</p>
+            
+            {/* Billing Toggle */}
+            <div className="inline-flex items-center gap-4 p-1 bg-card border border-border mb-8">
+              <button
+                onClick={() => setBillingCycle('monthly')}
+                className={`px-4 py-2 text-sm font-mono lowercase transition-all duration-300 ${
+                  billingCycle === 'monthly'
+                    ? 'bg-foreground text-background'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                monthly
+              </button>
+              <button
+                onClick={() => setBillingCycle('yearly')}
+                className={`px-4 py-2 text-sm font-mono lowercase transition-all duration-300 relative ${
+                  billingCycle === 'yearly'
+                    ? 'bg-foreground text-background'
+                    : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                yearly
+                <span className="absolute -top-1 -right-1 bg-foreground text-background text-xs px-1 font-mono">
+                  -20%
+                </span>
+              </button>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-px bg-border border border-border">
-            <div className="bg-background p-8 hover:bg-card transition-all duration-300 hover:scale-[1.02] cursor-pointer">
-              <h3 className="text-xl font-mono mb-4 text-foreground uppercase tracking-wide">Starter</h3>
-              <div className="text-3xl font-mono mb-2 text-foreground">€9<span className="text-base text-muted-foreground">/month</span></div>
-              <p className="text-muted-foreground mb-6 text-sm">Perfect for getting started</p>
-              <ul className="space-y-3 mb-8">
-                {[
+            {[
+              {
+                name: "Starter",
+                price: billingCycle === 'monthly' ? "€9" : "€72",
+                description: "Perfect for getting started",
+                features: [
                   "30 videos/month",
                   "Basic templates", 
                   "2 platforms",
                   "Basic analytics",
                   "Email support"
-                ].map((feature) => (
-                  <li key={feature} className="flex items-center gap-3 text-sm text-muted-foreground border-b border-border pb-3">
-                    <span className="text-foreground font-mono">[✓]</span>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Button asChild className="w-full bg-foreground text-background hover:bg-transparent hover:text-foreground hover:border-foreground border border-transparent font-mono lowercase">
-                <Link href="/auth/signin">get started</Link>
-              </Button>
-            </div>
-
-            <div className="bg-card p-8 border border-foreground relative">
-              <div className="absolute -top-px -left-px -right-px bg-foreground text-background py-2 text-center text-xs font-mono uppercase tracking-wider">
-                most popular
-              </div>
-              <div className="mt-8">
-                <h3 className="text-xl font-mono mb-4 text-foreground uppercase tracking-wide">Professional</h3>
-                <div className="text-3xl font-mono mb-2 text-foreground">€29<span className="text-base text-muted-foreground">/month</span></div>
-                <p className="text-muted-foreground mb-6 text-sm">For serious creators</p>
-                <ul className="space-y-3 mb-8">
-                  {[
-                    "150 videos/month",
-                    "All templates",
-                    "All platforms", 
-                    "Advanced analytics",
-                    "Custom AI models",
-                    "Priority support"
-                  ].map((feature) => (
-                    <li key={feature} className="flex items-center gap-3 text-sm text-muted-foreground border-b border-border pb-3">
-                      <span className="text-foreground font-mono">[✓]</span>
-                      {feature}
-                    </li>
-                  ))}
-                </ul>
-                <Button asChild className="w-full bg-foreground text-background hover:bg-transparent hover:text-foreground hover:border-foreground border border-transparent font-mono lowercase">
-                  <Link href="/auth/signin">get started</Link>
-                </Button>
-              </div>
-            </div>
-
-            <div className="bg-background p-8 hover:bg-card transition-all duration-300 hover:scale-[1.02] cursor-pointer">
-              <h3 className="text-xl font-mono mb-4 text-foreground uppercase tracking-wide">Enterprise</h3>
-              <div className="text-3xl font-mono mb-2 text-foreground">€99<span className="text-base text-muted-foreground">/month</span></div>
-              <p className="text-muted-foreground mb-6 text-sm">For teams and agencies</p>
-              <ul className="space-y-3 mb-8">
-                {[
+                ],
+                cta: "get started",
+                featured: false
+              },
+              {
+                name: "Professional", 
+                price: billingCycle === 'monthly' ? "€29" : "€232",
+                description: "For serious creators",
+                features: [
+                  "150 videos/month",
+                  "All templates",
+                  "All platforms", 
+                  "Advanced analytics",
+                  "Custom AI models",
+                  "Priority support"
+                ],
+                cta: "get started",
+                featured: true
+              },
+              {
+                name: "Enterprise",
+                price: billingCycle === 'monthly' ? "€99" : "€792", 
+                description: "For teams and agencies",
+                features: [
                   "Unlimited videos",
                   "Custom templates",
                   "API access",
                   "Team management", 
                   "Dedicated training",
                   "24/7 support"
-                ].map((feature) => (
-                  <li key={feature} className="flex items-center gap-3 text-sm text-muted-foreground border-b border-border pb-3">
-                    <span className="text-foreground font-mono">[✓]</span>
-                    {feature}
-                  </li>
-                ))}
-              </ul>
-              <Button asChild className="w-full bg-foreground text-background hover:bg-transparent hover:text-foreground hover:border-foreground border border-transparent font-mono lowercase">
-                <Link href="/auth/signin">contact us</Link>
-              </Button>
-            </div>
+                ],
+                cta: "contact us",
+                featured: false
+              }
+            ].map((plan, index) => (
+              <PricingCard key={plan.name} plan={plan} index={index} />
+            ))}
           </div>
         </div>
       </section>
