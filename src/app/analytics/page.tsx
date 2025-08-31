@@ -30,91 +30,7 @@ import {
 import Link from 'next/link';
 import { LineChart, Line, AreaChart, Area, BarChart, Bar, PieChart as RechartsPieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 
-// Mock analytics data
-const mockAnalytics = {
-  overview: {
-    totalViews: 2456780,
-    totalLikes: 145230,
-    totalShares: 23450,
-    totalComments: 12340,
-    avgEngagementRate: 8.7,
-    totalVideos: 127,
-    totalProjects: 8,
-    avgVideoLength: 32,
-  },
-  
-  performance: {
-    viewsGrowth: 23.5,
-    engagementGrowth: 12.8,
-    followersGrowth: 18.2,
-    conversionRate: 4.2,
-  },
-  
-  platforms: [
-    { name: 'TikTok', views: 1456780, engagement: 9.2, color: '#FF0050' },
-    { name: 'Instagram', views: 678450, engagement: 7.8, color: '#E4405F' },
-    { name: 'YouTube', views: 321550, engagement: 6.4, color: '#FF0000' },
-  ],
-  
-  timelineData: [
-    { date: '2024-01', views: 156780, engagement: 7.2, videos: 12 },
-    { date: '2024-02', views: 234560, engagement: 8.1, videos: 18 },
-    { date: '2024-03', views: 345670, engagement: 8.7, videos: 24 },
-    { date: '2024-04', views: 456780, engagement: 9.2, videos: 21 },
-    { date: '2024-05', views: 567890, engagement: 8.9, videos: 27 },
-    { date: '2024-06', views: 634520, engagement: 9.5, videos: 25 },
-  ],
-  
-  topContent: [
-    {
-      id: '1',
-      title: 'Morning Routine Productive',
-      views: 245670,
-      engagement: 12.4,
-      platform: 'TikTok',
-      createdAt: new Date('2024-02-15'),
-    },
-    {
-      id: '2',
-      title: 'React Tips & Tricks',
-      views: 198450,
-      engagement: 11.2,
-      platform: 'YouTube',
-      createdAt: new Date('2024-03-02'),
-    },
-    {
-      id: '3',
-      title: 'Fashion Haul Spring',
-      views: 176320,
-      engagement: 10.8,
-      platform: 'Instagram',
-      createdAt: new Date('2024-02-28'),
-    },
-  ],
-  
-  audienceInsights: {
-    demographics: [
-      { name: '18-24', value: 35, color: '#8884d8' },
-      { name: '25-34', value: 42, color: '#82ca9d' },
-      { name: '35-44', value: 18, color: '#ffc658' },
-      { name: '45+', value: 5, color: '#ff7c7c' },
-    ],
-    
-    topCountries: [
-      { country: 'France', percentage: 45, users: 125670 },
-      { country: 'Canada', percentage: 22, users: 61450 },
-      { country: 'Belgique', percentage: 15, users: 41230 },
-      { country: 'Suisse', percentage: 18, users: 50120 },
-    ],
-    
-    peakHours: [
-      { hour: '08:00', engagement: 67 },
-      { hour: '12:00', engagement: 89 },
-      { hour: '18:00', engagement: 95 },
-      { hour: '21:00', engagement: 78 },
-    ],
-  },
-};
+import { mockAnalytics, formatNumber } from '@/lib/mock-data';
 
 export default function AnalyticsPage() {
   const { user, isLoading } = useAuth();
@@ -137,15 +53,6 @@ export default function AnalyticsPage() {
     redirect('/auth/signin');
   }
 
-  const formatNumber = (num: number) => {
-    if (num >= 1000000) {
-      return `${(num / 1000000).toFixed(1)}M`;
-    }
-    if (num >= 1000) {
-      return `${(num / 1000).toFixed(1)}k`;
-    }
-    return num.toString();
-  };
 
   return (
     <div className="min-h-screen bg-minimal-gradient relative">

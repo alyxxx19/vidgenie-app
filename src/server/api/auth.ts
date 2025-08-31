@@ -1,11 +1,9 @@
-import { PrismaAdapter } from '@auth/prisma-adapter';
 import { type GetServerSidePropsContext } from 'next';
 import {
   getServerSession,
   type DefaultSession,
   type NextAuthOptions,
 } from 'next-auth';
-import { type Adapter } from 'next-auth/adapters';
 import CredentialsProvider from 'next-auth/providers/credentials';
 import { db } from './db';
 

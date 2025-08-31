@@ -1,7 +1,5 @@
 import { initTRPC, TRPCError } from '@trpc/server';
 import { type CreateNextContextOptions } from '@trpc/server/adapters/next';
-import { createServerComponentClient } from '@supabase/auth-helpers-nextjs';
-import { cookies } from 'next/headers';
 import { db } from './db';
 import superjson from 'superjson';
 import { ZodError } from 'zod';

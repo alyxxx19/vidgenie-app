@@ -4,20 +4,22 @@ Plateforme SaaS d'automatisation de création de contenus vidéo courts pour Tik
 
 ## Stack Technique
 
-- **Frontend**: Next.js 14 avec App Router, TypeScript, shadcn/ui
-- **Backend**: tRPC pour APIs type-safe
+- **Frontend**: Next.js 15 avec App Router, TypeScript, shadcn/ui
+- **Backend**: tRPC pour APIs type-safe  
 - **Base de données**: PostgreSQL avec Prisma ORM
 - **Jobs asynchrones**: Inngest pour workflows durables
 - **Stockage**: AWS S3 pour média
-- **Authentification**: Système custom avec contexte React
-- **UI**: Tailwind CSS + Radix UI components
+- **Authentification**: NextAuth.js + Système custom avec contexte React
+- **UI**: Tailwind CSS v4 + Radix UI components
+- **Analytics**: PostHog + Sentry
 
 ## Installation
 
 ### Prérequis
 
-- Node.js 18+
-- Compte Supabase (base de données PostgreSQL hébergée)
+- Node.js 18+ (recommandé v20+)
+- Compte Supabase (base de données PostgreSQL hébergée) 
+- Docker (pour PostgreSQL local optionnel)
 - Compte AWS S3 (optionnel pour dev)
 
 ### Configuration

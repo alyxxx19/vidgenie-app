@@ -9,62 +9,6 @@ const config: Config = {
   ],
   theme: {
     extend: {
-      colors: {
-        // Design System basé sur le rapport d'analyse
-        primary: {
-          50: '#f0f9ff',
-          100: '#e0f2fe',
-          200: '#bae6fd',
-          300: '#7dd3fc',
-          400: '#38bdf8',
-          500: '#0ea5e9',
-          600: '#0284c7',
-          700: '#0369a1',
-          800: '#075985',
-          900: '#0c4a6e',
-          950: '#082f49',
-        },
-        // Palette sombre principale
-        dark: {
-          50: '#f8fafc',
-          100: '#f1f5f9',
-          200: '#e2e8f0',
-          300: '#cbd5e1',
-          400: '#94a3b8',
-          500: '#64748b',
-          600: '#475569',
-          700: '#334155',
-          800: '#1e293b',
-          900: '#0f172a',
-          950: '#020617',
-        },
-        // Accent lumineux (bleu électrique)
-        accent: {
-          50: '#f0fdff',
-          100: '#ccfbfe',
-          200: '#99f6fc',
-          300: '#59ecf7',
-          400: '#00BFFF', // Couleur principale accent
-          500: '#06b6d4',
-          600: '#0891b2',
-          700: '#0e7490',
-          800: '#155e75',
-          900: '#164e63',
-          950: '#083344',
-        },
-        // Couleurs d'alerte
-        success: '#2FC47A',
-        warning: '#F59E0B',
-        error: '#E02424',
-        // Thème sombre cyber
-        cyber: {
-          bg: '#0A192F',
-          surface: '#112240',
-          border: '#233554',
-          text: '#E6E6E6',
-          textMuted: '#8892B0',
-        }
-      },
       fontFamily: {
         sans: ['var(--font-mono)', 'ui-monospace', 'monospace'],
         mono: ['var(--font-mono)', 'ui-monospace', 'monospace'],
@@ -117,9 +61,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [
-    require("tailwindcss-animate"),
-  ],
+  plugins: [],
 } satisfies Config;
 
 export default config;

@@ -24,45 +24,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-// Mock data for video library
-const mockVideos = [
-  {
-    id: '1',
-    filename: 'lifestyle_morning_routine.mp4',
-    thumbnail: '/api/placeholder/400/225',
-    duration: 28,
-    size: '24.5 MB',
-    uploadedAt: new Date('2024-01-15'),
-    project: 'Campagne Printemps 2024',
-    tags: ['lifestyle', 'morning', 'routine'],
-    description: 'Routine matinale inspirante pour jeunes professionnels',
-    used: 3,
-  },
-  {
-    id: '2',
-    filename: 'product_demo_smartphone.mp4',
-    thumbnail: '/api/placeholder/400/225',
-    duration: 45,
-    size: '67.2 MB',
-    uploadedAt: new Date('2024-01-12'),
-    project: 'Série Tutoriels',
-    tags: ['tech', 'smartphone', 'demo'],
-    description: 'Démonstration des nouvelles fonctionnalités',
-    used: 1,
-  },
-  {
-    id: '3',
-    filename: 'cooking_quick_recipe.mp4',
-    thumbnail: '/api/placeholder/400/225',
-    duration: 35,
-    size: '41.8 MB',
-    uploadedAt: new Date('2024-01-10'),
-    project: 'Content Marketing Q1',
-    tags: ['food', 'cooking', 'recipe'],
-    description: 'Recette rapide et savoureuse en 5 minutes',
-    used: 5,
-  },
-];
+import { mockVideos } from '@/lib/mock-data';
 
 export default function LibraryPage() {
   const { user, isLoading } = useAuth();

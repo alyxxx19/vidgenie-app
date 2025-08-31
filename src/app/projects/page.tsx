@@ -31,73 +31,7 @@ import {
 import Link from 'next/link';
 import { toast } from 'sonner';
 
-interface Project {
-  id: string;
-  name: string;
-  description: string;
-  status: 'active' | 'completed' | 'paused' | 'archived';
-  priority: 'low' | 'medium' | 'high';
-  startDate: Date;
-  endDate?: Date;
-  contentCount: number;
-  publishedCount: number;
-  scheduledCount: number;
-  platforms: string[];
-  collaborators: string[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// Mock projects data
-const mockProjects: Project[] = [
-  {
-    id: '1',
-    name: 'Campagne Printemps 2024',
-    description: 'Série de contenus lifestyle pour promouvoir la nouvelle collection printemps',
-    status: 'active',
-    priority: 'high',
-    startDate: new Date('2024-03-01'),
-    endDate: new Date('2024-05-31'),
-    contentCount: 24,
-    publishedCount: 18,
-    scheduledCount: 6,
-    platforms: ['tiktok', 'instagram', 'youtube'],
-    collaborators: ['marie@example.com', 'julien@example.com'],
-    createdAt: new Date('2024-02-15'),
-    updatedAt: new Date('2024-03-20'),
-  },
-  {
-    id: '2',
-    name: 'Série Tutoriels Tech',
-    description: 'Tutoriels courts sur les dernières technologies et outils de développement',
-    status: 'active',
-    priority: 'medium',
-    startDate: new Date('2024-01-15'),
-    contentCount: 12,
-    publishedCount: 8,
-    scheduledCount: 4,
-    platforms: ['youtube', 'tiktok'],
-    collaborators: ['alex@example.com'],
-    createdAt: new Date('2024-01-10'),
-    updatedAt: new Date('2024-03-18'),
-  },
-  {
-    id: '3',
-    name: 'Content Marketing Q1',
-    description: 'Stratégie de contenu pour le premier trimestre avec focus sur l\'engagement',
-    status: 'completed',
-    priority: 'high',
-    startDate: new Date('2024-01-01'),
-    endDate: new Date('2024-03-31'),
-    contentCount: 36,
-    publishedCount: 36,
-    scheduledCount: 0,
-    platforms: ['tiktok', 'instagram', 'youtube'],
-    collaborators: ['sophie@example.com', 'thomas@example.com', 'claire@example.com'],
-    createdAt: new Date('2023-12-15'),
-    updatedAt: new Date('2024-03-31'),
-  },
-];
+import { mockProjects, type Project, getStatusBadge, getPriorityBadge } from '@/lib/mock-data';
 
 export default function ProjectsPage() {
   const { user, isLoading } = useAuth();
@@ -134,33 +68,6 @@ export default function ProjectsPage() {
     return matchesSearch && matchesStatus;
   });
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <Badge className="bg-white text-black font-mono text-xs">active</Badge>;
-      case 'completed':
-        return <Badge className="bg-muted text-white font-mono text-xs">complete</Badge>;
-      case 'paused':
-        return <Badge className="bg-secondary text-white font-mono text-xs">paused</Badge>;
-      case 'archived':
-        return <Badge className="bg-muted-foreground text-black font-mono text-xs">archived</Badge>;
-      default:
-        return <Badge variant="secondary" className="font-mono text-xs">{status}</Badge>;
-    }
-  };
-
-  const getPriorityBadge = (priority: string) => {
-    switch (priority) {
-      case 'high':
-        return <Badge variant="outline" className="border-white text-white font-mono text-xs">high</Badge>;
-      case 'medium':
-        return <Badge variant="outline" className="border-muted-foreground text-muted-foreground font-mono text-xs">med</Badge>;
-      case 'low':
-        return <Badge variant="outline" className="border-muted text-muted-foreground font-mono text-xs">low</Badge>;
-      default:
-        return <Badge variant="secondary" className="font-mono text-xs">{priority}</Badge>;
-    }
-  };
 
   const getPlatformIcon = (platform: string) => {
     // Return platform-specific styling
@@ -356,8 +263,14 @@ export default function ProjectsPage() {
                         {project.name.toLowerCase().replace(/\s+/g, '_')}
                       </CardTitle>
                       <div className="flex items-center gap-1 mb-2">
-                        {getStatusBadge(project.status)}
-                        {getPriorityBadge(project.priority)}
+                        {(() => {
+                          const statusBadge = getStatusBadge(project.status);
+                          return <Badge className={statusBadge.className}>{statusBadge.label}</Badge>;
+                        })()}
+                        {(() => {
+                          const priorityBadge = getPriorityBadge(project.priority);
+                          return <Badge variant="outline" className={priorityBadge.className}>{priorityBadge.label}</Badge>;
+                        })()}
                       </div>
                     </div>
                     <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-white">
