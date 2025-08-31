@@ -124,12 +124,10 @@ export default function AnalyticsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-cyber-gradient flex items-center justify-center">
-        <div className="text-center animate-fade-in-up">
-          <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-glow-pulse">
-            <BarChart3 className="w-8 h-8 text-primary animate-pulse" />
-          </div>
-          <p className="text-cyber-textMuted">Chargement des analytics...</p>
+      <div className="min-h-screen bg-minimal-gradient flex items-center justify-center">
+        <div className="text-center animate-slide-in">
+          <div className="w-8 h-8 border border-white border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-muted-foreground font-mono text-xs">loading_analytics...</p>
         </div>
       </div>
     );
@@ -150,155 +148,161 @@ export default function AnalyticsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-cyber-gradient relative">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-10" />
-      <div className="absolute top-0 left-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl animate-pulse" />
+    <div className="min-h-screen bg-minimal-gradient relative">
+      {/* Minimal grid */}
+      <div className="absolute inset-0 bg-grid-minimal opacity-30" />
       
       {/* Header */}
-      <header className="bg-card/50 backdrop-blur-lg border-b border-secondary relative z-10">
-        <div className="max-w-7xl mx-auto px-6 py-6">
+      <header className="bg-card border-b border-border relative z-10">
+        <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-6 animate-fade-in-up">
-              <Button variant="ghost" asChild className="text-cyber-textMuted hover:text-primary transition-colors">
+            <div className="flex items-center gap-3 animate-slide-in">
+              <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-white">
                 <Link href="/dashboard">
-                  <ArrowLeft className="w-5 h-5 mr-3" />
-                  RETOUR
+                  <ArrowLeft className="w-3 h-3 mr-1" />
+                  back
                 </Link>
               </Button>
               <div>
-                <h1 className="text-2xl font-bold">Analytics avancées</h1>
-                <p className="text-slate-600">Analysez les performances de votre contenu</p>
+                <h1 className="font-mono text-lg text-white mb-1">analytics</h1>
+                <p className="text-muted-foreground text-xs font-mono">performance metrics</p>
               </div>
             </div>
             
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
               <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-32">
+                <SelectTrigger className="w-20 h-8 bg-input border-border text-white font-mono text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="7d">7 jours</SelectItem>
-                  <SelectItem value="30d">30 jours</SelectItem>
-                  <SelectItem value="90d">90 jours</SelectItem>
-                  <SelectItem value="1y">1 an</SelectItem>
+                  <SelectItem value="7d">7d</SelectItem>
+                  <SelectItem value="30d">30d</SelectItem>
+                  <SelectItem value="90d">90d</SelectItem>
+                  <SelectItem value="1y">1y</SelectItem>
                 </SelectContent>
               </Select>
               
-              <Button variant="outline">
-                <Download className="w-4 h-4 mr-2" />
-                Exporter
+              <Button variant="outline" className="border-border text-muted-foreground font-mono text-xs h-8">
+                <Download className="w-3 h-3 mr-1" />
+                export
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-6 relative z-10">
         {/* Overview Stats */}
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="pt-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          <Card className="bg-card border-border hover:border-white/20 transition-colors animate-slide-in">
+            <CardContent className="pt-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Vues totales</p>
-                  <p className="text-2xl font-bold">{formatNumber(mockAnalytics.overview.totalViews)}</p>
+                  <p className="text-xs font-mono text-muted-foreground">total_views</p>
+                  <p className="text-lg font-mono text-white">{formatNumber(mockAnalytics.overview.totalViews)}</p>
                 </div>
-                <Eye className="w-8 h-8 text-blue-600" />
+                <Eye className="w-4 h-4 text-white" />
               </div>
-              <div className="flex items-center gap-1 mt-2">
-                <TrendingUp className="w-3 h-3 text-green-600" />
-                <span className="text-xs text-green-600">+{mockAnalytics.performance.viewsGrowth}%</span>
+              <div className="flex items-center gap-1 mt-1">
+                <TrendingUp className="w-3 h-3 text-white" />
+                <span className="text-xs text-white font-mono">+{mockAnalytics.performance.viewsGrowth}%</span>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="bg-card border-border hover:border-white/20 transition-colors animate-slide-in">
+            <CardContent className="pt-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Engagement</p>
-                  <p className="text-2xl font-bold">{mockAnalytics.overview.avgEngagementRate}%</p>
+                  <p className="text-xs font-mono text-muted-foreground">engagement</p>
+                  <p className="text-lg font-mono text-white">{mockAnalytics.overview.avgEngagementRate}%</p>
                 </div>
-                <Heart className="w-8 h-8 text-red-600" />
+                <Heart className="w-4 h-4 text-white" />
               </div>
-              <div className="flex items-center gap-1 mt-2">
-                <TrendingUp className="w-3 h-3 text-green-600" />
-                <span className="text-xs text-green-600">+{mockAnalytics.performance.engagementGrowth}%</span>
+              <div className="flex items-center gap-1 mt-1">
+                <TrendingUp className="w-3 h-3 text-white" />
+                <span className="text-xs text-white font-mono">+{mockAnalytics.performance.engagementGrowth}%</span>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="bg-card border-border hover:border-white/20 transition-colors animate-slide-in">
+            <CardContent className="pt-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Vidéos créées</p>
-                  <p className="text-2xl font-bold">{mockAnalytics.overview.totalVideos}</p>
+                  <p className="text-xs font-mono text-muted-foreground">videos_created</p>
+                  <p className="text-lg font-mono text-white">{mockAnalytics.overview.totalVideos}</p>
                 </div>
-                <Video className="w-8 h-8 text-purple-600" />
+                <Video className="w-4 h-4 text-white" />
               </div>
-              <div className="flex items-center gap-1 mt-2">
-                <span className="text-xs text-slate-500">Durée moyenne: {mockAnalytics.overview.avgVideoLength}s</span>
+              <div className="flex items-center gap-1 mt-1">
+                <span className="text-xs text-muted-foreground font-mono">avg: {mockAnalytics.overview.avgVideoLength}s</span>
               </div>
             </CardContent>
           </Card>
           
-          <Card>
-            <CardContent className="pt-6">
+          <Card className="bg-card border-border hover:border-white/20 transition-colors animate-slide-in">
+            <CardContent className="pt-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600">Taux de conversion</p>
-                  <p className="text-2xl font-bold">{mockAnalytics.performance.conversionRate}%</p>
+                  <p className="text-xs font-mono text-muted-foreground">conversion_rate</p>
+                  <p className="text-lg font-mono text-white">{mockAnalytics.performance.conversionRate}%</p>
                 </div>
-                <Target className="w-8 h-8 text-green-600" />
+                <Target className="w-4 h-4 text-white" />
               </div>
-              <div className="flex items-center gap-1 mt-2">
-                <TrendingUp className="w-3 h-3 text-green-600" />
-                <span className="text-xs text-green-600">+2.1% ce mois</span>
+              <div className="flex items-center gap-1 mt-1">
+                <TrendingUp className="w-3 h-3 text-white" />
+                <span className="text-xs text-white font-mono">+2.1% monthly</span>
               </div>
             </CardContent>
           </Card>
         </div>
 
-        <Tabs defaultValue="performance" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
-            <TabsTrigger value="performance">Performance</TabsTrigger>
-            <TabsTrigger value="platforms">Plateformes</TabsTrigger>
-            <TabsTrigger value="audience">Audience</TabsTrigger>
-            <TabsTrigger value="content">Top contenu</TabsTrigger>
+        <Tabs defaultValue="performance" className="space-y-4">
+          <TabsList className="grid w-full grid-cols-4 bg-secondary border-border">
+            <TabsTrigger value="performance" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono text-xs">performance</TabsTrigger>
+            <TabsTrigger value="platforms" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono text-xs">platforms</TabsTrigger>
+            <TabsTrigger value="audience" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono text-xs">audience</TabsTrigger>
+            <TabsTrigger value="content" className="data-[state=active]:bg-white data-[state=active]:text-black font-mono text-xs">top_content</TabsTrigger>
           </TabsList>
 
           {/* Performance Tab */}
-          <TabsContent value="performance" className="space-y-6">
-            <Card>
+          <TabsContent value="performance" className="space-y-4">
+            <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle>Évolution des performances</CardTitle>
+                <CardTitle className="font-mono text-sm text-white">performance_timeline</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={400}>
+                <ResponsiveContainer width="100%" height={300}>
                   <LineChart data={mockAnalytics.timelineData}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="date" />
-                    <YAxis yAxisId="left" />
-                    <YAxis yAxisId="right" orientation="right" />
-                    <Tooltip />
-                    <Legend />
+                    <CartesianGrid strokeDasharray="1 1" stroke="#262626" />
+                    <XAxis dataKey="date" stroke="#737373" fontSize={10} />
+                    <YAxis yAxisId="left" stroke="#737373" fontSize={10} />
+                    <YAxis yAxisId="right" orientation="right" stroke="#737373" fontSize={10} />
+                    <Tooltip 
+                      contentStyle={{ 
+                        background: '#111111', 
+                        border: '1px solid #262626', 
+                        borderRadius: '4px',
+                        fontSize: '12px',
+                        fontFamily: 'monospace'
+                      }} 
+                    />
                     <Line
                       yAxisId="left"
                       type="monotone"
                       dataKey="views"
-                      stroke="#3b82f6"
-                      strokeWidth={2}
-                      name="Vues"
+                      stroke="#ffffff"
+                      strokeWidth={1}
+                      dot={false}
                     />
                     <Line
                       yAxisId="right"
                       type="monotone"
                       dataKey="engagement"
-                      stroke="#10b981"
-                      strokeWidth={2}
-                      name="Engagement (%)"
+                      stroke="#737373"
+                      strokeWidth={1}
+                      dot={false}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -307,177 +311,173 @@ export default function AnalyticsPage() {
           </TabsContent>
 
           {/* Platforms Tab */}
-          <TabsContent value="platforms" className="space-y-6">
-            <div className="grid md:grid-cols-3 gap-6">
+          <TabsContent value="platforms" className="space-y-4">
+            <div className="grid md:grid-cols-3 gap-4">
               {mockAnalytics.platforms.map((platform) => (
-                <Card key={platform.name}>
+                <Card key={platform.name} className="bg-card border-border hover:border-white/20 transition-colors">
                   <CardHeader>
-                    <CardTitle className="flex items-center gap-2">
-                      <div 
-                        className="w-3 h-3 rounded-full"
-                        style={{ backgroundColor: platform.color }}
-                      />
-                      {platform.name}
+                    <CardTitle className="flex items-center gap-2 font-mono text-sm text-white">
+                      <div className="w-2 h-2 bg-white" />
+                      {platform.name.toLowerCase()}
                     </CardTitle>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-3">
                     <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>Vues</span>
-                        <span className="font-bold">{formatNumber(platform.views)}</span>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="font-mono text-muted-foreground">views</span>
+                        <span className="font-mono text-white">{formatNumber(platform.views)}</span>
                       </div>
                       <Progress 
                         value={(platform.views / mockAnalytics.overview.totalViews) * 100} 
-                        className="h-2"
+                        className="h-1 bg-secondary"
                       />
                     </div>
                     
                     <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>Engagement</span>
-                        <span className="font-bold">{platform.engagement}%</span>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="font-mono text-muted-foreground">engagement</span>
+                        <span className="font-mono text-white">{platform.engagement}%</span>
                       </div>
-                      <Progress value={platform.engagement * 10} className="h-2" />
+                      <Progress value={platform.engagement * 10} className="h-1 bg-secondary" />
                     </div>
                   </CardContent>
                 </Card>
               ))}
             </div>
             
-            <Card>
+            <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle>Répartition des vues par plateforme</CardTitle>
+                <CardTitle className="font-mono text-sm text-white">platform_distribution</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={300}>
-                  <RechartsPieChart>
-                    <Pie
-                      data={mockAnalytics.platforms}
-                      cx="50%"
-                      cy="50%"
-                      outerRadius={100}
-                      fill="#8884d8"
-                      dataKey="views"
-                      label={({ name, percent }: any) => `${name}: ${(percent * 100).toFixed(0)}%`}
-                    >
-                      {mockAnalytics.platforms.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value: any) => formatNumber(value)} />
-                  </RechartsPieChart>
-                </ResponsiveContainer>
+                <div className="space-y-3">
+                  {mockAnalytics.platforms.map((platform, index) => (
+                    <div key={platform.name} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-white" />
+                        <span className="font-mono text-xs text-muted-foreground">{platform.name.toLowerCase()}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-xs text-white">{formatNumber(platform.views)}</span>
+                        <span className="font-mono text-xs text-muted-foreground">({Math.round((platform.views / mockAnalytics.overview.totalViews) * 100)}%)</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* Audience Tab */}
-          <TabsContent value="audience" className="space-y-6">
-            <div className="grid md:grid-cols-2 gap-6">
-              <Card>
+          <TabsContent value="audience" className="space-y-4">
+            <div className="grid md:grid-cols-2 gap-4">
+              <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle>Démographie par âge</CardTitle>
+                  <CardTitle className="font-mono text-sm text-white">age_demographics</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <ResponsiveContainer width="100%" height={250}>
-                    <RechartsPieChart>
-                      <Pie
-                        data={mockAnalytics.audienceInsights.demographics}
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={80}
-                        fill="#8884d8"
-                        dataKey="value"
-                        label={({ name, value }: any) => `${name}: ${value}%`}
-                      >
-                        {mockAnalytics.audienceInsights.demographics.map((entry, index) => (
-                          <Cell key={`cell-${index}`} fill={entry.color} />
-                        ))}
-                      </Pie>
-                      <Tooltip />
-                    </RechartsPieChart>
-                  </ResponsiveContainer>
+                  <div className="space-y-2">
+                    {mockAnalytics.audienceInsights.demographics.map((demo, index) => (
+                      <div key={demo.name} className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-white" />
+                          <span className="font-mono text-xs text-muted-foreground">{demo.name}</span>
+                        </div>
+                        <span className="font-mono text-xs text-white">{demo.value}%</span>
+                      </div>
+                    ))}
+                  </div>
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle>Pays principaux</CardTitle>
+                  <CardTitle className="font-mono text-sm text-white">top_countries</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-3">
                   {mockAnalytics.audienceInsights.topCountries.map((country) => (
                     <div key={country.country}>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span className="font-medium">{country.country}</span>
-                        <span>{country.percentage}%</span>
+                      <div className="flex justify-between text-xs mb-1">
+                        <span className="font-mono text-muted-foreground">{country.country.toLowerCase()}</span>
+                        <span className="font-mono text-white">{country.percentage}%</span>
                       </div>
-                      <div className="flex justify-between text-xs text-slate-500 mb-2">
-                        <span>{formatNumber(country.users)} utilisateurs</span>
+                      <div className="flex justify-between text-xs text-muted-foreground mb-1">
+                        <span className="font-mono">{formatNumber(country.users)} users</span>
                       </div>
-                      <Progress value={country.percentage} className="h-2" />
+                      <Progress value={country.percentage} className="h-1 bg-secondary" />
                     </div>
                   ))}
                 </CardContent>
               </Card>
             </div>
             
-            <Card>
+            <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle>Heures de pic d'engagement</CardTitle>
+                <CardTitle className="font-mono text-sm text-white">peak_engagement_hours</CardTitle>
               </CardHeader>
               <CardContent>
-                <ResponsiveContainer width="100%" height={250}>
-                  <BarChart data={mockAnalytics.audienceInsights.peakHours}>
-                    <CartesianGrid strokeDasharray="3 3" />
-                    <XAxis dataKey="hour" />
-                    <YAxis />
-                    <Tooltip />
-                    <Bar dataKey="engagement" fill="#3b82f6" name="Engagement %" />
-                  </BarChart>
-                </ResponsiveContainer>
+                <div className="space-y-2">
+                  {mockAnalytics.audienceInsights.peakHours.map((hour) => (
+                    <div key={hour.hour} className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Clock className="w-3 h-3 text-muted-foreground" />
+                        <span className="font-mono text-xs text-muted-foreground">{hour.hour}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-16 bg-secondary h-1 rounded-full overflow-hidden">
+                          <div 
+                            className="h-full bg-white transition-all duration-300"
+                            style={{ width: `${hour.engagement}%` }}
+                          />
+                        </div>
+                        <span className="font-mono text-xs text-white">{hour.engagement}%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* Top Content Tab */}
-          <TabsContent value="content" className="space-y-6">
-            <Card>
+          <TabsContent value="content" className="space-y-4">
+            <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle>Contenu le plus performant</CardTitle>
-                <CardDescription>
-                  Vos vidéos avec les meilleures performances cette période
+                <CardTitle className="font-mono text-sm text-white">top_performing_content</CardTitle>
+                <CardDescription className="font-mono text-xs text-muted-foreground">
+                  highest performance videos this period
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {mockAnalytics.topContent.map((content, index) => (
-                    <div key={content.id} className="flex items-center gap-4 p-4 border rounded-lg">
-                      <div className="flex items-center justify-center w-8 h-8 rounded-full bg-blue-100 text-blue-600 font-bold text-sm">
+                    <div key={content.id} className="flex items-center gap-3 p-3 border-b border-border last:border-b-0">
+                      <div className="flex items-center justify-center w-6 h-6 bg-white text-black font-mono text-xs">
                         #{index + 1}
                       </div>
                       
-                      <div className="w-16 h-16 bg-black rounded-lg flex items-center justify-center">
-                        <Video className="w-6 h-6 text-white" />
+                      <div className="w-12 h-12 bg-black flex items-center justify-center">
+                        <Video className="w-4 h-4 text-white" />
                       </div>
                       
                       <div className="flex-1">
-                        <h4 className="font-medium">{content.title}</h4>
-                        <div className="flex items-center gap-4 mt-1">
-                          <Badge variant="outline" className="text-xs">
-                            {content.platform}
+                        <h4 className="font-mono text-sm text-white">{content.title.toLowerCase().replace(/\s+/g, '_')}</h4>
+                        <div className="flex items-center gap-3 mt-1">
+                          <Badge variant="outline" className="border-border text-muted-foreground font-mono text-xs">
+                            {content.platform.toLowerCase()}
                           </Badge>
-                          <span className="text-xs text-slate-500">
-                            {content.createdAt.toLocaleDateString('fr-FR')}
+                          <span className="text-xs text-muted-foreground font-mono">
+                            {content.createdAt.toLocaleDateString('en-US')}
                           </span>
                         </div>
                       </div>
                       
                       <div className="text-right">
-                        <div className="text-lg font-bold text-blue-600">
+                        <div className="text-sm font-mono text-white">
                           {formatNumber(content.views)}
                         </div>
-                        <div className="text-sm text-slate-500">vues</div>
-                        <div className="text-sm font-medium text-green-600">
+                        <div className="text-xs text-muted-foreground font-mono">views</div>
+                        <div className="text-xs font-mono text-white">
                           {content.engagement}% engagement
                         </div>
                       </div>
@@ -488,87 +488,87 @@ export default function AnalyticsPage() {
             </Card>
             
             {/* Performance Metrics */}
-            <div className="grid md:grid-cols-3 gap-6">
-              <Card>
+            <div className="grid md:grid-cols-3 gap-4">
+              <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="text-lg">Métriques moyennes</CardTitle>
+                  <CardTitle className="font-mono text-sm text-white">avg_metrics</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-2">
                   <div className="flex justify-between">
-                    <span className="text-sm">Vues par vidéo</span>
-                    <span className="font-medium">
+                    <span className="text-xs font-mono text-muted-foreground">views/video</span>
+                    <span className="font-mono text-xs text-white">
                       {formatNumber(Math.round(mockAnalytics.overview.totalViews / mockAnalytics.overview.totalVideos))}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm">Likes par vidéo</span>
-                    <span className="font-medium">
+                    <span className="text-xs font-mono text-muted-foreground">likes/video</span>
+                    <span className="font-mono text-xs text-white">
                       {formatNumber(Math.round(mockAnalytics.overview.totalLikes / mockAnalytics.overview.totalVideos))}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-sm">Partages par vidéo</span>
-                    <span className="font-medium">
+                    <span className="text-xs font-mono text-muted-foreground">shares/video</span>
+                    <span className="font-mono text-xs text-white">
                       {formatNumber(Math.round(mockAnalytics.overview.totalShares / mockAnalytics.overview.totalVideos))}
                     </span>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="text-lg">Croissance</CardTitle>
+                  <CardTitle className="font-mono text-sm text-white">growth_metrics</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Vues</span>
+                    <span className="text-xs font-mono text-muted-foreground">views</span>
                     <div className="flex items-center gap-1">
-                      <TrendingUp className="w-3 h-3 text-green-600" />
-                      <span className="text-green-600 font-medium">+{mockAnalytics.performance.viewsGrowth}%</span>
+                      <TrendingUp className="w-3 h-3 text-white" />
+                      <span className="text-white font-mono text-xs">+{mockAnalytics.performance.viewsGrowth}%</span>
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Engagement</span>
+                    <span className="text-xs font-mono text-muted-foreground">engagement</span>
                     <div className="flex items-center gap-1">
-                      <TrendingUp className="w-3 h-3 text-green-600" />
-                      <span className="text-green-600 font-medium">+{mockAnalytics.performance.engagementGrowth}%</span>
+                      <TrendingUp className="w-3 h-3 text-white" />
+                      <span className="text-white font-mono text-xs">+{mockAnalytics.performance.engagementGrowth}%</span>
                     </div>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Followers</span>
+                    <span className="text-xs font-mono text-muted-foreground">followers</span>
                     <div className="flex items-center gap-1">
-                      <TrendingUp className="w-3 h-3 text-green-600" />
-                      <span className="text-green-600 font-medium">+{mockAnalytics.performance.followersGrowth}%</span>
+                      <TrendingUp className="w-3 h-3 text-white" />
+                      <span className="text-white font-mono text-xs">+{mockAnalytics.performance.followersGrowth}%</span>
                     </div>
                   </div>
                 </CardContent>
               </Card>
               
-              <Card>
+              <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="text-lg">Objectifs</CardTitle>
+                  <CardTitle className="font-mono text-sm text-white">targets</CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-2">
                   <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Engagement cible</span>
-                      <span>8.7% / 10%</span>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="font-mono text-muted-foreground">engagement_target</span>
+                      <span className="font-mono text-white">8.7% / 10%</span>
                     </div>
-                    <Progress value={87} className="h-2" />
+                    <Progress value={87} className="h-1 bg-secondary" />
                   </div>
                   <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Vidéos/mois</span>
-                      <span>25 / 30</span>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="font-mono text-muted-foreground">videos/month</span>
+                      <span className="font-mono text-white">25 / 30</span>
                     </div>
-                    <Progress value={83} className="h-2" />
+                    <Progress value={83} className="h-1 bg-secondary" />
                   </div>
                   <div>
-                    <div className="flex justify-between text-sm mb-1">
-                      <span>Croissance</span>
-                      <span>23.5% / 20%</span>
+                    <div className="flex justify-between text-xs mb-1">
+                      <span className="font-mono text-muted-foreground">growth_target</span>
+                      <span className="font-mono text-white">23.5% / 20%</span>
                     </div>
-                    <Progress value={100} className="h-2" />
+                    <Progress value={100} className="h-1 bg-secondary" />
                   </div>
                 </CardContent>
               </Card>

@@ -46,12 +46,10 @@ export default function CreatePage() {
   }, [searchParams]);
 
   if (authLoading) {
-    return <div className="min-h-screen bg-cyber-gradient flex items-center justify-center">
-      <div className="text-center animate-fade-in-up">
-        <div className="w-16 h-16 bg-primary/20 rounded-full flex items-center justify-center mx-auto mb-4 animate-glow-pulse">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
-        </div>
-        <p className="text-cyber-textMuted">Initialisation du créateur...</p>
+    return <div className="min-h-screen bg-minimal-gradient flex items-center justify-center">
+      <div className="text-center animate-slide-in">
+        <div className="w-8 h-8 border border-white border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+        <p className="text-muted-foreground font-mono text-xs">initializing_creator...</p>
       </div>
     </div>;
   }
@@ -99,103 +97,102 @@ export default function CreatePage() {
   };
 
   const predefinedPrompts = [
-    'Créez une vidéo motivante sur l\'entrepreneuriat',
-    'Tutoriel rapide sur une astuce de productivité',
-    'Présentation d\'un produit innovant',
-    'Conseil de développement personnel',
-    'Trend TikTok avec une twist originale',
+    'motivational entrepreneurship content',
+    'quick productivity tutorial',
+    'innovative product presentation',
+    'personal development advice',
+    'tiktok trend with original twist',
   ];
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-green-100 text-green-800">Terminé</Badge>;
+        return <Badge className="bg-white text-black font-mono text-xs">complete</Badge>;
       case 'running':
-        return <Badge className="bg-blue-100 text-blue-800">En cours</Badge>;
+        return <Badge className="bg-secondary text-white font-mono text-xs animate-minimal-pulse">running</Badge>;
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800">En attente</Badge>;
+        return <Badge className="bg-muted text-white font-mono text-xs">pending</Badge>;
       case 'failed':
-        return <Badge className="bg-red-100 text-red-800">Échec</Badge>;
+        return <Badge className="bg-destructive text-black font-mono text-xs">failed</Badge>;
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge variant="secondary" className="font-mono text-xs">{status}</Badge>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-cyber-gradient relative">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-10" />
-      <div className="absolute top-0 left-0 w-96 h-96 bg-accent/5 rounded-full blur-3xl animate-pulse" />
+    <div className="min-h-screen bg-minimal-gradient relative">
+      {/* Minimal grid */}
+      <div className="absolute inset-0 bg-grid-minimal opacity-30" />
       
       {/* Header */}
-      <header className="bg-card/50 backdrop-blur-lg border-b border-secondary relative z-10">
-        <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="animate-fade-in-up">
-            <h1 className="font-[var(--font-poppins)] text-4xl font-bold text-white mb-2">LABORATOIRE DE CRÉATION</h1>
-            <p className="text-cyber-textMuted text-lg">Transformez vos idées en contenus viraux avec l'IA de pointe</p>
+      <header className="bg-card border-b border-border relative z-10">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="animate-slide-in">
+            <h1 className="font-mono text-lg text-white mb-1">content_creator</h1>
+            <p className="text-muted-foreground text-xs font-mono">transform ideas into viral content</p>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 relative z-10">
-        <div className="grid lg:grid-cols-3 gap-8">
+      <div className="max-w-7xl mx-auto px-4 py-6 relative z-10">
+        <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Input */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card>
+          <div className="lg:col-span-1 space-y-4">
+            <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Wand2 className="w-5 h-5" />
-                  Votre idée
+                <CardTitle className="flex items-center gap-2 font-mono text-sm text-white">
+                  <Wand2 className="w-4 h-4" />
+                  content_prompt
                 </CardTitle>
-                <CardDescription>
-                  Décrivez le contenu que vous souhaitez créer
+                <CardDescription className="font-mono text-xs text-muted-foreground">
+                  describe what you want to create
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 <div>
-                  <Label htmlFor="prompt">Description du contenu</Label>
+                  <Label htmlFor="prompt" className="font-mono text-xs text-white">description</Label>
                   <Textarea
                     id="prompt"
-                    placeholder="Ex: Une vidéo inspirante sur l'importance de poursuivre ses rêves, avec des visuels de coucher de soleil et une musique motivante..."
+                    placeholder="inspiring video about pursuing dreams with sunset visuals and motivational music..."
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    className="min-h-[120px] mt-2"
+                    className="min-h-[80px] mt-1 bg-input border-border text-white font-mono text-xs"
                     maxLength={1000}
                   />
-                  <p className="text-xs text-slate-500 mt-2">
-                    {prompt.length}/1000 caractères
+                  <p className="text-xs text-muted-foreground mt-1 font-mono">
+                    {prompt.length}/1000 chars
                   </p>
                 </div>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <Label>Prompts suggérés</Label>
-                    <Button variant="ghost" size="sm" asChild>
+                    <Label className="font-mono text-xs text-white">suggested_prompts</Label>
+                    <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-white">
                       <Link href="/prompts">
                         <BookOpen className="w-3 h-3 mr-1" />
-                        Gérer
+                        manage
                       </Link>
                     </Button>
                   </div>
                   
                   {/* User's saved prompts */}
                   {userPrompts && userPrompts.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-slate-600 flex items-center gap-1">
+                    <div className="space-y-1">
+                      <p className="text-xs font-mono text-muted-foreground flex items-center gap-1">
                         <BookOpen className="w-3 h-3" />
-                        Vos prompts sauvegardés
+                        saved_prompts
                       </p>
                       {userPrompts.slice(0, 3).map((userPrompt) => (
                         <button
                           key={userPrompt.id}
                           onClick={() => setPrompt(userPrompt.content)}
-                          className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-colors text-sm"
+                          className="w-full text-left p-2 border border-border hover:border-white/20 hover:bg-secondary/50 transition-colors"
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium">{userPrompt.title}</span>
-                            {userPrompt.isPinned && <Star className="w-3 h-3 text-yellow-500" />}
+                            <span className="font-mono text-xs text-white">{userPrompt.title.toLowerCase().replace(/\s+/g, '_')}</span>
+                            {userPrompt.isPinned && <Star className="w-3 h-3 text-white" />}
                           </div>
-                          <p className="text-xs text-slate-500 line-clamp-2">
+                          <p className="text-xs text-muted-foreground line-clamp-2 font-mono">
                             {userPrompt.content}
                           </p>
                         </button>
@@ -205,22 +202,22 @@ export default function CreatePage() {
                   
                   {/* Templates */}
                   {templates && templates.length > 0 && (
-                    <div className="space-y-2">
-                      <p className="text-xs font-medium text-slate-600 flex items-center gap-1">
+                    <div className="space-y-1">
+                      <p className="text-xs font-mono text-muted-foreground flex items-center gap-1">
                         <Sparkles className="w-3 h-3" />
-                        Templates populaires
+                        popular_templates
                       </p>
                       {templates.slice(0, 3).map((template) => (
                         <button
                           key={template.id}
                           onClick={() => setPrompt(template.content)}
-                          className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-purple-300 hover:bg-purple-50 transition-colors text-sm"
+                          className="w-full text-left p-2 border border-border hover:border-white/20 hover:bg-secondary/50 transition-colors"
                         >
                           <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium">{template.title}</span>
-                            <Badge variant="secondary" className="text-xs">Template</Badge>
+                            <span className="font-mono text-xs text-white">{template.title.toLowerCase().replace(/\s+/g, '_')}</span>
+                            <Badge variant="secondary" className="font-mono text-xs">template</Badge>
                           </div>
-                          <p className="text-xs text-slate-500 line-clamp-2">
+                          <p className="text-xs text-muted-foreground line-clamp-2 font-mono">
                             {template.content}
                           </p>
                         </button>
@@ -230,12 +227,12 @@ export default function CreatePage() {
                   
                   {/* Fallback predefined prompts if no user prompts/templates */}
                   {(!userPrompts || userPrompts.length === 0) && (!templates || templates.length === 0) && (
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       {predefinedPrompts.map((suggestion, index) => (
                         <button
                           key={index}
                           onClick={() => setPrompt(suggestion)}
-                          className="w-full text-left p-3 rounded-lg border border-slate-200 hover:border-blue-300 hover:bg-blue-50 transition-colors text-sm"
+                          className="w-full text-left p-2 border border-border hover:border-white/20 hover:bg-secondary/50 transition-colors font-mono text-xs text-white"
                         >
                           {suggestion}
                         </button>
@@ -248,34 +245,34 @@ export default function CreatePage() {
           </div>
 
           {/* Center Column - Configuration */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card>
+          <div className="lg:col-span-1 space-y-4">
+            <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Settings className="w-5 h-5" />
-                  Configuration
+                <CardTitle className="flex items-center gap-2 font-mono text-sm text-white">
+                  <Settings className="w-4 h-4" />
+                  configuration
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4">
                 <div>
-                  <Label>Durée de la vidéo: {duration[0]}s</Label>
+                  <Label className="font-mono text-xs text-white">duration: {duration[0]}s</Label>
                   <Slider
                     value={duration}
                     onValueChange={setDuration}
                     max={60}
                     min={8}
                     step={1}
-                    className="mt-2"
+                    className="mt-1"
                   />
                 </div>
 
                 <div>
-                  <Label>Plateformes cibles</Label>
-                  <div className="mt-2 space-y-3">
+                  <Label className="font-mono text-xs text-white">target_platforms</Label>
+                  <div className="mt-1 space-y-2">
                     {[
-                      { id: 'tiktok', label: 'TikTok', optimal: '15-60s' },
-                      { id: 'youtube', label: 'YouTube Shorts', optimal: '15-60s' },
-                      { id: 'instagram', label: 'Instagram Reels', optimal: '15-30s' },
+                      { id: 'tiktok', label: 'tiktok', optimal: '15-60s' },
+                      { id: 'youtube', label: 'youtube_shorts', optimal: '15-60s' },
+                      { id: 'instagram', label: 'instagram_reels', optimal: '15-30s' },
                     ].map((platform) => (
                       <div key={platform.id} className="flex items-center justify-between">
                         <div className="flex items-center space-x-2">
@@ -289,12 +286,13 @@ export default function CreatePage() {
                                 setPlatforms(platforms.filter(p => p !== platform.id));
                               }
                             }}
+                            className="border-border data-[state=checked]:bg-white data-[state=checked]:text-black"
                           />
-                          <label htmlFor={platform.id} className="font-medium">
+                          <label htmlFor={platform.id} className="font-mono text-xs text-white">
                             {platform.label}
                           </label>
                         </div>
-                        <span className="text-xs text-slate-500">{platform.optimal}</span>
+                        <span className="text-xs text-muted-foreground font-mono">{platform.optimal}</span>
                       </div>
                     ))}
                   </div>
@@ -304,48 +302,51 @@ export default function CreatePage() {
           </div>
 
           {/* Right Column - Preview & Actions */}
-          <div className="lg:col-span-1 space-y-6">
-            <Card>
+          <div className="lg:col-span-1 space-y-4">
+            <Card className="bg-card border-border">
               <CardHeader>
-                <CardTitle>Aperçu & génération</CardTitle>
+                <CardTitle className="font-mono text-sm text-white">preview_&_generation</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-4">
+              <CardContent className="space-y-3">
                 {/* Generation Status */}
                 {currentJobId && jobStatus ? (
-                  <div className="space-y-4">
+                  <div className="space-y-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium">Progression</span>
+                      <span className="text-xs font-mono text-muted-foreground">progress</span>
                       {getStatusBadge(jobStatus.status)}
                     </div>
                     
-                    <Progress value={jobStatus.progress} />
+                    <div className="space-y-1">
+                      <Progress value={jobStatus.progress} className="h-1 bg-secondary" />
+                      <div className="text-xs font-mono text-muted-foreground">{jobStatus.progress}%</div>
+                    </div>
                     
                     {jobStatus.status === 'running' && (
-                      <div className="flex items-center gap-2 text-sm text-slate-600">
-                        <Clock className="w-4 h-4" />
-                        <span>Temps estimé: {Math.ceil((jobStatus.estimatedTimeRemaining || 0) / 60)} min</span>
+                      <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
+                        <Clock className="w-3 h-3" />
+                        <span>eta: {Math.ceil((jobStatus.estimatedTimeRemaining || 0) / 60)}min</span>
                       </div>
                     )}
 
                     {jobStatus.status === 'completed' && jobStatus.resultAsset && (
-                      <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+                      <div className="p-3 bg-secondary border border-border">
                         <div className="flex items-center gap-2 mb-2">
-                          <CheckCircle className="w-5 h-5 text-green-600" />
-                          <span className="font-medium text-green-800">Génération terminée !</span>
+                          <CheckCircle className="w-4 h-4 text-white" />
+                          <span className="font-mono text-xs text-white">generation_complete</span>
                         </div>
-                        <Button asChild variant="outline" size="sm">
+                        <Button asChild variant="outline" size="sm" className="border-border text-muted-foreground font-mono text-xs h-7">
                           <Link href={`/assets/${jobStatus.resultAsset.id}`}>
-                            Voir le résultat
+                            view_result
                           </Link>
                         </Button>
                       </div>
                     )}
                   </div>
                 ) : (
-                  <div className="text-center py-8 border-2 border-dashed border-slate-200 rounded-lg">
-                    <Video className="w-12 h-12 text-slate-400 mx-auto mb-4" />
-                    <p className="text-slate-500 mb-4">
-                      L'aperçu apparaîtra ici après génération
+                  <div className="text-center py-6 border border-dashed border-border">
+                    <Video className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-muted-foreground mb-3 font-mono text-xs">
+                      preview appears after generation
                     </p>
                   </div>
                 )}
@@ -353,24 +354,23 @@ export default function CreatePage() {
                 <Button
                   onClick={handleGenerate}
                   disabled={!prompt.trim() || platforms.length === 0 || isGenerating}
-                  className="w-full"
-                  size="lg"
+                  className="w-full bg-white hover:bg-white/90 text-black font-mono text-xs h-8"
                 >
                   {isGenerating ? (
                     <>
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      Génération en cours...
+                      <div className="w-3 h-3 border border-black border-t-transparent rounded-full animate-spin mr-2" />
+                      generating...
                     </>
                   ) : (
                     <>
-                      <Wand2 className="w-4 h-4 mr-2" />
-                      Générer le contenu
+                      <Wand2 className="w-3 h-3 mr-1" />
+                      generate_content
                     </>
                   )}
                 </Button>
 
-                <p className="text-xs text-slate-500 text-center">
-                  Coût: 10 crédits • Temps estimé: 2-5 minutes
+                <p className="text-xs text-muted-foreground text-center font-mono">
+                  cost: 10 credits • eta: 2-5min
                 </p>
               </CardContent>
             </Card>
