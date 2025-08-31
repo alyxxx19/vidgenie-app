@@ -128,6 +128,21 @@ export const authService = {
     }
   },
 
+  // Enhanced Google OAuth sign in with custom flow
+  async signInWithGoogle(returnTo?: string, organizationId?: string) {
+    try {
+      const params = new URLSearchParams();
+      if (returnTo) params.set('returnTo', returnTo);
+      if (organizationId) params.set('organizationId', organizationId);
+
+      // Redirect to our custom Google OAuth endpoint
+      const authUrl = `/api/auth/google?${params.toString()}`;
+      window.location.href = authUrl;
+    } catch (error) {
+      throw new AuthError('Google authentication initiation failed');
+    }
+  },
+
   // Get current session
   async getSession() {
     try {

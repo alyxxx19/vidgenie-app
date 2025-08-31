@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { authService } from '@/lib/supabase/auth';
+import { GoogleSignInButton } from './google-signin-button';
 
 export function SignInForm() {
   const [email, setEmail] = useState('');
@@ -103,18 +104,17 @@ export function SignInForm() {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-2">
-          <Button
-            variant="outline"
-            onClick={() => handleOAuthSignIn('google')}
+        <div className="space-y-2">
+          <GoogleSignInButton
             disabled={isLoading}
-          >
-            Google
-          </Button>
+            onError={(error) => setError(error)}
+            onSuccess={() => router.push('/dashboard')}
+          />
           <Button
             variant="outline"
             onClick={() => handleOAuthSignIn('github')}
             disabled={isLoading}
+            className="w-full"
           >
             GitHub
           </Button>
