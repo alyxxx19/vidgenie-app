@@ -60,7 +60,7 @@ const StatsCounter = ({ value, label }: { value: string; label: string }) => {
   );
 };
 
-const PricingCard = ({ plan, index }: { plan: any; index: number }) => {
+const PricingCard = ({ plan, index, billingCycle }: { plan: any; index: number; billingCycle: 'monthly' | 'yearly' }) => {
   const [isVisible, setIsVisible] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
   const [priceAnimated, setPriceAnimated] = useState(false);
@@ -93,11 +93,11 @@ const PricingCard = ({ plan, index }: { plan: any; index: number }) => {
         isVisible ? 'translate-y-0 opacity-100' : 'translate-y-8 opacity-0'
       } ${
         plan.featured 
-          ? 'bg-card border border-foreground scale-105 shadow-2xl' 
+          ? 'bg-card border border-foreground scale-105 shadow-2xl pricing-card-featured animate-float' 
           : 'bg-background hover:bg-card border-0'
       } p-8 cursor-pointer ${
         isHovered ? 'scale-[1.02]' : ''
-      }`}
+      } group`}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
       style={{
@@ -110,8 +110,8 @@ const PricingCard = ({ plan, index }: { plan: any; index: number }) => {
       }}
     >
       {plan.featured && (
-        <div className="absolute -top-px -left-px -right-px bg-foreground text-background py-2 text-center text-xs font-mono uppercase tracking-wider animate-pulse">
-          most popular
+        <div className="absolute -top-px -left-px -right-px bg-foreground text-background py-2 text-center text-xs font-mono uppercase tracking-wider">
+          <span className="animate-pulse">most popular</span>
         </div>
       )}
       
@@ -124,7 +124,7 @@ const PricingCard = ({ plan, index }: { plan: any; index: number }) => {
         }`}>
           <span className="inline-block">{plan.price}</span>
           <span className="text-base text-muted-foreground">
-            /{billingCycle === 'monthly' ? 'month' : 'year'}
+            /month
           </span>
         </div>
         <p className="text-muted-foreground mb-6 text-sm">{plan.description}</p>
@@ -148,15 +148,18 @@ const PricingCard = ({ plan, index }: { plan: any; index: number }) => {
         
         <Button 
           asChild 
-          className={`w-full transition-all duration-300 font-mono lowercase ${
-            plan.featured
-              ? 'bg-foreground text-background hover:bg-transparent hover:text-foreground hover:border-foreground'
-              : 'bg-foreground text-background hover:bg-transparent hover:text-foreground hover:border-foreground'
-          } border border-transparent hover:scale-105 ${
-            isHovered ? 'shadow-lg' : ''
+          className={`w-full transition-all duration-300 font-mono lowercase bg-foreground text-background hover:bg-transparent hover:text-foreground hover:border-foreground border border-transparent hover:scale-105 group-hover:shadow-lg ${
+            plan.featured ? 'animate-shimmer' : ''
           }`}
         >
-          <Link href="/auth/signin">{plan.cta}</Link>
+          <Link href="/auth/signin" className="flex items-center justify-center">
+            {plan.cta}
+            {plan.cta === 'get started' && (
+              <ArrowRight className={`ml-2 h-4 w-4 transition-transform duration-300 ${
+                isHovered ? 'translate-x-1' : ''
+              }`} />
+            )}
+          </Link>
         </Button>
       </div>
     </div>
@@ -424,7 +427,7 @@ export default function HomePage() {
                 featured: false
               }
             ].map((plan, index) => (
-              <PricingCard key={plan.name} plan={plan} index={index} />
+              <PricingCard key={plan.name} plan={plan} index={index} billingCycle={billingCycle} />
             ))}
           </div>
         </div>
