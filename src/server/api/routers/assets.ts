@@ -3,6 +3,40 @@ import { createTRPCRouter, protectedProcedure } from '../trpc';
 import { TRPCError } from '@trpc/server';
 
 export const assetsRouter = createTRPCRouter({
+  // Get all assets for the current user
+  getAll: protectedProcedure
+    .input(z.object({
+      projectId: z.string().optional(),
+    }).optional())
+    .query(async ({ ctx, input }) => {
+      const assets = await ctx.db.asset.findMany({
+        where: {
+          userId: ctx.userId,
+          ...(input?.projectId && { projectId: input.projectId }),
+        },
+        include: {
+          project: {
+            select: {
+              id: true,
+              name: true,
+            },
+          },
+          posts: {
+            select: {
+              id: true,
+              status: true,
+              platforms: true,
+            },
+          },
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+      });
+
+      return assets;
+    }),
+
   // List user assets
   list: protectedProcedure
     .input(z.object({
