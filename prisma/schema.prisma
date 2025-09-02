@@ -1,396 +1,319 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider  = "postgresql"
-  url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
-// User management
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  name      String?
-  avatar    String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  // Creator profile
-  creatorType    String @default("solo") // solo, semi-pro
-  platforms      String[] // platforms used: tiktok, youtube, instagram
-  preferredLang  String @default("fr")
-  timezone       String @default("Europe/Paris")
-
-  // Subscription & Credits
-  planId         String @default("free")
-  creditsBalance Int    @default(100)
-  subscriptionId String?
-  
-  // Stripe integration
-  stripeCustomerId       String? @unique
-  stripeSubscriptionId   String? @unique
+  id                     String          @id @default(cuid())
+  email                  String          @unique
+  name                   String?
+  avatar                 String?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+  creatorType            String          @default("solo")
+  platforms              String[]
+  preferredLang          String          @default("fr")
+  timezone               String          @default("Europe/Paris")
+  planId                 String          @default("free")
+  creditsBalance         Int             @default(100)
+  subscriptionId         String?
+  stripeCustomerId       String?         @unique
+  stripeSubscriptionId   String?         @unique
   stripeCurrentPeriodEnd DateTime?
   stripePriceId          String?
   stripePaymentMethodId  String?
-
-  // Relations
-  apiCredentials ApiCredential[]
-  socialAccounts SocialAccount[]
-  projects       Project[]
-  jobs           Job[]
-  assets         Asset[]
-  posts          Post[]
-  prompts        Prompt[]
-  usageEvents    UsageEvent[]
-  creditLedger   CreditLedger[]
-  stripeCustomer StripeCustomer?
-  stripePayments StripePayment[]
+  apiCredentials         ApiCredential[]
+  assets                 Asset[]
+  creditLedger           CreditLedger[]
+  jobs                   Job[]
+  posts                  Post[]
+  projects               Project[]
+  prompts                Prompt[]
+  socialAccounts         SocialAccount[]
+  stripeCustomer         StripeCustomer?
+  stripePayments         StripePayment[]
+  usageEvents            UsageEvent[]
 
   @@map("users")
 }
 
-// Encrypted API credentials for AI providers
 model ApiCredential {
-  id              String   @id @default(cuid())
-  userId          String
-  provider        String   // openai, midjourney, sora, replicate, etc.
-  encryptedKey    String   // AES-256 encrypted
-  isActive        Boolean  @default(true)
-  lastValidated   DateTime?
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id            String    @id @default(cuid())
+  userId        String
+  provider      String
+  encryptedKey  String
+  isActive      Boolean   @default(true)
+  lastValidated DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, provider])
   @@map("api_credentials")
 }
 
-// Connected social media accounts
 model SocialAccount {
-  id           String   @id @default(cuid())
+  id           String    @id @default(cuid())
   userId       String
-  platform     String   // tiktok, youtube, instagram
-  accountId    String   // platform user ID
+  platform     String
+  accountId    String
   username     String
-  accessToken  String   // encrypted
-  refreshToken String?  // encrypted
+  accessToken  String
+  refreshToken String?
   expiresAt    DateTime?
-  isActive     Boolean  @default(true)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isActive     Boolean   @default(true)
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@unique([userId, platform, accountId])
   @@map("social_accounts")
 }
 
-// Projects/Campaigns grouping
 model Project {
-  id          String   @id @default(cuid())
+  id          String    @id @default(cuid())
   userId      String
   name        String
   description String?
-  isDefault   Boolean  @default(false)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  jobs   Job[]
-  assets Asset[]
-  posts  Post[]
+  isDefault   Boolean   @default(false)
+  category    String?
+  tags        String[]  @default([])
+  priority    String    @default("medium")
+  status      String    @default("active")
+  platforms   String[]  @default([])
+  startDate   DateTime?
+  endDate     DateTime?
+  targetPosts Int?
+  color       String?
+  isPublic    Boolean   @default(false)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  assets      Asset[]
+  jobs        Job[]
+  posts       Post[]
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("projects")
 }
 
-// Background jobs (generation, publishing)
 model Job {
-  id        String   @id @default(cuid())
-  userId    String
-  projectId String?
-  type      String   // generation, publishing, optimization
-  status    String   @default("pending") // pending, running, completed, failed, cancelled
-  
-  // Job configuration
-  prompt         String?
-  config         Json?  // duration, style, platforms, etc.
-  estimatedTime  Int?   // seconds
-  actualTime     Int?   // seconds
-  
-  // Progress tracking
-  progress               Int     @default(0) // 0-100
-  estimatedTimeRemaining Int?    // seconds
-  metadata               Json?   // additional job metadata
-  
-  // Results
-  resultAssetId String? @unique
-  resultPostId  String? @unique
-  errorMessage  String?
-  
-  // Metadata
-  inngestId     String? // Inngest job ID for tracking
-  priority      Int     @default(0)
-  retryCount    Int     @default(0)
-  maxRetries    Int     @default(3)
-  
-  createdAt     DateTime @default(now())
-  startedAt     DateTime?
-  completedAt   DateTime?
-  updatedAt     DateTime @updatedAt
-
-  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project      Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  resultAsset  Asset?   @relation("JobResult")
-  resultPost   Post?    @relation("JobResultPost")
-  usageEvents  UsageEvent[]
+  id                     String       @id @default(cuid())
+  userId                 String
+  projectId              String?
+  type                   String
+  status                 String       @default("pending")
+  prompt                 String?
+  config                 Json?
+  estimatedTime          Int?
+  actualTime             Int?
+  progress               Int          @default(0)
+  estimatedTimeRemaining Int?
+  metadata               Json?
+  resultAssetId          String?      @unique
+  resultPostId           String?      @unique
+  errorMessage           String?
+  inngestId              String?
+  priority               Int          @default(0)
+  retryCount             Int          @default(0)
+  maxRetries             Int          @default(3)
+  createdAt              DateTime     @default(now())
+  startedAt              DateTime?
+  completedAt            DateTime?
+  updatedAt              DateTime     @updatedAt
+  resultAsset            Asset?       @relation("JobResult")
+  project                Project?     @relation(fields: [projectId], references: [id])
+  user                   User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  resultPost             Post?        @relation("JobResultPost")
+  usageEvents            UsageEvent[]
 
   @@index([userId, status])
   @@index([inngestId])
   @@map("jobs")
 }
 
-// Generated media assets
 model Asset {
-  id          String   @id @default(cuid())
-  userId      String
-  projectId   String?
-  jobId       String?  @unique // Job that created this asset
-  
-  // File metadata
-  filename    String
+  id           String   @id @default(cuid())
+  userId       String
+  projectId    String?
+  jobId        String?  @unique
+  filename     String
   originalName String?
-  mimeType    String
-  fileSize    Int      // bytes
-  duration    Int?     // seconds for videos
-  width       Int?
-  height      Int?
-  
-  // Storage
-  s3Key       String   @unique
-  s3Bucket    String
-  s3Region    String
-  publicUrl   String?  // CloudFront URL
-  thumbnail   String?  // thumbnail S3 key
-  
-  // AI metadata
-  generatedBy String?  // openai, midjourney, etc.
-  prompt      String?
-  aiConfig    Json?
-  
-  // Status
-  status      String   @default("processing") // processing, ready, failed
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project     Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  creatorJob  Job?      @relation("JobResult", fields: [jobId], references: [resultAssetId])
-  posts       Post[]
+  mimeType     String
+  fileSize     Int
+  duration     Int?
+  width        Int?
+  height       Int?
+  s3Key        String   @unique
+  s3Bucket     String
+  s3Region     String
+  publicUrl    String?
+  thumbnail    String?
+  generatedBy  String?
+  prompt       String?
+  aiConfig     Json?
+  status       String   @default("processing")
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  creatorJob   Job?     @relation("JobResult", fields: [jobId], references: [resultAssetId])
+  project      Project? @relation(fields: [projectId], references: [id])
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  posts        Post[]
 
   @@index([userId, status])
   @@index([s3Key])
   @@map("assets")
 }
 
-// Posts for publishing to social media
 model Post {
-  id          String   @id @default(cuid())
-  userId      String
-  projectId   String?
-  assetId     String?
-  jobId       String?  @unique // Publishing job
-  
-  // Content
-  title       String?
-  description String?
-  hashtags    String[] // array of hashtags
-  
-  // Publishing
-  platforms        String[]  // platforms to publish to
-  scheduledAt      DateTime?
-  publishedAt      DateTime?
-  status           String    @default("draft") // draft, scheduled, publishing, published, failed
-  
-  // Platform-specific metadata
-  platformData     Json?     // platform-specific IDs, URLs, etc.
-  
-  // SEO & Performance
-  seoOptimized     Boolean   @default(false)
-  performanceData  Json?     // views, likes, shares per platform
-  
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
-
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  project     Project? @relation(fields: [projectId], references: [id], onDelete: SetNull)
-  asset       Asset?   @relation(fields: [assetId], references: [id], onDelete: SetNull)
-  creatorJob  Job?     @relation("JobResultPost", fields: [jobId], references: [resultPostId])
+  id              String    @id @default(cuid())
+  userId          String
+  projectId       String?
+  assetId         String?
+  jobId           String?   @unique
+  title           String?
+  description     String?
+  hashtags        String[]
+  platforms       String[]
+  scheduledAt     DateTime?
+  publishedAt     DateTime?
+  status          String    @default("draft")
+  platformData    Json?
+  seoOptimized    Boolean   @default(false)
+  performanceData Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  asset           Asset?    @relation(fields: [assetId], references: [id])
+  creatorJob      Job?      @relation("JobResultPost", fields: [jobId], references: [resultPostId])
+  project         Project?  @relation(fields: [projectId], references: [id])
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, status])
   @@index([scheduledAt])
   @@map("posts")
 }
 
-// Saved prompts and templates
 model Prompt {
-  id          String   @id @default(cuid())
-  userId      String?  // null for public templates
-  title       String
-  content     String
-  category    String?  // motivation, tutorial, product, etc.
-  tags        String[] @default([])
-  
-  // Usage tracking
-  usageCount  Int      @default(0)
-  lastUsedAt  DateTime?
-  
-  // Template system
-  isTemplate  Boolean  @default(false)
-  isPublic    Boolean  @default(false)
-  isPinned    Boolean  @default(false)
-  
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String    @id @default(cuid())
+  userId     String?
+  title      String
+  content    String
+  category   String?
+  tags       String[]  @default([])
+  usageCount Int       @default(0)
+  lastUsedAt DateTime?
+  isTemplate Boolean   @default(false)
+  isPublic   Boolean   @default(false)
+  isPinned   Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isPinned])
   @@index([isTemplate, isPublic])
   @@map("prompts")
 }
 
-// Subscription plans
 model Plan {
-  id          String @id @default(cuid())
-  name        String @unique
-  description String?
-  price       Int    // cents
-  currency    String @default("EUR")
-  
-  // Stripe integration
-  stripePriceId   String? @unique
-  stripeProductId String?
-  
-  // Limits
-  creditsPerMonth     Int
-  maxGenerationsDay   Int
-  maxStorageGB        Int
-  features            String[] // scheduling, advanced_ai, analytics, etc.
-  
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id                String   @id @default(cuid())
+  name              String   @unique
+  description       String?
+  price             Int
+  currency          String   @default("EUR")
+  stripePriceId     String?  @unique
+  stripeProductId   String?
+  creditsPerMonth   Int
+  maxGenerationsDay Int
+  maxStorageGB      Int
+  features          String[]
+  isActive          Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@map("plans")
 }
 
-// Credits usage tracking
 model CreditLedger {
   id          String   @id @default(cuid())
   userId      String
-  amount      Int      // positive = credit, negative = debit
-  type        String   // purchase, generation, publishing, refund
+  amount      Int
+  type        String
   description String?
-  
-  // Cost tracking
-  costEur     Decimal? @db.Decimal(10, 4) // actual cost in EUR
+  costEur     Decimal? @db.Decimal(10, 4)
   jobId       String?
-  
   createdAt   DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@map("credit_ledger")
 }
 
-// Usage events for analytics
 model UsageEvent {
   id        String   @id @default(cuid())
   userId    String?
   jobId     String?
-  
-  // Event data
-  event     String   // signup_completed, api_connected, generation_started, etc.
-  platform  String?  // tiktok, youtube, instagram
-  provider  String?  // openai, midjourney, etc.
-  
-  // Metadata
+  event     String
+  platform  String?
+  provider  String?
   metadata  Json?
   costEur   Decimal? @db.Decimal(10, 4)
-  duration  Int?     // seconds
-  
+  duration  Int?
   createdAt DateTime @default(now())
-
-  user User? @relation(fields: [userId], references: [id], onDelete: SetNull)
-  job  Job?  @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  job       Job?     @relation(fields: [jobId], references: [id])
+  user      User?    @relation(fields: [userId], references: [id])
 
   @@index([event, createdAt])
   @@index([userId, createdAt])
   @@map("usage_events")
 }
 
-// Stripe webhooks tracking
 model StripeWebhook {
-  id            String   @id @default(cuid())
-  stripeEventId String   @unique
-  eventType     String   // customer.subscription.created, invoice.payment_succeeded, etc.
-  processed     Boolean  @default(false)
-  attempts      Int      @default(0)
+  id            String    @id @default(cuid())
+  stripeEventId String    @unique
+  eventType     String
+  processed     Boolean   @default(false)
+  attempts      Int       @default(0)
   lastError     String?
-  data          Json?    // stripe event data
-  createdAt     DateTime @default(now())
+  data          Json?
+  createdAt     DateTime  @default(now())
   processedAt   DateTime?
 
   @@index([processed, createdAt])
   @@map("stripe_webhooks")
 }
 
-// Stripe customer data sync
 model StripeCustomer {
-  id               String   @id @default(cuid())
-  userId           String   @unique
-  stripeCustomerId String   @unique
-  email            String
-  name             String?
-  
-  // Subscription info
-  subscriptionId     String?
-  subscriptionStatus String? // active, past_due, canceled, etc.
-  currentPeriodEnd   DateTime?
-  cancelAtPeriodEnd  Boolean @default(false)
-  
-  // Payment info
+  id                     String    @id @default(cuid())
+  userId                 String    @unique
+  stripeCustomerId       String    @unique
+  email                  String
+  name                   String?
+  subscriptionId         String?
+  subscriptionStatus     String?
+  currentPeriodEnd       DateTime?
+  cancelAtPeriodEnd      Boolean   @default(false)
   defaultPaymentMethodId String?
-  
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt              DateTime  @default(now())
+  updatedAt              DateTime  @updatedAt
+  user                   User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("stripe_customers")
 }
 
-// Stripe payment history
 model StripePayment {
-  id               String   @id @default(cuid())
-  userId           String
-  stripePaymentId  String   @unique
-  stripeInvoiceId  String?
-  amount           Int      // cents
-  currency         String   @default("eur")
-  status           String   // succeeded, pending, failed
-  description      String?
-  createdAt        DateTime @default(now())
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id              String   @id @default(cuid())
+  userId          String
+  stripePaymentId String   @unique
+  stripeInvoiceId String?
+  amount          Int
+  currency        String   @default("eur")
+  status          String
+  description     String?
+  createdAt       DateTime @default(now())
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, createdAt])
   @@map("stripe_payments")

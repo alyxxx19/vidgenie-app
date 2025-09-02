@@ -114,12 +114,12 @@ export default function LibraryPage() {
                   placeholder="search_videos"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-7 h-8 bg-input border-border text-white font-mono text-xs"
+                  className="pl-7 h-8 bg-white border-border text-black font-mono text-xs"
                 />
               </div>
               
               <Select value={selectedProject} onValueChange={setSelectedProject}>
-                <SelectTrigger className="h-8 bg-input border-border text-white font-mono text-xs">
+                <SelectTrigger className="h-8 bg-white border-border text-black font-mono text-xs">
                   <SelectValue placeholder="all_projects" />
                 </SelectTrigger>
                 <SelectContent>
@@ -131,7 +131,7 @@ export default function LibraryPage() {
               </Select>
 
               <Select value={selectedTag} onValueChange={setSelectedTag}>
-                <SelectTrigger className="h-8 bg-input border-border text-white font-mono text-xs">
+                <SelectTrigger className="h-8 bg-white border-border text-black font-mono text-xs">
                   <SelectValue placeholder="all_tags" />
                 </SelectTrigger>
                 <SelectContent>
@@ -143,7 +143,7 @@ export default function LibraryPage() {
               </Select>
 
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="h-8 bg-input border-border text-white font-mono text-xs">
+                <SelectTrigger className="h-8 bg-white border-border text-black font-mono text-xs">
                   <SelectValue placeholder="sort_by" />
                 </SelectTrigger>
                 <SelectContent>

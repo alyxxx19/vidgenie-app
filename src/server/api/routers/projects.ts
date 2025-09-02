@@ -85,6 +85,14 @@ export const projectsRouter = createTRPCRouter({
     .input(z.object({
       name: z.string().min(1).max(100),
       description: z.string().optional(),
+      category: z.string().optional(),
+      tags: z.array(z.string()).optional(),
+      priority: z.enum(['low', 'medium', 'high']).optional(),
+      platforms: z.array(z.string()).optional(),
+      startDate: z.date().optional(),
+      endDate: z.date().optional(),
+      targetPosts: z.number().optional(),
+      color: z.string().optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const project = await ctx.db.project.create({
@@ -92,6 +100,14 @@ export const projectsRouter = createTRPCRouter({
           userId: ctx.userId,
           name: input.name,
           description: input.description,
+          category: input.category,
+          tags: input.tags || [],
+          priority: input.priority || 'medium',
+          platforms: input.platforms || [],
+          startDate: input.startDate,
+          endDate: input.endDate,
+          targetPosts: input.targetPosts,
+          color: input.color,
         },
       });
 

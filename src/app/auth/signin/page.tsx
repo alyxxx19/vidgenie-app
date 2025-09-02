@@ -250,7 +250,7 @@ export default function SignInPage() {
                       placeholder="user@domain.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-10 bg-input border-border text-white placeholder:text-muted-foreground focus:border-white focus:ring-0 font-mono text-sm"
+                      className="h-10 bg-white border-border text-black placeholder:text-muted-foreground focus:border-border focus:ring-0 font-mono text-sm"
                       required
                     />
                   </div>
@@ -264,7 +264,7 @@ export default function SignInPage() {
                         placeholder="••••••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pr-10 h-10 bg-input border-border text-white placeholder:text-muted-foreground focus:border-white focus:ring-0 font-mono text-sm"
+                        className="pr-10 h-10 bg-white border-border text-black placeholder:text-muted-foreground focus:border-border focus:ring-0 font-mono text-sm"
                         required
                       />
                       <button
@@ -304,7 +304,7 @@ export default function SignInPage() {
                       placeholder="full name"
                       value={name}
                       onChange={(e) => setName(e.target.value)}
-                      className="h-10 bg-input border-border text-white placeholder:text-muted-foreground focus:border-white focus:ring-0 font-mono text-sm"
+                      className="h-10 bg-white border-border text-black placeholder:text-muted-foreground focus:border-border focus:ring-0 font-mono text-sm"
                       required
                     />
                   </div>
@@ -317,7 +317,7 @@ export default function SignInPage() {
                       placeholder="user@domain.com"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
-                      className="h-10 bg-input border-border text-white placeholder:text-muted-foreground focus:border-white focus:ring-0 font-mono text-sm"
+                      className="h-10 bg-white border-border text-black placeholder:text-muted-foreground focus:border-border focus:ring-0 font-mono text-sm"
                       required
                     />
                   </div>
@@ -331,7 +331,7 @@ export default function SignInPage() {
                         placeholder="••••••••••••"
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="pr-10 h-10 bg-input border-border text-white placeholder:text-muted-foreground focus:border-white focus:ring-0 font-mono text-sm"
+                        className="pr-10 h-10 bg-white border-border text-black placeholder:text-muted-foreground focus:border-border focus:ring-0 font-mono text-sm"
                         required
                         minLength={6}
                       />

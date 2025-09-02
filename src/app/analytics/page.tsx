@@ -70,7 +70,7 @@ export default function AnalyticsPage() {
             
             <div className="flex items-center gap-2">
               <Select value={timeRange} onValueChange={setTimeRange}>
-                <SelectTrigger className="w-20 h-8 bg-input border-border text-white font-mono text-xs">
+                <SelectTrigger className="w-20 h-8 bg-white border-border text-black font-mono text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

@@ -154,7 +154,7 @@ export default function CreatePage() {
                     placeholder="inspiring video about pursuing dreams with sunset visuals and motivational music..."
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
-                    className="min-h-[80px] mt-1 bg-input border-border text-white font-mono text-xs"
+                    className="min-h-[80px] mt-1 bg-white border-border text-black font-mono text-xs"
                     maxLength={1000}
                   />
                   <p className="text-xs text-muted-foreground mt-1 font-mono">

@@ -46,15 +46,25 @@ export const createTRPCContext = async (_opts: CreateNextContextOptions) => {
     // Get authenticated user
     const { data: { user: authUser }, error } = await supabase.auth.getUser();
     
-    if (!error && authUser) {
-      // Get user profile from database
-      const { data: profile } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', authUser.id)
-        .single();
+    if (!error && authUser && authUser.id && authUser.email) {
+      // Ensure user exists in Prisma database
+      let dbUser = await db.user.findUnique({
+        where: { id: authUser.id }
+      });
 
-      user = { ...authUser, profile };
+      if (!dbUser) {
+        // Create user in Prisma database
+        dbUser = await db.user.create({
+          data: {
+            id: authUser.id,
+            email: authUser.email,
+            name: authUser.user_metadata?.name || authUser.email.split('@')[0],
+            avatar: authUser.user_metadata?.avatar_url,
+          }
+        });
+      }
+
+      user = { ...authUser, profile: dbUser };
     }
 
     // DEV MODE: Auto-authenticate for development if no user found
@@ -120,6 +130,7 @@ const enforceUserIsAuthed = t.middleware(({ ctx, next }) => {
     ctx: {
       ...ctx,
       user: ctx.user, // user is now guaranteed to be non-null
+      userId: ctx.user.id, // Add userId for convenience
     },
   });
 });

@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { redirect, useParams } from 'next/navigation';
+import { api } from '@/app/providers';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -23,69 +24,21 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-// Mock project data
-const mockProjectData = {
-  '1': {
-    id: '1',
-    name: 'Campagne Printemps 2024',
-    description: 'Série de contenus lifestyle pour promouvoir la nouvelle collection printemps',
-    status: 'active',
-    priority: 'high',
-    startDate: new Date('2024-03-01'),
-    endDate: new Date('2024-05-31'),
-    platforms: ['tiktok', 'instagram', 'youtube'],
-    collaborators: [
-      { id: '1', name: 'Marie Dubois', email: 'marie@example.com', role: 'Editor' },
-      { id: '2', name: 'Julien Martin', email: 'julien@example.com', role: 'Viewer' },
-    ],
-    content: [
-      {
-        id: '1',
-        title: 'Look printemps casual',
-        status: 'completed',
-        createdAt: new Date('2024-03-15'),
-        platforms: ['tiktok', 'instagram'],
-        views: 15420,
-        engagement: 8.2,
-      },
-      {
-        id: '2',
-        title: 'Tendances mode 2024',
-        status: 'published',
-        createdAt: new Date('2024-03-18'),
-        platforms: ['youtube', 'tiktok'],
-        views: 24680,
-        engagement: 12.5,
-      },
-      {
-        id: '3',
-        title: 'Accessoires must-have',
-        status: 'scheduled',
-        createdAt: new Date('2024-03-20'),
-        platforms: ['instagram'],
-        scheduledAt: new Date('2024-03-25'),
-      },
-    ],
-    analytics: {
-      totalViews: 156420,
-      totalEngagement: 9.8,
-      avgCompletionRate: 78,
-      topPerformingContent: 'Tendances mode 2024',
-      platformBreakdown: {
-        tiktok: 60,
-        instagram: 25,
-        youtube: 15,
-      },
-    },
-  },
-};
 
 export default function ProjectDetailPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const params = useParams();
   const projectId = params.id as string;
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+
+  // Fetch project data
+  const { data: project, isLoading: projectLoading } = api.projects.getById.useQuery(
+    { id: projectId },
+    { enabled: !!user && !!projectId }
+  );
+
+  const isLoading = authLoading || projectLoading;
 
   if (isLoading) {
     return (
@@ -99,16 +52,14 @@ export default function ProjectDetailPage() {
     redirect('/auth/signin');
   }
 
-  const project = mockProjectData[projectId as keyof typeof mockProjectData];
-  
-  if (!project) {
+  if (!project && !projectLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center">
-          <h2 className="text-2xl font-bold mb-2">Projet introuvable</h2>
-          <p className="text-slate-600 mb-4">Le projet demandé n&apos;existe pas</p>
-          <Button asChild>
-            <Link href="/projects">Retour aux projets</Link>
+          <h2 className="text-2xl font-mono text-white mb-2">project_not_found</h2>
+          <p className="text-muted-foreground mb-4 font-mono text-sm">requested project does not exist</p>
+          <Button asChild className="bg-white text-black font-mono text-xs">
+            <Link href="/projects">back_to_projects</Link>
           </Button>
         </div>
       </div>
@@ -130,13 +81,23 @@ export default function ProjectDetailPage() {
     }
   };
 
-  const filteredContent = project.content.filter(content => {
-    const matchesSearch = content.title.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || content.status === statusFilter;
+  // Filter project assets and posts
+  const filteredAssets = (project?.assets || []).filter(asset => {
+    const matchesSearch = asset.filename.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || asset.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const projectProgress = Math.round((project.content.filter(c => c.status === 'published').length / project.content.length) * 100);
+  const filteredPosts = (project?.posts || []).filter(post => {
+    const matchesSearch = (post.title || post.description || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === 'all' || post.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  const allContent = [...filteredAssets, ...filteredPosts];
+  const totalContent = (project?.assets?.length || 0) + (project?.posts?.length || 0);
+  const publishedCount = (project?.posts || []).filter(p => p.status === 'published').length;
+  const projectProgress = totalContent > 0 ? Math.round((publishedCount / totalContent) * 100) : 0;
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
@@ -172,8 +133,8 @@ export default function ProjectDetailPage() {
                 </Link>
               </Button>
               <div>
-                <h1 className="font-mono text-lg text-white mb-1">{project.name.toLowerCase().replace(/\s+/g, '_')}</h1>
-                <p className="text-muted-foreground text-xs font-mono">{project.description}</p>
+                <h1 className="font-mono text-lg text-white mb-1">{project?.name.toLowerCase().replace(/\s+/g, '_')}</h1>
+                <p className="text-muted-foreground text-xs font-mono">{project?.description || 'no_description'}</p>
               </div>
             </div>
             
@@ -202,7 +163,7 @@ export default function ProjectDetailPage() {
                 <Video className="w-4 h-4 text-white" />
                 <span className="text-sm font-mono text-white">contents</span>
               </div>
-              <div className="text-2xl font-mono text-white">{project.content.length}</div>
+              <div className="text-2xl font-mono text-white">{totalContent}</div>
               <p className="text-xs text-muted-foreground font-mono">total_created</p>
             </CardContent>
           </Card>
@@ -213,7 +174,7 @@ export default function ProjectDetailPage() {
                 <CheckCircle className="w-4 h-4 text-white" />
                 <span className="text-sm font-mono text-white">published</span>
               </div>
-              <div className="text-2xl font-mono text-white">{project.content.filter(c => c.status === 'published').length}</div>
+              <div className="text-2xl font-mono text-white">{publishedCount}</div>
               <p className="text-xs text-muted-foreground font-mono">{projectProgress}%_progress</p>
             </CardContent>
           </Card>
@@ -224,8 +185,8 @@ export default function ProjectDetailPage() {
                 <TrendingUp className="w-4 h-4 text-white" />
                 <span className="text-sm font-mono text-white">views</span>
               </div>
-              <div className="text-2xl font-mono text-white">{project.analytics.totalViews.toLocaleString('fr-FR')}</div>
-              <p className="text-xs text-muted-foreground font-mono">engagement_{project.analytics.totalEngagement}%</p>
+              <div className="text-2xl font-mono text-white">-</div>
+              <p className="text-xs text-muted-foreground font-mono">coming_soon</p>
             </CardContent>
           </Card>
           
@@ -235,7 +196,7 @@ export default function ProjectDetailPage() {
                 <Users className="w-4 h-4 text-white" />
                 <span className="text-sm font-mono text-white">team</span>
               </div>
-              <div className="text-2xl font-mono text-white">{project.collaborators.length + 1}</div>
+              <div className="text-2xl font-mono text-white">1</div>
               <p className="text-xs text-muted-foreground font-mono">collaborators</p>
             </CardContent>
           </Card>
@@ -245,7 +206,7 @@ export default function ProjectDetailPage() {
           <TabsList className="bg-card border-border">
             <TabsTrigger value="content" className="flex items-center gap-2 font-mono text-xs text-muted-foreground data-[state=active]:text-background data-[state=active]:bg-foreground">
               <Video className="w-3 h-3" />
-              content_({project.content.length})
+              content_({totalContent})
             </TabsTrigger>
             <TabsTrigger value="analytics" className="flex items-center gap-2 font-mono text-xs text-muted-foreground data-[state=active]:text-background data-[state=active]:bg-foreground">
               <TrendingUp className="w-3 h-3" />
@@ -253,7 +214,7 @@ export default function ProjectDetailPage() {
             </TabsTrigger>
             <TabsTrigger value="team" className="flex items-center gap-2 font-mono text-xs text-muted-foreground data-[state=active]:text-background data-[state=active]:bg-foreground">
               <Users className="w-3 h-3" />
-              team_({project.collaborators.length})
+              team_(1)
             </TabsTrigger>
           </TabsList>
 
@@ -269,13 +230,13 @@ export default function ProjectDetailPage() {
                       placeholder="search_content"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-7 h-8 bg-input border-border text-white font-mono text-xs"
+                      className="pl-7 h-8 bg-white border-border text-black font-mono text-xs"
                     />
                   </div>
                   <select 
                     value={statusFilter} 
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 h-8 bg-input border-border text-white font-mono text-xs rounded-md"
+                    className="px-3 py-2 h-8 bg-white border-border text-black font-mono text-xs rounded-md"
                   >
                     <option value="all">all_status</option>
                     <option value="completed">completed</option>
@@ -289,25 +250,79 @@ export default function ProjectDetailPage() {
 
             {/* Content List */}
             <div className="space-y-4">
-              {filteredContent.map((content) => (
-                <Card key={content.id} className="bg-card border-border hover:border-white/20 transition-colors">
+              {/* Assets */}
+              {filteredAssets.map((asset) => (
+                <Card key={`asset-${asset.id}`} className="bg-card border-border hover:border-white/20 transition-colors">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
                         <div className="w-16 h-16 bg-foreground rounded-lg flex items-center justify-center">
-                          <Play className="w-6 h-6 text-background" />
+                          <Video className="w-6 h-6 text-background" />
                         </div>
                         
                         <div>
-                          <h3 className="font-mono text-sm text-white">{content.title.toLowerCase().replace(/\s+/g, '_')}</h3>
+                          <h3 className="font-mono text-sm text-white">{asset.filename.toLowerCase()}</h3>
                           <div className="flex items-center gap-2 mt-1">
-                            {getStatusBadge(content.status)}
+                            {getStatusBadge(asset.status)}
                             <span className="text-xs text-muted-foreground font-mono">
-                              {content.createdAt.toLocaleDateString('en-US')}
+                              {new Date(asset.createdAt).toLocaleDateString('en-US')}
                             </span>
                           </div>
                           <div className="flex flex-wrap gap-1 mt-2">
-                            {content.platforms.map(platform => (
+                            <Badge variant="outline" className="text-xs border-border text-muted-foreground font-mono">
+                              {asset.mimeType}
+                            </Badge>
+                            {asset.duration && (
+                              <Badge variant="outline" className="text-xs border-border text-muted-foreground font-mono">
+                                {Math.round(asset.duration)}s
+                              </Badge>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="text-right">
+                        <div className="text-lg font-mono text-white">
+                          {(asset.fileSize / 1024 / 1024).toFixed(1)}MB
+                        </div>
+                        <p className="text-xs text-muted-foreground font-mono">
+                          {asset.width}x{asset.height}
+                        </p>
+                        
+                        <div className="flex gap-1 mt-3">
+                          <Button size="sm" variant="outline" className="border-border text-muted-foreground font-mono text-xs h-7">
+                            <Play className="w-3 h-3" />
+                          </Button>
+                          <Button size="sm" variant="outline" className="border-border text-muted-foreground font-mono text-xs h-7">
+                            <MoreVertical className="w-3 h-3" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+
+              {/* Posts */}
+              {filteredPosts.map((post) => (
+                <Card key={`post-${post.id}`} className="bg-card border-border hover:border-white/20 transition-colors">
+                  <CardContent className="p-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <div className="w-16 h-16 bg-foreground rounded-lg flex items-center justify-center">
+                          <Users className="w-6 h-6 text-background" />
+                        </div>
+                        
+                        <div>
+                          <h3 className="font-mono text-sm text-white">{(post.title || 'untitled').toLowerCase().replace(/\s+/g, '_')}</h3>
+                          <div className="flex items-center gap-2 mt-1">
+                            {getStatusBadge(post.status)}
+                            <span className="text-xs text-muted-foreground font-mono">
+                              {new Date(post.createdAt).toLocaleDateString('en-US')}
+                            </span>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {post.platforms.map(platform => (
                               <Badge key={platform} variant="outline" className="text-xs border-border text-muted-foreground font-mono">
                                 {platform}
                               </Badge>
@@ -317,19 +332,9 @@ export default function ProjectDetailPage() {
                       </div>
                       
                       <div className="text-right">
-                        {content.views && (
-                          <div className="text-lg font-mono text-white">
-                            {content.views.toLocaleString('en-US')}
-                          </div>
-                        )}
-                        {content.engagement && (
+                        {post.scheduledAt && (
                           <p className="text-xs text-muted-foreground font-mono">
-                            {content.engagement}%_engagement
-                          </p>
-                        )}
-                        {content.scheduledAt && (
-                          <p className="text-xs text-muted-foreground font-mono">
-                            scheduled_{content.scheduledAt.toLocaleDateString('en-US')}
+                            scheduled_{new Date(post.scheduledAt).toLocaleDateString('en-US')}
                           </p>
                         )}
                         
@@ -346,127 +351,76 @@ export default function ProjectDetailPage() {
                   </CardContent>
                 </Card>
               ))}
+
+              {allContent.length === 0 && (
+                <Card className="bg-card border-border">
+                  <CardContent className="py-8 text-center">
+                    <Video className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                    <h3 className="font-mono text-sm text-white mb-2">no_content_yet</h3>
+                    <p className="text-muted-foreground mb-4 font-mono text-xs">create your first content</p>
+                    <Button asChild className="bg-white text-black font-mono text-xs h-8">
+                      <Link href={`/create?project=${projectId}`}>
+                        <Plus className="w-3 h-3 mr-1" />
+                        new_content
+                      </Link>
+                    </Button>
+                  </CardContent>
+                </Card>
+              )}
             </div>
           </TabsContent>
 
           {/* Analytics Tab */}
           <TabsContent value="analytics" className="space-y-6">
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Performance globale</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-4">
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>Vues totales</span>
-                        <span className="font-medium">{project.analytics.totalViews.toLocaleString('fr-FR')}</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>Engagement moyen</span>
-                        <span className="font-medium">{project.analytics.totalEngagement}%</span>
-                      </div>
-                    </div>
-                    <div>
-                      <div className="flex justify-between text-sm mb-1">
-                        <span>Taux de completion</span>
-                        <span className="font-medium">{project.analytics.avgCompletionRate}%</span>
-                      </div>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Top contenu</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-center">
-                    <div className="w-12 h-12 bg-black rounded-lg flex items-center justify-center mx-auto mb-3">
-                      <Play className="w-6 h-6 text-white" />
-                    </div>
-                    <h4 className="font-medium">{project.analytics.topPerformingContent}</h4>
-                    <p className="text-sm text-slate-500">24,680 vues</p>
-                    <p className="text-sm text-green-600">12.5% engagement</p>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Répartition plateformes</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {Object.entries(project.analytics.platformBreakdown).map(([platform, percentage]) => (
-                      <div key={platform}>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span className="capitalize">
-                            {platform === 'tiktok' ? 'TikTok' : platform === 'instagram' ? 'Instagram' : 'YouTube'}
-                          </span>
-                          <span className="font-medium">{percentage}%</span>
-                        </div>
-                        <Progress value={percentage} className="h-2" />
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+            <Card className="bg-card border-border">
+              <CardHeader>
+                <CardTitle className="font-mono text-lg text-white">analytics_dashboard</CardTitle>
+                <CardDescription className="font-mono text-xs text-muted-foreground">coming_soon</CardDescription>
+              </CardHeader>
+              <CardContent className="py-8 text-center">
+                <TrendingUp className="w-12 h-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="font-mono text-sm text-white mb-2">analytics_in_development</h3>
+                <p className="text-muted-foreground font-mono text-xs">detailed metrics and insights will be available soon</p>
+              </CardContent>
+            </Card>
           </TabsContent>
 
           {/* Team Tab */}
           <TabsContent value="team" className="space-y-6">
-            <Card>
+            <Card className="bg-card border-border">
               <CardHeader>
                 <div className="flex items-center justify-between">
-                  <CardTitle className="text-lg">Collaborateurs du projet</CardTitle>
-                  <Button variant="outline" size="sm">
-                    <Plus className="w-4 h-4 mr-2" />
-                    Inviter
+                  <CardTitle className="font-mono text-lg text-white">project_team</CardTitle>
+                  <Button variant="outline" size="sm" className="border-border text-muted-foreground font-mono text-xs h-8">
+                    <Plus className="w-3 h-3 mr-1" />
+                    invite
                   </Button>
                 </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {/* Project Owner */}
-                  <div className="flex items-center justify-between p-4 border rounded-lg">
+                  <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-card">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
-                        {user.name?.charAt(0).toUpperCase()}
+                      <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-black font-mono font-medium">
+                        {user?.name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
                       </div>
                       <div>
-                        <p className="font-medium">{user.name}</p>
-                        <p className="text-sm text-slate-500">{user.email}</p>
+                        <p className="font-mono text-sm text-white">{user?.name || 'user'}</p>
+                        <p className="text-xs text-muted-foreground font-mono">{user?.email}</p>
                       </div>
                     </div>
-                    <Badge className="bg-blue-100 text-blue-800">Propriétaire</Badge>
+                    <Badge className="bg-white text-black font-mono text-xs">owner</Badge>
                   </div>
 
-                  {/* Collaborators */}
-                  {project.collaborators.map((collaborator) => (
-                    <div key={collaborator.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-slate-600 flex items-center justify-center text-white font-medium">
-                          {collaborator.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <p className="font-medium">{collaborator.name}</p>
-                          <p className="text-sm text-slate-500">{collaborator.email}</p>
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant="outline">{collaborator.role}</Badge>
-                        <Button variant="ghost" size="sm">
-                          <MoreVertical className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                  {/* Collaboration coming soon */}
+                  <Card className="bg-card border-border">
+                    <CardContent className="py-8 text-center">
+                      <Users className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
+                      <h3 className="font-mono text-sm text-white mb-2">team_collaboration</h3>
+                      <p className="text-muted-foreground font-mono text-xs">invite team members - coming soon</p>
+                    </CardContent>
+                  </Card>
                 </div>
               </CardContent>
             </Card>

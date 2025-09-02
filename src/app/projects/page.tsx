@@ -10,9 +10,11 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogOverlay, DialogPortal } from '@/components/ui/dialog';
 import { 
   Plus, 
   Search, 
@@ -24,7 +26,14 @@ import {
   ArrowUpDown,
   Grid3x3,
   List,
-  ArrowRight
+  ArrowRight,
+  Tag,
+  Target,
+  Palette,
+  Clock,
+  CheckCircle2,
+  X,
+  Hash
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
@@ -39,7 +48,18 @@ export default function ProjectsPage() {
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
+    category: '',
+    tags: [] as string[],
+    priority: 'medium' as 'low' | 'medium' | 'high',
+    platforms: [] as string[],
+    startDate: '',
+    endDate: '',
+    targetPosts: '',
+    color: '#ffffff',
   });
+  const [currentTag, setCurrentTag] = useState('');
+  const [step, setStep] = useState(1);
+  const [isCreating, setIsCreating] = useState(false);
 
   // Fetch projects from database
   const { data: projects, isLoading: projectsLoading, refetch } = api.projects.getAll.useQuery(undefined, {
@@ -101,22 +121,68 @@ export default function ProjectsPage() {
       return;
     }
 
+    setIsCreating(true);
     try {
       await createProject.mutateAsync({
         name: newProject.name,
         description: newProject.description || undefined,
+        category: newProject.category || undefined,
+        tags: newProject.tags,
+        priority: newProject.priority,
+        platforms: newProject.platforms,
+        startDate: newProject.startDate ? new Date(newProject.startDate) : undefined,
+        endDate: newProject.endDate ? new Date(newProject.endDate) : undefined,
+        targetPosts: newProject.targetPosts ? parseInt(newProject.targetPosts) : undefined,
+        color: newProject.color !== '#ffffff' ? newProject.color : undefined,
       });
       
       toast.success('project created successfully');
       setIsCreateDialogOpen(false);
+      setStep(1);
       setNewProject({
         name: '',
         description: '',
+        category: '',
+        tags: [],
+        priority: 'medium',
+        platforms: [],
+        startDate: '',
+        endDate: '',
+        targetPosts: '',
+        color: '#ffffff',
       });
       refetch();
     } catch (_error) {
       toast.error('failed to create project');
+    } finally {
+      setIsCreating(false);
     }
+  };
+
+  const addTag = () => {
+    if (currentTag && !newProject.tags.includes(currentTag)) {
+      setNewProject(prev => ({
+        ...prev,
+        tags: [...prev.tags, currentTag]
+      }));
+      setCurrentTag('');
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setNewProject(prev => ({
+      ...prev,
+      tags: prev.tags.filter(tag => tag !== tagToRemove)
+    }));
+  };
+
+  const togglePlatform = (platform: string) => {
+    setNewProject(prev => ({
+      ...prev,
+      platforms: prev.platforms.includes(platform)
+        ? prev.platforms.filter(p => p !== platform)
+        : [...prev.platforms, platform]
+    }));
   };
 
   const getProgressPercentage = (project: any) => {
@@ -164,54 +230,347 @@ export default function ProjectsPage() {
               </div>
             </div>
             
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <Dialog open={isCreateDialogOpen} onOpenChange={(open) => {
+              setIsCreateDialogOpen(open);
+              if (!open) {
+                setStep(1);
+                setNewProject({
+                  name: '',
+                  description: '',
+                  category: '',
+                  tags: [],
+                  priority: 'medium',
+                  platforms: [],
+                  startDate: '',
+                  endDate: '',
+                  targetPosts: '',
+                  color: '#ffffff',
+                });
+              }
+            }}>
               <DialogTrigger asChild>
-                <Button className="bg-white hover:bg-white/90 text-black font-mono text-xs h-8">
+                <Button className="bg-white hover:bg-white/90 text-black font-mono text-xs h-8 hover:scale-105 transition-all duration-300">
                   <Plus className="w-3 h-3 mr-1" />
                   new_project
                 </Button>
               </DialogTrigger>
-              <DialogContent className="max-w-lg bg-card border-border">
-                <DialogHeader>
-                  <DialogTitle className="font-mono text-white text-sm">create_project</DialogTitle>
-                  <DialogDescription className="font-mono text-muted-foreground text-xs">
-                    organize content into projects
-                  </DialogDescription>
+              <DialogPortal>
+                <DialogOverlay className="backdrop-blur-[5px] bg-black/30" />
+                <DialogContent className="max-w-2xl bg-black border-border overflow-hidden" showCloseButton={false}>
+                  <div className="absolute inset-0 bg-black" />
+                
+                <DialogHeader className="relative z-10">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <DialogTitle className="font-mono text-white text-lg flex items-center gap-2">
+                        <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 ${
+                          step === 1 ? 'bg-white text-black' : 
+                          step === 2 ? 'bg-white/20 text-white' : 
+                          'bg-white/10 text-muted-foreground'
+                        }`}>
+                          <Plus className="w-4 h-4" />
+                        </div>
+                        create_project
+                      </DialogTitle>
+                      <DialogDescription className="font-mono text-muted-foreground text-xs ml-10">
+                        step {step}/3 - {step === 1 ? 'basic info' : step === 2 ? 'classification' : 'planning'}
+                      </DialogDescription>
+                    </div>
+                    <div className="flex gap-1">
+                      {[1, 2, 3].map((s) => (
+                        <div
+                          key={s}
+                          className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                            s <= step ? 'bg-white' : 'bg-white/20'
+                          }`}
+                        />
+                      ))}
+                    </div>
+                  </div>
                 </DialogHeader>
                 
-                <div className="space-y-3">
-                  <div>
-                    <Label htmlFor="project-name" className="font-mono text-xs text-white">name *</Label>
-                    <Input
-                      id="project-name"
-                      placeholder="project_name_here"
-                      value={newProject.name}
-                      onChange={(e) => setNewProject(prev => ({ ...prev, name: e.target.value }))}
-                      className="h-8 bg-input border-border text-white font-mono text-xs"
-                    />
+                <div className="relative z-10">
+                  {/* Step 1: Basic Information */}
+                  {step === 1 && (
+                    <div className="space-y-4 animate-fade-in-up">
+                      <div>
+                        <Label htmlFor="project-name" className="font-mono text-xs text-white flex items-center gap-2">
+                          <Hash className="w-3 h-3" />
+                          project_name *
+                        </Label>
+                        <Input
+                          id="project-name"
+                          placeholder="my_awesome_project"
+                          value={newProject.name}
+                          onChange={(e) => setNewProject(prev => ({ ...prev, name: e.target.value }))}
+                          className="h-10 bg-white border-border text-black font-mono text-sm mt-2"
+                          autoFocus
+                        />
+                      </div>
+                      
+                      <div>
+                        <Label htmlFor="project-description" className="font-mono text-xs text-white">description</Label>
+                        <Textarea
+                          id="project-description"
+                          placeholder="describe your project goals and content strategy..."
+                          value={newProject.description}
+                          onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
+                          className="min-h-[80px] bg-white border-border text-black font-mono text-sm mt-2 resize-none"
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="font-mono text-xs text-white flex items-center gap-2">
+                          <Target className="w-3 h-3" />
+                          category
+                        </Label>
+                        <Select value={newProject.category} onValueChange={(value) => setNewProject(prev => ({ ...prev, category: value }))}>
+                          <SelectTrigger className="h-10 bg-white border-border text-black font-mono text-sm mt-2">
+                            <SelectValue placeholder="select category" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-card border-border">
+                            <SelectItem value="lifestyle" className="font-mono text-xs">lifestyle</SelectItem>
+                            <SelectItem value="tech" className="font-mono text-xs">tech</SelectItem>
+                            <SelectItem value="business" className="font-mono text-xs">business</SelectItem>
+                            <SelectItem value="entertainment" className="font-mono text-xs">entertainment</SelectItem>
+                            <SelectItem value="education" className="font-mono text-xs">education</SelectItem>
+                            <SelectItem value="fitness" className="font-mono text-xs">fitness</SelectItem>
+                            <SelectItem value="food" className="font-mono text-xs">food</SelectItem>
+                            <SelectItem value="travel" className="font-mono text-xs">travel</SelectItem>
+                            <SelectItem value="other" className="font-mono text-xs">other</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 2: Classification & Tags */}
+                  {step === 2 && (
+                    <div className="space-y-4 animate-fade-in-up">
+                      <div>
+                        <Label className="font-mono text-xs text-white flex items-center gap-2">
+                          <Tag className="w-3 h-3" />
+                          tags
+                        </Label>
+                        <div className="flex gap-2 mt-2">
+                          <Input
+                            placeholder="add_tag"
+                            value={currentTag}
+                            onChange={(e) => setCurrentTag(e.target.value)}
+                            onKeyPress={(e) => e.key === 'Enter' && addTag()}
+                            className="h-8 bg-white border-border text-black font-mono text-xs"
+                          />
+                          <Button 
+                            onClick={addTag} 
+                            size="sm" 
+                            className="bg-white text-black hover:bg-white/90 font-mono text-xs h-8"
+                          >
+                            add
+                          </Button>
+                        </div>
+                        <div className="flex flex-wrap gap-1 mt-3">
+                          {newProject.tags.map((tag) => (
+                            <Badge 
+                              key={tag} 
+                              variant="secondary" 
+                              className="font-mono text-xs bg-white/10 text-white hover:bg-white/20 cursor-pointer group"
+                              onClick={() => removeTag(tag)}
+                            >
+                              {tag}
+                              <X className="w-3 h-3 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+
+                      <Separator className="bg-border" />
+
+                      <div>
+                        <Label className="font-mono text-xs text-white flex items-center gap-2">
+                          <Target className="w-3 h-3" />
+                          priority
+                        </Label>
+                        <div className="grid grid-cols-3 gap-2 mt-2">
+                          {[
+                            { value: 'low', label: 'low', color: 'bg-muted-foreground' },
+                            { value: 'medium', label: 'medium', color: 'bg-white' },
+                            { value: 'high', label: 'high', color: 'bg-white' }
+                          ].map((priority) => (
+                            <Button
+                              key={priority.value}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setNewProject(prev => ({ ...prev, priority: priority.value as any }))}
+                              className={`h-10 font-mono text-xs transition-all duration-300 ${
+                                newProject.priority === priority.value
+                                  ? 'bg-white text-black border-white'
+                                  : 'bg-transparent border-border text-muted-foreground hover:text-white hover:border-white/30'
+                              }`}
+                            >
+                              <div className={`w-2 h-2 rounded-full mr-2 ${priority.color}`} />
+                              {priority.label}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label className="font-mono text-xs text-white flex items-center gap-2">
+                          <Palette className="w-3 h-3" />
+                          project_color
+                        </Label>
+                        <div className="flex items-center gap-3 mt-2">
+                          <input
+                            type="color"
+                            value={newProject.color}
+                            onChange={(e) => setNewProject(prev => ({ ...prev, color: e.target.value }))}
+                            className="w-10 h-10 rounded border border-border bg-transparent cursor-pointer"
+                          />
+                          <Input
+                            value={newProject.color}
+                            onChange={(e) => setNewProject(prev => ({ ...prev, color: e.target.value }))}
+                            className="h-10 bg-white border-border text-black font-mono text-xs"
+                            placeholder="#ffffff"
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Step 3: Planning & Platforms */}
+                  {step === 3 && (
+                    <div className="space-y-4 animate-fade-in-up">
+                      <div>
+                        <Label className="font-mono text-xs text-white flex items-center gap-2">
+                          <Users className="w-3 h-3" />
+                          target_platforms
+                        </Label>
+                        <div className="grid grid-cols-3 gap-2 mt-2">
+                          {[
+                            { id: 'tiktok', label: 'TikTok', color: 'hover:bg-pink-500/20' },
+                            { id: 'instagram', label: 'Instagram', color: 'hover:bg-purple-500/20' },
+                            { id: 'youtube', label: 'YouTube', color: 'hover:bg-red-500/20' }
+                          ].map((platform) => (
+                            <Button
+                              key={platform.id}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => togglePlatform(platform.id)}
+                              className={`h-12 font-mono text-xs transition-all duration-300 ${platform.color} ${
+                                newProject.platforms.includes(platform.id)
+                                  ? 'bg-white text-black border-white'
+                                  : 'bg-transparent border-border text-muted-foreground hover:text-white hover:border-white/30'
+                              }`}
+                            >
+                              <CheckCircle2 className={`w-3 h-3 mr-2 ${
+                                newProject.platforms.includes(platform.id) ? 'opacity-100' : 'opacity-0'
+                              } transition-opacity`} />
+                              {platform.label}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <Separator className="bg-border" />
+
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <Label htmlFor="start-date" className="font-mono text-xs text-white flex items-center gap-2">
+                            <Calendar className="w-3 h-3" />
+                            start_date
+                          </Label>
+                          <Input
+                            id="start-date"
+                            type="date"
+                            value={newProject.startDate}
+                            onChange={(e) => setNewProject(prev => ({ ...prev, startDate: e.target.value }))}
+                            className="h-10 bg-white border-border text-black font-mono text-xs mt-2"
+                          />
+                        </div>
+                        
+                        <div>
+                          <Label htmlFor="end-date" className="font-mono text-xs text-white">end_date</Label>
+                          <Input
+                            id="end-date"
+                            type="date"
+                            value={newProject.endDate}
+                            onChange={(e) => setNewProject(prev => ({ ...prev, endDate: e.target.value }))}
+                            className="h-10 bg-white border-border text-black font-mono text-xs mt-2"
+                          />
+                        </div>
+                      </div>
+
+                      <div>
+                        <Label htmlFor="target-posts" className="font-mono text-xs text-white flex items-center gap-2">
+                          <Target className="w-3 h-3" />
+                          target_posts
+                        </Label>
+                        <Input
+                          id="target-posts"
+                          type="number"
+                          placeholder="50"
+                          value={newProject.targetPosts}
+                          onChange={(e) => setNewProject(prev => ({ ...prev, targetPosts: e.target.value }))}
+                          className="h-10 bg-white border-border text-black font-mono text-xs mt-2"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Navigation Buttons */}
+                  <div className="flex justify-between pt-4 border-t border-border relative z-10">
+                    <Button 
+                      variant="outline" 
+                      onClick={() => step > 1 ? setStep(step - 1) : setIsCreateDialogOpen(false)}
+                      className="font-mono text-xs h-8 border-border text-muted-foreground hover:text-white"
+                      disabled={isCreating}
+                    >
+                      {step > 1 ? 'previous' : 'cancel'}
+                    </Button>
+                    
+                    <div className="flex gap-2">
+                      {step < 3 ? (
+                        <Button 
+                          onClick={() => setStep(step + 1)}
+                          className="bg-white text-black hover:bg-white/90 font-mono text-xs h-8"
+                          disabled={step === 1 && !newProject.name}
+                        >
+                          next
+                          <ArrowRight className="w-3 h-3 ml-1" />
+                        </Button>
+                      ) : (
+                        <Button 
+                          onClick={handleCreateProject} 
+                          className="bg-white text-black hover:bg-white/90 font-mono text-xs h-8"
+                          disabled={!newProject.name || isCreating}
+                        >
+                          {isCreating ? (
+                            <>
+                              <div className="animate-spin rounded-full h-3 w-3 border-b border-black mr-2" />
+                              creating...
+                            </>
+                          ) : (
+                            <>
+                              <CheckCircle2 className="w-3 h-3 mr-1" />
+                              create_project
+                            </>
+                          )}
+                        </Button>
+                      )}
+                    </div>
                   </div>
                   
-                  <div>
-                    <Label htmlFor="project-description" className="font-mono text-xs text-white">description (optional)</Label>
-                    <Textarea
-                      id="project-description"
-                      placeholder="project objectives and scope"
-                      value={newProject.description}
-                      onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
-                      className="min-h-[60px] bg-input border-border text-white font-mono text-xs"
-                    />
-                  </div>
-                  
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)} className="font-mono text-xs h-8">
-                      cancel
-                    </Button>
-                    <Button onClick={handleCreateProject} className="bg-white text-black font-mono text-xs h-8">
-                      create
-                    </Button>
-                  </div>
+                  {/* Custom close button */}
+                  <button
+                    onClick={() => setIsCreateDialogOpen(false)}
+                    className="absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 z-20"
+                  >
+                    <X className="h-4 w-4 text-white" />
+                    <span className="sr-only">Close</span>
+                  </button>
                 </div>
               </DialogContent>
+              </DialogPortal>
             </Dialog>
           </div>
         </div>
@@ -228,13 +587,13 @@ export default function ProjectsPage() {
                   placeholder="search_projects"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-7 h-8 bg-input border-border text-white font-mono text-xs"
+                  className="pl-7 h-8 bg-white border-border text-black font-mono text-xs"
                 />
               </div>
               
 
               <Select value={sortBy} onValueChange={setSortBy}>
-                <SelectTrigger className="w-32 h-8 bg-input border-border text-white font-mono text-xs">
+                <SelectTrigger className="w-32 h-8 bg-white border-border text-black font-mono text-xs">
                   <SelectValue placeholder="sort_by" />
                 </SelectTrigger>
                 <SelectContent className="bg-card border-border">
@@ -368,13 +727,13 @@ export default function ProjectsPage() {
             <CardContent className="py-8 text-center">
               <Folder className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
               <h3 className="font-mono text-sm text-white mb-2">
-                {searchTerm || statusFilter !== 'all' 
+                {searchTerm 
                   ? 'no_projects_found' 
                   : 'no_projects_yet'
                 }
               </h3>
               <p className="text-muted-foreground mb-4 font-mono text-xs">
-                {searchTerm || statusFilter !== 'all'
+                {searchTerm
                   ? 'try adjusting filters'
                   : 'create your first project'
                 }
