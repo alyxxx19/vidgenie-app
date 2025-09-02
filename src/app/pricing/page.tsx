@@ -196,7 +196,7 @@ const EnhancedPricingCard = ({
                   €{plan.originalPrice}
                 </span>
                 <Badge variant="secondary" className="ml-2 text-xs animate-shimmer">
-                  -17%
+                  -20%
                 </Badge>
               </div>
             )}
@@ -241,23 +241,19 @@ const EnhancedPricingCard = ({
           <Button
             onClick={onSubscribe}
             disabled={isLoading || isCurrentPlan}
-            className={`w-full font-mono lowercase transition-all duration-500 transform hover:scale-105 hover:shadow-glow shine-effect ${
+            className={`w-full font-mono lowercase transition-all duration-500 transform hover:scale-105 hover:shadow-glow rounded-lg py-3 px-6 border-[0.5px] ${
               plan.featured
-                ? 'bg-foreground hover:bg-foreground/90 text-background glow-white'
-                : 'bg-foreground hover:bg-foreground/90 text-background'
+                ? 'bg-transparent border-white text-white hover:bg-white hover:text-black'
+                : 'bg-transparent border-white text-white hover:bg-white hover:text-black'
             } ${
               isCurrentPlan 
-                ? 'bg-success hover:bg-success text-background' 
-                : ''
-            } ${
-              isHovered 
-                ? 'animate-glow-pulse shadow-glow' 
+                ? 'bg-white text-black border-white' 
                 : ''
             }`}
           >
             {isLoading ? (
               <div className="flex items-center animate-pulse">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-background mr-2" />
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-current mr-2" />
                 traitement...
               </div>
             ) : isCurrentPlan ? (
@@ -265,7 +261,7 @@ const EnhancedPricingCard = ({
             ) : (
               <span className="flex items-center justify-center group">
                 {plan.cta}
-                <ArrowRight className="ml-2 h-3 w-3 transition-transform duration-300 group-hover:translate-x-1" />
+                <ArrowRight className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
               </span>
             )}
           </Button>
@@ -502,7 +498,7 @@ export default function PricingPage() {
             
             {/* Enhanced Billing Toggle */}
             <div className="reveal-up stagger-3 mt-8">
-              <div className="inline-flex items-center gap-0 bg-card/50 backdrop-blur-md border border-border/50 overflow-hidden glass-card">
+              <div className="relative inline-flex items-center gap-0 bg-card/50 backdrop-blur-md border border-border/50 glass-card">
                 <button
                   onClick={() => setBillingCycle('monthly')}
                   className={`px-6 py-3 text-sm font-mono lowercase transition-all duration-500 hover:scale-105 shine-effect ${
@@ -522,10 +518,10 @@ export default function PricingPage() {
                   }`}
                 >
                   annuel
-                  <span className="absolute -top-2 -right-1 bg-foreground text-background text-xs px-2 py-1 font-mono animate-bounce">
-                    -17%
-                  </span>
                 </button>
+                <span className="absolute -top-3 -right-2 bg-white text-black text-xs px-2 py-1 font-mono animate-bounce z-30 shadow-lg border border-gray-300 rounded">
+                  -20%
+                </span>
               </div>
             </div>
           </div>
