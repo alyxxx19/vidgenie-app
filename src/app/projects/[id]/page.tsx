@@ -118,15 +118,15 @@ export default function ProjectDetailPage() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-green-100 text-green-800">Terminé</Badge>;
+        return <Badge className="bg-white text-black font-mono text-xs">completed</Badge>;
       case 'published':
-        return <Badge className="bg-blue-100 text-blue-800">Publié</Badge>;
+        return <Badge className="bg-white text-black font-mono text-xs">published</Badge>;
       case 'scheduled':
-        return <Badge className="bg-purple-100 text-purple-800">Programmé</Badge>;
+        return <Badge className="bg-muted text-white font-mono text-xs">scheduled</Badge>;
       case 'failed':
-        return <Badge className="bg-red-100 text-red-800">Échec</Badge>;
+        return <Badge className="bg-destructive text-background font-mono text-xs">failed</Badge>;
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge variant="secondary" className="font-mono text-xs">{status}</Badge>;
     }
   };
 
@@ -139,33 +139,53 @@ export default function ProjectDetailPage() {
   const projectProgress = Math.round((project.content.filter(c => c.status === 'published').length / project.content.length) * 100);
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Background with Grid Pattern like Landing Page */}
+      <div className="absolute inset-0" style={{
+        background: 'linear-gradient(180deg, #000000 0%, #111111 100%)'
+      }} />
+      <div className="absolute inset-0 opacity-50" style={{
+        backgroundImage: `repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 39px,
+          rgba(38, 38, 38, 0.3) 39px,
+          rgba(38, 38, 38, 0.3) 40px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 39px,
+          rgba(38, 38, 38, 0.3) 39px,
+          rgba(38, 38, 38, 0.3) 40px
+        )`
+      }} />
       {/* Header */}
-      <header className="bg-white border-b border-slate-200">
+      <header className="bg-card border-b border-border relative z-10">
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <Button variant="ghost" asChild>
+              <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-white">
                 <Link href="/projects">
-                  <ArrowLeft className="w-4 h-4 mr-2" />
-                  Projets
+                  <ArrowLeft className="w-3 h-3 mr-1" />
+                  back
                 </Link>
               </Button>
               <div>
-                <h1 className="text-2xl font-bold">{project.name}</h1>
-                <p className="text-slate-600">{project.description}</p>
+                <h1 className="font-mono text-lg text-white mb-1">{project.name.toLowerCase().replace(/\s+/g, '_')}</h1>
+                <p className="text-muted-foreground text-xs font-mono">{project.description}</p>
               </div>
             </div>
             
             <div className="flex items-center gap-3">
-              <Button variant="outline">
-                <Settings className="w-4 h-4 mr-2" />
-                Paramètres
+              <Button variant="outline" className="bg-transparent border-white text-white hover:bg-white hover:text-black font-mono text-xs h-8">
+                <Settings className="w-3 h-3 mr-1" />
+                settings
               </Button>
-              <Button asChild>
+              <Button asChild className="bg-white hover:bg-white/90 text-black font-mono text-xs h-8">
                 <Link href={`/create?project=${project.id}`}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Nouveau contenu
+                  <Plus className="w-3 h-3 mr-1" />
+                  new_content
                 </Link>
               </Button>
             </div>
@@ -173,95 +193,95 @@ export default function ProjectDetailPage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-6 relative z-10">
         {/* Project Overview */}
         <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card>
+          <Card className="bg-card border-border">
             <CardContent className="pt-6">
               <div className="flex items-center gap-2 mb-2">
-                <Video className="w-4 h-4 text-blue-600" />
-                <span className="text-sm font-medium">Contenus</span>
+                <Video className="w-4 h-4 text-white" />
+                <span className="text-sm font-mono text-white">contents</span>
               </div>
-              <div className="text-2xl font-bold">{project.content.length}</div>
-              <p className="text-xs text-slate-500">Total créés</p>
+              <div className="text-2xl font-mono text-white">{project.content.length}</div>
+              <p className="text-xs text-muted-foreground font-mono">total_created</p>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-card border-border">
             <CardContent className="pt-6">
               <div className="flex items-center gap-2 mb-2">
-                <CheckCircle className="w-4 h-4 text-green-600" />
-                <span className="text-sm font-medium">Publiés</span>
+                <CheckCircle className="w-4 h-4 text-white" />
+                <span className="text-sm font-mono text-white">published</span>
               </div>
-              <div className="text-2xl font-bold">{project.content.filter(c => c.status === 'published').length}</div>
-              <p className="text-xs text-slate-500">{projectProgress}% du projet</p>
+              <div className="text-2xl font-mono text-white">{project.content.filter(c => c.status === 'published').length}</div>
+              <p className="text-xs text-muted-foreground font-mono">{projectProgress}%_progress</p>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-card border-border">
             <CardContent className="pt-6">
               <div className="flex items-center gap-2 mb-2">
-                <TrendingUp className="w-4 h-4 text-purple-600" />
-                <span className="text-sm font-medium">Vues</span>
+                <TrendingUp className="w-4 h-4 text-white" />
+                <span className="text-sm font-mono text-white">views</span>
               </div>
-              <div className="text-2xl font-bold">{project.analytics.totalViews.toLocaleString('fr-FR')}</div>
-              <p className="text-xs text-slate-500">Engagement {project.analytics.totalEngagement}%</p>
+              <div className="text-2xl font-mono text-white">{project.analytics.totalViews.toLocaleString('fr-FR')}</div>
+              <p className="text-xs text-muted-foreground font-mono">engagement_{project.analytics.totalEngagement}%</p>
             </CardContent>
           </Card>
           
-          <Card>
+          <Card className="bg-card border-border">
             <CardContent className="pt-6">
               <div className="flex items-center gap-2 mb-2">
-                <Users className="w-4 h-4 text-orange-600" />
-                <span className="text-sm font-medium">Équipe</span>
+                <Users className="w-4 h-4 text-white" />
+                <span className="text-sm font-mono text-white">team</span>
               </div>
-              <div className="text-2xl font-bold">{project.collaborators.length + 1}</div>
-              <p className="text-xs text-slate-500">Collaborateurs</p>
+              <div className="text-2xl font-mono text-white">{project.collaborators.length + 1}</div>
+              <p className="text-xs text-muted-foreground font-mono">collaborators</p>
             </CardContent>
           </Card>
         </div>
 
         <Tabs defaultValue="content" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="content" className="flex items-center gap-2">
-              <Video className="w-4 h-4" />
-              Contenu ({project.content.length})
+          <TabsList className="bg-card border-border">
+            <TabsTrigger value="content" className="flex items-center gap-2 font-mono text-xs text-muted-foreground data-[state=active]:text-background data-[state=active]:bg-foreground">
+              <Video className="w-3 h-3" />
+              content_({project.content.length})
             </TabsTrigger>
-            <TabsTrigger value="analytics" className="flex items-center gap-2">
-              <TrendingUp className="w-4 h-4" />
-              Analytics
+            <TabsTrigger value="analytics" className="flex items-center gap-2 font-mono text-xs text-muted-foreground data-[state=active]:text-background data-[state=active]:bg-foreground">
+              <TrendingUp className="w-3 h-3" />
+              analytics
             </TabsTrigger>
-            <TabsTrigger value="team" className="flex items-center gap-2">
-              <Users className="w-4 h-4" />
-              Équipe ({project.collaborators.length})
+            <TabsTrigger value="team" className="flex items-center gap-2 font-mono text-xs text-muted-foreground data-[state=active]:text-background data-[state=active]:bg-foreground">
+              <Users className="w-3 h-3" />
+              team_({project.collaborators.length})
             </TabsTrigger>
           </TabsList>
 
           {/* Content Tab */}
           <TabsContent value="content" className="space-y-6">
             {/* Content Filters */}
-            <Card>
-              <CardContent className="pt-6">
-                <div className="flex gap-4">
+            <Card className="bg-card border-border">
+              <CardContent className="pt-4">
+                <div className="flex gap-3">
                   <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
+                    <Search className="absolute left-2 top-1/2 transform -translate-y-1/2 text-muted-foreground w-3 h-3" />
                     <Input
-                      placeholder="Rechercher du contenu..."
+                      placeholder="search_content"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-10"
+                      className="pl-7 h-8 bg-input border-border text-white font-mono text-xs"
                     />
                   </div>
                   <select 
                     value={statusFilter} 
                     onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-2 border border-slate-300 rounded-md text-sm"
+                    className="px-3 py-2 h-8 bg-input border-border text-white font-mono text-xs rounded-md"
                   >
-                    <option value="all">Tous les statuts</option>
-                    <option value="completed">Terminés</option>
-                    <option value="published">Publiés</option>
-                    <option value="scheduled">Programmés</option>
-                    <option value="failed">Échecs</option>
+                    <option value="all">all_status</option>
+                    <option value="completed">completed</option>
+                    <option value="published">published</option>
+                    <option value="scheduled">scheduled</option>
+                    <option value="failed">failed</option>
                   </select>
                 </div>
               </CardContent>
@@ -270,26 +290,26 @@ export default function ProjectDetailPage() {
             {/* Content List */}
             <div className="space-y-4">
               {filteredContent.map((content) => (
-                <Card key={content.id}>
+                <Card key={content.id} className="bg-card border-border hover:border-white/20 transition-colors">
                   <CardContent className="p-6">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <div className="w-16 h-16 bg-black rounded-lg flex items-center justify-center">
-                          <Play className="w-6 h-6 text-white" />
+                        <div className="w-16 h-16 bg-foreground rounded-lg flex items-center justify-center">
+                          <Play className="w-6 h-6 text-background" />
                         </div>
                         
                         <div>
-                          <h3 className="font-medium text-lg">{content.title}</h3>
+                          <h3 className="font-mono text-sm text-white">{content.title.toLowerCase().replace(/\s+/g, '_')}</h3>
                           <div className="flex items-center gap-2 mt-1">
                             {getStatusBadge(content.status)}
-                            <span className="text-sm text-slate-500">
-                              {content.createdAt.toLocaleDateString('fr-FR')}
+                            <span className="text-xs text-muted-foreground font-mono">
+                              {content.createdAt.toLocaleDateString('en-US')}
                             </span>
                           </div>
                           <div className="flex flex-wrap gap-1 mt-2">
                             {content.platforms.map(platform => (
-                              <Badge key={platform} variant="outline" className="text-xs">
-                                {platform === 'tiktok' ? 'TikTok' : platform === 'instagram' ? 'Instagram' : 'YouTube'}
+                              <Badge key={platform} variant="outline" className="text-xs border-border text-muted-foreground font-mono">
+                                {platform}
                               </Badge>
                             ))}
                           </div>
@@ -298,26 +318,26 @@ export default function ProjectDetailPage() {
                       
                       <div className="text-right">
                         {content.views && (
-                          <div className="text-lg font-bold text-blue-600">
-                            {content.views.toLocaleString('fr-FR')}
+                          <div className="text-lg font-mono text-white">
+                            {content.views.toLocaleString('en-US')}
                           </div>
                         )}
                         {content.engagement && (
-                          <p className="text-sm text-slate-500">
-                            {content.engagement}% engagement
+                          <p className="text-xs text-muted-foreground font-mono">
+                            {content.engagement}%_engagement
                           </p>
                         )}
                         {content.scheduledAt && (
-                          <p className="text-sm text-slate-500">
-                            Programmé pour {content.scheduledAt.toLocaleDateString('fr-FR')}
+                          <p className="text-xs text-muted-foreground font-mono">
+                            scheduled_{content.scheduledAt.toLocaleDateString('en-US')}
                           </p>
                         )}
                         
-                        <div className="flex gap-2 mt-3">
-                          <Button size="sm" variant="outline">
+                        <div className="flex gap-1 mt-3">
+                          <Button size="sm" variant="outline" className="border-border text-muted-foreground font-mono text-xs h-7">
                             <Play className="w-3 h-3" />
                           </Button>
-                          <Button size="sm" variant="outline">
+                          <Button size="sm" variant="outline" className="border-border text-muted-foreground font-mono text-xs h-7">
                             <MoreVertical className="w-3 h-3" />
                           </Button>
                         </div>

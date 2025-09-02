@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
+import { api } from '@/app/providers';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,26 +20,35 @@ import {
   Calendar, 
   Users, 
   ArrowLeft,
-  MoreVertical
+  MoreVertical,
+  ArrowUpDown,
+  Grid3x3,
+  List,
+  ArrowRight
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 
-import { mockProjects, type Project, getStatusBadge, getPriorityBadge } from '@/lib/mock-data';
-
 export default function ProjectsPage() {
-  const { user, isLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
   const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [sortBy, setSortBy] = useState('updated');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [newProject, setNewProject] = useState({
     name: '',
     description: '',
-    priority: 'medium',
-    platforms: [] as string[],
-    startDate: '',
-    endDate: '',
   });
+
+  // Fetch projects from database
+  const { data: projects, isLoading: projectsLoading, refetch } = api.projects.getAll.useQuery(undefined, {
+    enabled: !!user,
+  });
+  const createProject = api.projects.create.useMutation();
+  const deleteProject = api.projects.delete.useMutation();
+
+  const isLoading = authLoading || projectsLoading;
 
   if (isLoading) {
     return (
@@ -52,55 +62,90 @@ export default function ProjectsPage() {
     redirect('/auth/signin');
   }
 
-  // Filter projects
-  const filteredProjects = mockProjects.filter(project => {
-    const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         project.description.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || project.status === statusFilter;
-    
-    return matchesSearch && matchesStatus;
-  });
-
-
-  const _getPlatformIcon = (platform: string) => {
-    // Return platform-specific styling
-    return platform;
-  };
+  // Filter and sort projects
+  const filteredProjects = (projects || [])
+    .filter(project => {
+      const matchesSearch = project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           (project.description?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+      
+      return matchesSearch;
+    })
+    .sort((a, b) => {
+      let aValue, bValue;
+      
+      switch (sortBy) {
+        case 'name':
+          aValue = a.name.toLowerCase();
+          bValue = b.name.toLowerCase();
+          break;
+        case 'created':
+          aValue = new Date(a.createdAt).getTime();
+          bValue = new Date(b.createdAt).getTime();
+          break;
+        case 'updated':
+          aValue = new Date(a.updatedAt).getTime();
+          bValue = new Date(b.updatedAt).getTime();
+          break;
+        default:
+          return 0;
+      }
+      
+      if (aValue < bValue) return sortOrder === 'asc' ? -1 : 1;
+      if (aValue > bValue) return sortOrder === 'asc' ? 1 : -1;
+      return 0;
+    });
 
   const handleCreateProject = async () => {
-    if (!newProject.name || !newProject.description) {
-      toast.error('Veuillez remplir tous les champs obligatoires');
+    if (!newProject.name) {
+      toast.error('please enter a project name');
       return;
     }
 
     try {
-      // Simulate project creation
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await createProject.mutateAsync({
+        name: newProject.name,
+        description: newProject.description || undefined,
+      });
       
-      toast.success('Projet créé avec succès!');
+      toast.success('project created successfully');
       setIsCreateDialogOpen(false);
       setNewProject({
         name: '',
         description: '',
-        priority: 'medium',
-        platforms: [],
-        startDate: '',
-        endDate: '',
       });
+      refetch();
     } catch (_error) {
-      toast.error('Erreur lors de la création du projet');
+      toast.error('failed to create project');
     }
   };
 
-  const getProgressPercentage = (project: Project) => {
-    if (project.contentCount === 0) return 0;
+  const getProgressPercentage = (project: any) => {
+    if (!project.contentCount || project.contentCount === 0) return 0;
     return Math.round((project.publishedCount / project.contentCount) * 100);
   };
 
   return (
-    <div className="min-h-screen bg-minimal-gradient">
-      {/* Minimal grid */}
-      <div className="absolute inset-0 bg-grid-minimal opacity-30" />
+    <div className="min-h-screen bg-background relative overflow-hidden">
+      {/* Background with Grid Pattern like Landing Page */}
+      <div className="absolute inset-0" style={{
+        background: 'linear-gradient(180deg, #000000 0%, #111111 100%)'
+      }} />
+      <div className="absolute inset-0 opacity-50" style={{
+        backgroundImage: `repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 39px,
+          rgba(38, 38, 38, 0.3) 39px,
+          rgba(38, 38, 38, 0.3) 40px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 39px,
+          rgba(38, 38, 38, 0.3) 39px,
+          rgba(38, 38, 38, 0.3) 40px
+        )`
+      }} />
       
       {/* Header */}
       <header className="bg-card border-b border-border relative z-10">
@@ -147,54 +192,13 @@ export default function ProjectsPage() {
                   </div>
                   
                   <div>
-                    <Label htmlFor="project-description" className="font-mono text-xs text-white">description *</Label>
+                    <Label htmlFor="project-description" className="font-mono text-xs text-white">description (optional)</Label>
                     <Textarea
                       id="project-description"
                       placeholder="project objectives and scope"
                       value={newProject.description}
                       onChange={(e) => setNewProject(prev => ({ ...prev, description: e.target.value }))}
                       className="min-h-[60px] bg-input border-border text-white font-mono text-xs"
-                    />
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <Label htmlFor="priority" className="font-mono text-xs text-white">priority</Label>
-                      <Select 
-                        value={newProject.priority} 
-                        onValueChange={(value) => setNewProject(prev => ({ ...prev, priority: value }))}
-                      >
-                        <SelectTrigger className="h-8 bg-input border-border text-white font-mono text-xs">
-                          <SelectValue placeholder="select priority" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="low">low</SelectItem>
-                          <SelectItem value="medium">medium</SelectItem>
-                          <SelectItem value="high">high</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                    
-                    <div>
-                      <Label htmlFor="start-date" className="font-mono text-xs text-white">start_date</Label>
-                      <Input
-                        id="start-date"
-                        type="date"
-                        value={newProject.startDate}
-                        onChange={(e) => setNewProject(prev => ({ ...prev, startDate: e.target.value }))}
-                        className="h-8 bg-input border-border text-white font-mono text-xs"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <Label htmlFor="end-date" className="font-mono text-xs text-white">end_date (optional)</Label>
-                    <Input
-                      id="end-date"
-                      type="date"
-                      value={newProject.endDate}
-                      onChange={(e) => setNewProject(prev => ({ ...prev, endDate: e.target.value }))}
-                      className="h-8 bg-input border-border text-white font-mono text-xs"
                     />
                   </div>
                   
@@ -214,7 +218,7 @@ export default function ProjectsPage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-6 relative z-10">
-        {/* Filters */}
+        {/* Enhanced Filters and Controls */}
         <Card className="mb-6 bg-card border-border">
           <CardContent className="pt-4">
             <div className="flex flex-col md:flex-row gap-3">
@@ -228,42 +232,73 @@ export default function ProjectsPage() {
                 />
               </div>
               
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
+
+              <Select value={sortBy} onValueChange={setSortBy}>
                 <SelectTrigger className="w-32 h-8 bg-input border-border text-white font-mono text-xs">
-                  <SelectValue placeholder="filter_status" />
+                  <SelectValue placeholder="sort_by" />
                 </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">all</SelectItem>
-                  <SelectItem value="active">active</SelectItem>
-                  <SelectItem value="completed">complete</SelectItem>
-                  <SelectItem value="paused">paused</SelectItem>
-                  <SelectItem value="archived">archived</SelectItem>
+                <SelectContent className="bg-card border-border">
+                  <SelectItem value="updated" className="font-mono text-xs">updated</SelectItem>
+                  <SelectItem value="created" className="font-mono text-xs">created</SelectItem>
+                  <SelectItem value="name" className="font-mono text-xs">name</SelectItem>
                 </SelectContent>
               </Select>
+
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="h-8 px-3 border-border text-muted-foreground hover:text-white font-mono text-xs"
+              >
+                <ArrowUpDown className="w-3 h-3" />
+                {sortOrder}
+              </Button>
+
+              <div className="flex gap-1 border border-border overflow-hidden">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode('grid')}
+                  className={`h-8 px-3 font-mono text-xs ${viewMode === 'grid' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-white'}`}
+                >
+                  <Grid3x3 className="w-3 h-3" />
+                </Button>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setViewMode('list')}
+                  className={`h-8 px-3 font-mono text-xs ${viewMode === 'list' ? 'bg-foreground text-background' : 'text-muted-foreground hover:text-white'}`}
+                >
+                  <List className="w-3 h-3" />
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Projects Grid */}
+        {/* Projects Grid/List */}
         {filteredProjects.length > 0 ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {filteredProjects.map((project) => (
-              <Card key={project.id} className="bg-card border-border hover:border-white/20 transition-colors animate-slide-in">
-                <CardHeader className="pb-3">
+          <div className={viewMode === 'grid' 
+            ? "grid md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch" 
+            : "space-y-4"
+          }>
+            {filteredProjects.map((project, index) => (
+              <Card key={project.id} className="bg-card border-border hover:border-white/20 transition-all duration-500 hover:scale-[1.02] hover:shadow-glow animate-slide-in h-full flex flex-col" style={{ animationDelay: `${index * 100}ms` }}>
+                <CardHeader className="pb-3 flex-shrink-0">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <CardTitle className="font-mono text-sm text-white leading-tight mb-2">
                         {project.name.toLowerCase().replace(/\s+/g, '_')}
                       </CardTitle>
                       <div className="flex items-center gap-1 mb-2">
-                        {(() => {
-                          const statusBadge = getStatusBadge(project.status);
-                          return <Badge className={statusBadge.className}>{statusBadge.label}</Badge>;
-                        })()}
-                        {(() => {
-                          const priorityBadge = getPriorityBadge(project.priority);
-                          return <Badge variant="outline" className={priorityBadge.className}>{priorityBadge.label}</Badge>;
-                        })()}
+                        <Badge className="bg-white text-black font-mono text-xs">
+                          {project.contentCount} content
+                        </Badge>
+                        {project.publishedCount > 0 && (
+                          <Badge variant="outline" className="border-border text-muted-foreground font-mono text-xs">
+                            {project.publishedCount} published
+                          </Badge>
+                        )}
                       </div>
                     </div>
                     <Button variant="ghost" size="sm" className="h-6 w-6 p-0 text-muted-foreground hover:text-white">
@@ -271,12 +306,12 @@ export default function ProjectsPage() {
                     </Button>
                   </div>
                   
-                  <CardDescription className="line-clamp-2 font-mono text-xs text-muted-foreground">
-                    {project.description}
+                  <CardDescription className="line-clamp-2 font-mono text-xs text-muted-foreground h-10">
+                    {project.description || 'no_description'}
                   </CardDescription>
                 </CardHeader>
                 
-                <CardContent className="space-y-3">
+                <CardContent className="space-y-3 flex-1 flex flex-col justify-between">
                   {/* Progress */}
                   <div className="space-y-1">
                     <div className="flex items-center justify-between text-xs">
@@ -289,54 +324,33 @@ export default function ProjectsPage() {
                   {/* Stats */}
                   <div className="grid grid-cols-3 gap-2 text-center">
                     <div>
-                      <div className="text-sm font-mono text-white">{project.contentCount}</div>
+                      <div className="text-sm font-mono text-white">{project.contentCount || 0}</div>
                       <div className="text-xs text-muted-foreground font-mono">total</div>
                     </div>
                     <div>
-                      <div className="text-sm font-mono text-white">{project.publishedCount}</div>
+                      <div className="text-sm font-mono text-white">{project.publishedCount || 0}</div>
                       <div className="text-xs text-muted-foreground font-mono">live</div>
                     </div>
                     <div>
-                      <div className="text-sm font-mono text-white">{project.scheduledCount}</div>
+                      <div className="text-sm font-mono text-white">{project.scheduledCount || 0}</div>
                       <div className="text-xs text-muted-foreground font-mono">queue</div>
                     </div>
                   </div>
-                  
-                  {/* Platforms */}
-                  <div>
-                    <div className="flex flex-wrap gap-1 mb-2">
-                      {project.platforms.map((platform, index) => (
-                        <Badge key={`${project.id}-${platform}-${index}`} variant="outline" className="border-border text-muted-foreground font-mono text-xs">
-                          {platform}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-                  
-                  {/* Collaborators */}
-                  {project.collaborators.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <Users className="w-3 h-3 text-muted-foreground" />
-                      <span className="text-xs text-muted-foreground font-mono">
-                        {project.collaborators.length} collaborators
-                      </span>
-                    </div>
-                  )}
                   
                   {/* Dates */}
                   <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
                     <Calendar className="w-3 h-3" />
                     <span>
-                      {project.startDate.toLocaleDateString('en-US')}
-                      {project.endDate && ` - ${project.endDate.toLocaleDateString('en-US')}`}
+                      created_{new Date(project.createdAt).toLocaleDateString('en-US')}
                     </span>
                   </div>
                   
                   {/* Actions */}
-                  <div className="flex gap-1 pt-2">
-                    <Button size="sm" className="flex-1 bg-white text-black font-mono text-xs h-7" asChild>
-                      <Link href={`/projects/${project.id}`}>
+                  <div className="flex gap-1 pt-2 mt-auto">
+                    <Button size="sm" className="flex-1 bg-transparent border-white text-white hover:bg-white hover:text-black font-mono text-xs h-7 rounded-lg border" asChild>
+                      <Link href={`/projects/${project.id}`} className="flex items-center justify-center">
                         open
+                        <ArrowRight className="ml-1 h-3 w-3" />
                       </Link>
                     </Button>
                     <Button variant="outline" size="sm" className="border-border text-muted-foreground font-mono text-xs h-7" asChild>
@@ -389,21 +403,21 @@ export default function ProjectsPage() {
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-mono text-white">
-                    {filteredProjects.reduce((sum, p) => sum + p.contentCount, 0)}
+                    {filteredProjects.reduce((sum, p) => sum + (p.contentCount || 0), 0)}
                   </div>
                   <div className="text-xs text-muted-foreground font-mono">content</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-mono text-white">
-                    {filteredProjects.reduce((sum, p) => sum + p.publishedCount, 0)}
+                    {filteredProjects.reduce((sum, p) => sum + (p.publishedCount || 0), 0)}
                   </div>
                   <div className="text-xs text-muted-foreground font-mono">published</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-mono text-white">
-                    {new Set(filteredProjects.flatMap(p => p.collaborators)).size}
+                    {filteredProjects.reduce((sum, p) => sum + (p.scheduledCount || 0), 0)}
                   </div>
-                  <div className="text-xs text-muted-foreground font-mono">users</div>
+                  <div className="text-xs text-muted-foreground font-mono">scheduled</div>
                 </div>
               </div>
             </CardContent>
