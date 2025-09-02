@@ -114,8 +114,12 @@ const PricingCard = ({ plan, index, billingCycle }: {
                 : 'bg-foreground text-background hover:bg-foreground/90 border border-foreground'
             }`}
           >
-            <Link href="/auth/signin" className="flex items-center justify-center">
+            <Link 
+              href={`/pricing?plan=${plan.name.toLowerCase()}&billing=${billingCycle}`} 
+              className="flex items-center justify-center"
+            >
               {plan.cta}
+              <ArrowRight className="ml-2 h-3 w-3" />
             </Link>
           </Button>
         </div>
