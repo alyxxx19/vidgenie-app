@@ -1,20 +1,28 @@
 import Stripe from 'stripe';
 import { loadStripe } from '@stripe/stripe-js';
 
-// Configuration serveur Stripe
-export const stripe = new Stripe(
-  process.env.STRIPE_SECRET_KEY!,
-  {
-    apiVersion: '2025-08-27.basil',
-    typescript: true,
-    telemetry: false,
-  }
-);
+// Configuration serveur Stripe - only initialize if valid key exists
+const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+const isValidStripeKey = stripeSecretKey && 
+                        stripeSecretKey !== 'sk_test_your-stripe-secret-key' &&
+                        stripeSecretKey.startsWith('sk_');
+
+export const stripe = isValidStripeKey
+  ? new Stripe(stripeSecretKey, {
+      apiVersion: '2025-08-27.basil',
+      typescript: true,
+      telemetry: false,
+    })
+  : null;
 
 // Configuration client
-const stripePublicKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!;
+const stripePublicKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
 export const getStripe = () => {
+  if (!stripePublicKey || stripePublicKey === 'pk_test_your-stripe-public-key') {
+    console.warn('Stripe public key not configured');
+    return null;
+  }
   return loadStripe(stripePublicKey);
 };
 

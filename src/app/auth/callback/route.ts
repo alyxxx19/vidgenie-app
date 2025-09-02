@@ -7,6 +7,13 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get('code');
   const next = searchParams.get('next') ?? '/dashboard';
+  const error = searchParams.get('error');
+  const error_description = searchParams.get('error_description');
+
+  // Handle OAuth errors
+  if (error) {
+    return NextResponse.redirect(`${origin}/auth/signin?error=${encodeURIComponent(error_description || error)}`);
+  }
 
   if (code) {
     const cookieStore = await cookies();
@@ -28,12 +35,23 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code);
-    if (!error) {
-      return NextResponse.redirect(`${origin}${next}`);
+    try {
+      const { data, error: sessionError } = await supabase.auth.exchangeCodeForSession(code);
+      
+      if (sessionError) {
+        return NextResponse.redirect(`${origin}/auth/signin?error=${encodeURIComponent(sessionError.message)}`);
+      }
+
+      if (data.session) {
+        // Redirect immediately - trigger runs async in background
+        const response = NextResponse.redirect(`${origin}${next}`);
+        return response;
+      }
+    } catch (err) {
+      return NextResponse.redirect(`${origin}/auth/signin?error=callback_failed`);
     }
   }
 
-  // Return the user to an error page with instructions
-  return NextResponse.redirect(`${origin}/auth/auth-code-error`);
+  // No code provided
+  return NextResponse.redirect(`${origin}/auth/signin?error=no_code`);
 }

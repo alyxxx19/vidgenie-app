@@ -51,10 +51,7 @@ export default function SignInPage() {
           variant: 'destructive',
         });
       } else {
-        toast({
-          title: 'Connexion réussie',
-          description: 'Bienvenue sur Vidgenie!',
-        });
+        // Immediate redirect, no toast to avoid delay
         router.push('/dashboard');
       }
     } catch (error: any) {
@@ -84,8 +81,12 @@ export default function SignInPage() {
       } else {
         toast({
           title: 'Compte créé',
-          description: 'Vérifiez votre email pour confirmer votre compte',
+          description: 'Vérifiez votre email pour confirmer votre compte avant de vous connecter',
         });
+        // Clear form fields after successful signup
+        setEmail('');
+        setPassword('');
+        setName('');
       }
     } catch (error: any) {
       toast({
@@ -100,6 +101,7 @@ export default function SignInPage() {
 
   const handleOAuthSignIn = async (provider: 'google' | 'github') => {
     try {
+      setIsLoading(true);
       const { error } = await signInWithOAuth(provider);
       
       if (error) {
@@ -108,13 +110,16 @@ export default function SignInPage() {
           description: error.message || `Impossible de se connecter avec ${provider}`,
           variant: 'destructive',
         });
+        setIsLoading(false);
       }
+      // No need to set loading false on success as user will be redirected
     } catch (error: any) {
       toast({
         title: 'Erreur OAuth',
         description: error.message || 'Une erreur est survenue',
         variant: 'destructive',
       });
+      setIsLoading(false);
     }
   };
 
@@ -191,6 +196,7 @@ export default function SignInPage() {
                 variant="outline"
                 className="w-full h-10 border-border text-white hover:bg-white hover:text-black font-mono text-sm"
                 onClick={() => handleOAuthSignIn('google')}
+                disabled={isLoading}
               >
                 <svg className="w-4 h-4 mr-2" viewBox="0 0 24 24">
                   <path fill="#4285f4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -206,6 +212,7 @@ export default function SignInPage() {
                 variant="outline"
                 className="w-full h-10 border-border text-white hover:bg-white hover:text-black font-mono text-sm"
                 onClick={() => handleOAuthSignIn('github')}
+                disabled={isLoading}
               >
                 <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
                   <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/>

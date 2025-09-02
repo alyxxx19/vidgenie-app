@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,67 +23,77 @@ import { api } from '@/app/providers';
 import ContentCalendar from '@/components/content-calendar';
 import ContentHistory from '@/components/content-history';
 import TimeDisplay from '@/components/time-display';
+import DashboardSkeleton from '@/components/dashboard-skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export default function DashboardPage() {
   const { user, isLoading, signOut } = useAuth();
   const [_selectedDate, _setSelectedDate] = useState<Date | null>(null);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
   
   // Always call hooks, but conditionally enable them
   const { data: _recentJobs } = api.jobs.list.useQuery(
     { limit: 5 },
-    { enabled: !!user }
+    { enabled: !!user, staleTime: 60000 }
   );
   const { data: userAssets } = api.assets.list.useQuery(
     { limit: 20 },
-    { enabled: !!user }
+    { enabled: !!user, staleTime: 60000 }
   );
   const { data: scheduledPosts } = api.publishing.getScheduled.useQuery(
     {},
-    { enabled: !!user }
+    { enabled: !!user, staleTime: 60000 }
   );
   const { data: creditBalance } = api.credits.getBalance.useQuery(
     undefined,
-    { enabled: !!user }
+    { enabled: !!user, staleTime: 30000 }
   );
   const { data: generationMetrics } = api.analytics.getGenerationMetrics.useQuery(
     { days: 30 },
-    { enabled: !!user }
+    { enabled: !!user, staleTime: 300000 }
   );
   const { data: usagePatterns } = api.analytics.getUsagePatterns.useQuery(
     { days: 7 },
-    { enabled: !!user }
+    { enabled: !!user, staleTime: 300000 }
   );
   const { data: subscription } = api.stripe.getSubscription.useQuery(
     undefined,
-    { enabled: !!user }
+    { enabled: !!user, staleTime: 300000 }
   );
   
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
-      </div>
-    );
-  }
-
-  if (!user) {
+  
+  // Handle loading and auth states AFTER all hooks
+  if (!isLoading && !user) {
     redirect('/auth/signin');
   }
 
+  if (isLoading && isInitialLoad) {
+    return <DashboardSkeleton />;
+  }
+
+  if (!isLoading && isInitialLoad) {
+    setIsInitialLoad(false);
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  // Use default values immediately to avoid recalculations
   const stats = {
-    creditsUsed: creditBalance?.usedThisMonth || 0,
-    creditsTotal: creditBalance?.balance || 1000,
-    contentGenerated: userAssets?.assets.length || 0,
-    scheduledPosts: scheduledPosts?.length || 0,
-    successRate: Math.round(generationMetrics?.successRate || 95),
-    weeklyContent: usagePatterns?.weeklyContent || 0,
-    avgGenerationTime: Math.round((generationMetrics?.avgGenerationTime || 300) / 60), // Convert to minutes
+    creditsUsed: creditBalance?.usedThisMonth ?? 0,
+    creditsTotal: creditBalance?.balance ?? 1000,
+    contentGenerated: userAssets?.assets?.length ?? 0,
+    scheduledPosts: scheduledPosts?.length ?? 0,
+    successRate: generationMetrics?.successRate ?? 95,
+    weeklyContent: usagePatterns?.weeklyContent ?? 0,
+    avgGenerationTime: generationMetrics?.avgGenerationTime ? Math.round(generationMetrics.avgGenerationTime / 60) : 5,
   };
 
-  // Transform data for calendar and history
+
+  // Transform data for calendar and history - calculate directly without hooks
   const calendarEvents = [
-    ...(userAssets?.assets.map(asset => ({
+    ...(userAssets?.assets?.map(asset => ({
       id: asset.id,
       title: asset.filename?.replace('.mp4', '') || 'Contenu généré',
       date: new Date(asset.createdAt),
@@ -101,7 +111,7 @@ export default function DashboardPage() {
     })) || []),
   ];
 
-  const contentHistory = userAssets?.assets.map(asset => ({
+  const contentHistory = userAssets?.assets?.map(asset => ({
     id: asset.id,
     title: asset.filename?.replace('.mp4', '') || 'Contenu sans titre',
     prompt: asset.prompt || '',
@@ -109,7 +119,7 @@ export default function DashboardPage() {
     status: asset.status,
     platforms: (asset.aiConfig as any)?.platforms || ['tiktok'],
     duration: asset.duration || 0,
-    views: Math.floor(Math.random() * 10000 + 100), // Mock views
+    views: Math.floor(Math.random() * 10000 + 100),
   })) || [];
 
   const _getStatusBadge = (status: string) => {
@@ -202,7 +212,7 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-[var(--font-poppins)] font-bold text-white mb-2 animate-counter">
+              <div className="text-3xl font-[var(--font-poppins)] font-bold text-white mb-2">
                 {stats.creditsTotal - stats.creditsUsed}
               </div>
               <p className="text-sm text-cyber-textMuted mb-4">
@@ -229,7 +239,7 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-[var(--font-poppins)] font-bold text-white mb-2 animate-counter">
+              <div className="text-3xl font-[var(--font-poppins)] font-bold text-white mb-2">
                 {stats.contentGenerated}
               </div>
               <p className="text-sm text-cyber-textMuted">
@@ -246,7 +256,7 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-[var(--font-poppins)] font-bold text-white mb-2 animate-counter">
+              <div className="text-3xl font-[var(--font-poppins)] font-bold text-white mb-2">
                 {stats.scheduledPosts}
               </div>
               <p className="text-sm text-cyber-textMuted">
@@ -263,7 +273,7 @@ export default function DashboardPage() {
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-[var(--font-poppins)] font-bold text-white mb-2 animate-counter">
+              <div className="text-3xl font-[var(--font-poppins)] font-bold text-white mb-2">
                 {stats.successRate}%
               </div>
               <p className="text-sm text-cyber-textMuted">

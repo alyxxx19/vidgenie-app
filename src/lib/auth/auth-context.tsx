@@ -44,7 +44,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (error) {
-        console.error('Error loading user profile:', error);
+        // Profile might not exist yet for new OAuth users
+        if (error.code === 'PGRST116') {
+          // No rows found - profile will be created by database trigger
+          // Just set profile to null for now
+          setProfile(null);
+          return;
+        }
+        
+        // Other database errors
+        console.error('Error loading user profile:', error.message || error);
         setProfile(null);
         return;
       }
@@ -83,7 +92,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.id);
+        // Auth state changed
         
         setSession(session);
         setUser(session?.user ?? null);
@@ -103,19 +112,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
-      return { error };
+      
+      if (error) {
+        return { error };
+      }
+      
+      if (data.user) {
+        // Force a profile reload after signin
+        await loadUserProfile(data.user);
+      }
+      
+      return { error: null };
     } catch (error) {
+      console.error('Signin catch error:', error);
       return { error };
     }
   };
 
   const signUp = async (email: string, password: string, name?: string) => {
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
@@ -125,8 +145,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           emailRedirectTo: `${window.location.origin}/auth/callback`,
         },
       });
-      return { error };
+      
+      if (error) {
+        return { error };
+      }
+      
+      // No delay - trigger runs async in background
+      
+      return { error: null };
     } catch (error) {
+      console.error('Signup catch error:', error);
       return { error };
     }
   };
@@ -157,8 +185,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           },
         },
       });
+      
       return { error };
     } catch (error) {
+      console.error(`OAuth ${provider} catch error:`, error);
       return { error };
     }
   };
