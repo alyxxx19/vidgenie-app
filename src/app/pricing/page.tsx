@@ -135,28 +135,19 @@ const EnhancedPricingCard = ({
           </>
         )}
 
-        {/* Popular Badge with Animation */}
-        {plan.featured && (
-          <div className="absolute -top-3 left-1/2 transform -translate-x-1/2 z-10">
-            <div className="bg-foreground text-background px-4 py-1.5 text-xs font-mono uppercase tracking-wider animate-badge-pulse shine-effect">
-              <Star className="inline w-3 h-3 mr-1" />
-              POPULAIRE
-            </div>
-          </div>
-        )}
 
         {/* Current Plan Badge */}
         {isCurrentPlan && (
-          <div className="absolute -top-3 right-4 z-10">
+          <div className="absolute -top-4 right-4 z-20">
             <div className="bg-success text-background px-3 py-1 text-xs font-mono uppercase tracking-wider animate-pulse">
               ACTUEL
             </div>
           </div>
         )}
 
-        <CardContent className="p-6 relative z-10">
-          {/* Plan Header with Icon Animation */}
-          <div className="text-center mb-6">
+        <CardContent className="p-6 relative z-10 flex flex-col h-full">
+          {/* Plan Header with Icon Animation - Fixed Height */}
+          <div className="text-center mb-6 h-32 flex flex-col justify-center">
             <div className="flex justify-center mb-4">
               <div className={`p-4 rounded-full transition-all duration-500 ${
                 plan.featured 
@@ -183,8 +174,8 @@ const EnhancedPricingCard = ({
             </p>
           </div>
 
-          {/* Price with Glow Animation */}
-          <div className="text-center mb-6">
+          {/* Price with Glow Animation - Fixed Height */}
+          <div className="text-center mb-6 h-20 flex flex-col justify-center">
             <div className={`flex items-baseline justify-center gap-1 ${
               plan.featured ? 'animate-price-glow' : ''
             }`}>
@@ -211,38 +202,40 @@ const EnhancedPricingCard = ({
             )}
           </div>
 
-          {/* Features with Stagger Animation */}
-          <ul className="space-y-3 mb-6">
-            {plan.features.slice(0, 5).map((feature: string, idx: number) => (
-              <li 
-                key={idx} 
-                className={`flex items-start gap-2 transition-all duration-500 ${
-                  isVisible 
-                    ? 'translate-x-0 opacity-100' 
-                    : 'translate-x-4 opacity-0'
-                }`}
-                style={{ 
-                  transitionDelay: `${400 + (idx * 100)}ms` 
-                }}
-              >
-                <Check className="w-4 h-4 text-success mt-0.5 flex-shrink-0 animate-pulse" />
-                <span className="text-sm text-muted-foreground group-hover:text-foreground/90 transition-colors duration-300">
-                  {feature}
-                </span>
-              </li>
-            ))}
-            {plan.features.length > 5 && (
-              <li className="text-sm text-muted-foreground font-mono opacity-60 animate-fade-in-up">
-                + {plan.features.length - 5} autres
-              </li>
-            )}
-            {plan.limitations?.map((limitation: string, idx: number) => (
-              <li key={idx} className="flex items-start gap-2 animate-fade-in-up">
-                <X className="w-4 h-4 text-destructive/60 mt-0.5 flex-shrink-0" />
-                <span className="text-sm text-muted-foreground/60">{limitation}</span>
-              </li>
-            ))}
-          </ul>
+          {/* Features with Stagger Animation - Fixed Height */}
+          <div className="flex-1 mb-6">
+            <ul className="space-y-3 h-48 overflow-hidden">
+              {plan.features.slice(0, 6).map((feature: string, idx: number) => (
+                <li 
+                  key={idx} 
+                  className={`flex items-start gap-2 transition-all duration-500 ${
+                    isVisible 
+                      ? 'translate-x-0 opacity-100' 
+                      : 'translate-x-4 opacity-0'
+                  }`}
+                  style={{ 
+                    transitionDelay: `${400 + (idx * 100)}ms` 
+                  }}
+                >
+                  <Check className="w-4 h-4 text-success mt-0.5 flex-shrink-0 animate-pulse" />
+                  <span className="text-sm text-muted-foreground group-hover:text-foreground/90 transition-colors duration-300">
+                    {feature}
+                  </span>
+                </li>
+              ))}
+              {plan.features.length > 6 && (
+                <li className="text-sm text-muted-foreground font-mono opacity-60 animate-fade-in-up">
+                  + {plan.features.length - 6} autres
+                </li>
+              )}
+              {plan.limitations?.map((limitation: string, idx: number) => (
+                <li key={idx} className="flex items-start gap-2 animate-fade-in-up">
+                  <X className="w-4 h-4 text-destructive/60 mt-0.5 flex-shrink-0" />
+                  <span className="text-sm text-muted-foreground/60">{limitation}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
 
           {/* Enhanced CTA Button */}
           <Button
@@ -456,9 +449,26 @@ export default function PricingPage() {
 
   return (
     <div className="min-h-screen bg-background relative overflow-hidden">
-      {/* Enhanced Background with Animation */}
-      <div className="absolute inset-0 animated-gradient-bg" />
-      <div className="absolute inset-0 texture-grid opacity-30" />
+      {/* Background with Grid Pattern like Landing Page */}
+      <div className="absolute inset-0" style={{
+        background: 'linear-gradient(180deg, #000000 0%, #111111 100%)'
+      }} />
+      <div className="absolute inset-0 opacity-50" style={{
+        backgroundImage: `repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 39px,
+          rgba(38, 38, 38, 0.3) 39px,
+          rgba(38, 38, 38, 0.3) 40px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 39px,
+          rgba(38, 38, 38, 0.3) 39px,
+          rgba(38, 38, 38, 0.3) 40px
+        )`
+      }} />
       
       {/* Floating Particles */}
       {[...Array(8)].map((_, i) => (
