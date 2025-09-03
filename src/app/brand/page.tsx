@@ -256,7 +256,7 @@ export default function BrandPage() {
                         Glissez-déposez votre logo ou cliquez pour sélectionner
                       </p>
                       <p className="text-xs text-slate-400 mt-1">
-                        PNG, JPG, SVG jusqu'à 10MB
+                        PNG, JPG, SVG jusqu&apos;à 10MB
                       </p>
                     </div>
                   )}

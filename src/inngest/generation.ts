@@ -1,26 +1,49 @@
 import { inngest } from '@/lib/inngest';
 import { db } from '@/server/api/db';
 import { uploadToS3, generateAssetKey } from '@/lib/s3';
+import Replicate from 'replicate';
 
-// Mock AI providers with different characteristics
+// Import the new generation workers
+export {
+  generateImageWorker,
+  generateVideoWorker,
+  imageToVideoWorkflowWorker,
+  cleanupWorker,
+  monitorJobsWorker,
+  scheduleCleanup,
+  scheduleMonitoring,
+} from './generation-workers';
+
+// Initialize Replicate client
+const replicate = new Replicate({
+  auth: process.env.REPLICATE_API_TOKEN || '',
+});
+
+// Real AI providers available on Replicate
 const AI_PROVIDERS = {
-  'openai-sora': {
-    name: 'OpenAI Sora',
-    avgTime: 120, // seconds
-    costPerSecond: 0.5,
+  'minimax-video': {
+    name: 'Minimax Video-01',
+    model: 'minimax/video-01',
+    avgTime: 180, // seconds
+    costPerSecond: 0.08,
     qualityScore: 9,
+    maxDuration: 6,
   },
-  'midjourney': {
-    name: 'MidJourney Video',
-    avgTime: 180,
-    costPerSecond: 0.3,
-    qualityScore: 8,
-  },
-  'runwayml': {
-    name: 'RunwayML Gen-3',
-    avgTime: 90,
-    costPerSecond: 0.4,
+  'stable-video-diffusion': {
+    name: 'Stable Video Diffusion',
+    model: 'stability-ai/stable-video-diffusion:3f0457e4619daac51203dedb472816fd4af51f3149fa7a9e0b5ffcf1b8172438',
+    avgTime: 120,
+    costPerSecond: 0.05,
     qualityScore: 7,
+    maxDuration: 4,
+  },
+  'hunyuan-video': {
+    name: 'HunyuanVideo',
+    model: 'tencent/hunyuan-video',
+    avgTime: 200,
+    costPerSecond: 0.06,
+    qualityScore: 8,
+    maxDuration: 5,
   },
 };
 
@@ -28,12 +51,21 @@ type AIProvider = keyof typeof AI_PROVIDERS;
 
 // Select best provider based on prompt and duration
 function selectOptimalProvider(prompt: string, duration: number): AIProvider {
-  // Simple heuristic: longer videos prefer faster providers
-  if (duration > 45) return 'runwayml';
-  if (prompt.toLowerCase().includes('quality') || prompt.toLowerCase().includes('professional')) {
-    return 'openai-sora';
+  // Choose based on duration limits and quality requirements
+  if (duration <= 4) {
+    // SVD for shorter clips
+    return 'stable-video-diffusion';
   }
-  return 'midjourney';
+  if (duration <= 5 && (prompt.toLowerCase().includes('quality') || prompt.toLowerCase().includes('professional'))) {
+    // HunyuanVideo for high quality 5s clips
+    return 'hunyuan-video';
+  }
+  if (duration <= 6) {
+    // Minimax for longer clips up to 6s
+    return 'minimax-video';
+  }
+  // Default to SVD and trim duration
+  return 'stable-video-diffusion';
 }
 
 // Generate SEO-optimized content metadata
@@ -113,23 +145,87 @@ function generateTitle(prompt: string): string {
   return words.slice(0, 8).join(' ').replace(/[^\w\s]/g, '');
 }
 
-function generateMockVideoContent(prompt: string, duration: number): string {
-  // Generate realistic mock video content metadata
-  const timestamp = Date.now();
-  const mockMetadata = {
-    format: 'mp4',
-    codec: 'h264',
-    bitrate: '2000kbps',
-    fps: 30,
-    resolution: '1080x1920',
-    duration: `${duration}s`,
-    prompt: prompt.slice(0, 100),
-    generated_at: new Date().toISOString(),
-    mock_content_id: `vid_${timestamp}`,
-  };
+// Generate video using Replicate API
+async function generateVideoWithReplicate(
+  prompt: string, 
+  duration: number, 
+  provider: AIProvider
+): Promise<{
+  videoUrl: string;
+  thumbnailUrl?: string;
+  width: number;
+  height: number;
+  actualDuration: number;
+  provider: string;
+  qualityScore: number;
+  generationCost: number;
+}> {
+  const selectedProvider = AI_PROVIDERS[provider];
+  const clampedDuration = Math.min(duration, selectedProvider.maxDuration);
   
-  // In a real implementation, this would be actual video binary data
-  return JSON.stringify(mockMetadata, null, 2);
+  let input: Record<string, any>;
+  
+  switch (provider) {
+    case 'minimax-video':
+      input = {
+        prompt: prompt,
+        duration: clampedDuration,
+        aspect_ratio: '9:16', // TikTok format
+      };
+      break;
+      
+    case 'stable-video-diffusion':
+      input = {
+        input_image: null, // Text-to-video mode
+        prompt: prompt,
+        num_frames: Math.min(25, clampedDuration * 6), // ~6 fps
+        motion_bucket_id: 127,
+        cond_aug: 0.02,
+      };
+      break;
+      
+    case 'hunyuan-video':
+      input = {
+        prompt: prompt,
+        duration: clampedDuration,
+        resolution: "720p",
+        aspect_ratio: "9:16",
+        seed: Math.floor(Math.random() * 1000000),
+      };
+      break;
+      
+    default:
+      throw new Error(`Unknown provider: ${provider}`);
+  }
+
+  // Run the prediction
+  const prediction = await replicate.run(selectedProvider.model, { input });
+  
+  // Handle different response formats
+  let videoUrl: string;
+  let thumbnailUrl: string | undefined;
+  
+  if (Array.isArray(prediction)) {
+    videoUrl = prediction[0] as string;
+  } else if (typeof prediction === 'string') {
+    videoUrl = prediction;
+  } else if (prediction && typeof prediction === 'object' && 'video' in prediction) {
+    videoUrl = (prediction as any).video;
+    thumbnailUrl = (prediction as any).thumbnail;
+  } else {
+    throw new Error('Unexpected prediction format from Replicate');
+  }
+
+  return {
+    videoUrl,
+    thumbnailUrl,
+    width: 720,
+    height: 1280, // 9:16 aspect ratio
+    actualDuration: clampedDuration,
+    provider: selectedProvider.name,
+    qualityScore: selectedProvider.qualityScore,
+    generationCost: selectedProvider.costPerSecond * clampedDuration,
+  };
 }
 
 export const generationWorker = inngest.createFunction(
@@ -167,11 +263,18 @@ export const generationWorker = inngest.createFunction(
 
     // Select optimal AI provider
     const provider = await step.run('select-provider', async () => {
-      const config = job.config as { duration?: number; platforms?: string[] };
-      const selectedProvider = selectOptimalProvider(
-        job.prompt || '',
-        config?.duration || 30
-      );
+      const config = job.config as { duration?: number; platforms?: string[]; style?: string };
+      let selectedProvider: AIProvider;
+      
+      // Use user-selected model if provided, otherwise auto-select
+      if (config?.style && config.style in AI_PROVIDERS) {
+        selectedProvider = config.style as AIProvider;
+      } else {
+        selectedProvider = selectOptimalProvider(
+          job.prompt || '',
+          config?.duration || 30
+        );
+      }
       
       // Update job with provider info
       await db.job.update({
@@ -204,44 +307,76 @@ export const generationWorker = inngest.createFunction(
       );
     });
 
-    // Simulate AI generation with realistic progress updates
+    // Generate video with real AI API
     const generatedContent = await step.run('generate-content', async () => {
-      const selectedAI = AI_PROVIDERS[provider];
       const config = job.config as { duration?: number; platforms?: string[] };
       const duration = config?.duration || 30;
-      const simulationTime = selectedAI.avgTime * 1000; // Convert to ms
-      const progressSteps = 8;
-      const stepTime = simulationTime / progressSteps;
       
-      // Simulate generation steps with progress updates
-      for (let i = 0; i < progressSteps; i++) {
-        await new Promise(resolve => setTimeout(resolve, stepTime));
-        const progress = 20 + ((i + 1) / progressSteps) * 60; // 20-80%
-        const remaining = Math.floor((progressSteps - i - 1) * stepTime / 1000);
+      // Update progress to 30%
+      await db.job.update({
+        where: { id: jobId },
+        data: {
+          progress: 30,
+          estimatedTimeRemaining: AI_PROVIDERS[provider].avgTime,
+        },
+      });
+      
+      try {
+        // Generate video using Replicate
+        const result = await generateVideoWithReplicate(
+          job.prompt || '',
+          duration,
+          provider
+        );
         
+        // Update progress to 70%
+        await db.job.update({
+          where: { id: jobId },
+          data: { progress: 70 },
+        });
+        
+        // Download video from Replicate URL
+        const videoResponse = await fetch(result.videoUrl);
+        if (!videoResponse.ok) {
+          throw new Error(`Failed to download video: ${videoResponse.statusText}`);
+        }
+        
+        const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
+        
+        // Download thumbnail if available
+        let thumbnailBuffer: Buffer | undefined;
+        if (result.thumbnailUrl) {
+          const thumbnailResponse = await fetch(result.thumbnailUrl);
+          if (thumbnailResponse.ok) {
+            thumbnailBuffer = Buffer.from(await thumbnailResponse.arrayBuffer());
+          }
+        }
+        
+        return {
+          buffer: videoBuffer,
+          thumbnailBuffer,
+          filename: `generated-${Date.now()}-${provider}.mp4`,
+          thumbnailFilename: thumbnailBuffer ? `thumb-${Date.now()}-${provider}.jpg` : undefined,
+          mimeType: 'video/mp4' as const,
+          duration: result.actualDuration,
+          width: result.width,
+          height: result.height,
+          provider: result.provider,
+          qualityScore: result.qualityScore,
+          generationCost: result.generationCost,
+        };
+      } catch (error) {
+        // Mark job as failed
         await db.job.update({
           where: { id: jobId },
           data: {
-            progress: Math.floor(progress),
-            estimatedTimeRemaining: remaining,
+            status: 'failed',
+            errorMessage: error instanceof Error ? error.message : 'Unknown error',
+            completedAt: new Date(),
           },
         });
+        throw error;
       }
-      
-      // Generate realistic mock video content
-      const mockVideoContent = generateMockVideoContent(job.prompt || '', duration);
-      
-      return {
-        buffer: Buffer.from(mockVideoContent),
-        filename: `generated-${Date.now()}-${provider}.mp4`,
-        mimeType: 'video/mp4' as const,
-        duration,
-        width: 1080,
-        height: 1920,
-        provider,
-        qualityScore: selectedAI.qualityScore,
-        generationCost: selectedAI.costPerSecond * duration,
-      };
     });
 
     // Update progress to 90% before upload
@@ -257,9 +392,21 @@ export const generationWorker = inngest.createFunction(
       const s3Key = generateAssetKey(job.userId, generatedContent.filename);
       const publicUrl = await uploadToS3(
         s3Key,
-        Buffer.isBuffer(generatedContent.buffer) ? generatedContent.buffer : Buffer.from(JSON.stringify(generatedContent.buffer)),
+        generatedContent.buffer,
         generatedContent.mimeType
       );
+      
+      // Upload thumbnail if available
+      let thumbnailUrl: string | undefined;
+      let thumbnailS3Key: string | undefined;
+      if (generatedContent.thumbnailBuffer && generatedContent.thumbnailFilename) {
+        thumbnailS3Key = generateAssetKey(job.userId, generatedContent.thumbnailFilename);
+        thumbnailUrl = await uploadToS3(
+          thumbnailS3Key,
+          generatedContent.thumbnailBuffer,
+          'image/jpeg'
+        );
+      }
 
       return await db.asset.create({
         data: {
@@ -268,14 +415,16 @@ export const generationWorker = inngest.createFunction(
           jobId: job.id,
           filename: generatedContent.filename,
           mimeType: generatedContent.mimeType,
-          fileSize: Buffer.isBuffer(generatedContent.buffer) ? generatedContent.buffer.length : JSON.stringify(generatedContent.buffer).length,
+          fileSize: generatedContent.buffer.length,
           duration: generatedContent.duration,
           width: generatedContent.width,
           height: generatedContent.height,
           s3Key,
-          s3Bucket: process.env.S3_BUCKET_NAME || 'vidgenie-media',
+          s3Bucket: process.env.S3_BUCKET_NAME || 'vidgenie-media-dev',
           s3Region: process.env.S3_REGION || 'eu-west-3',
           publicUrl,
+          thumbnailUrl,
+          thumbnailS3Key,
           generatedBy: generatedContent.provider,
           prompt: job.prompt,
           status: 'ready',
@@ -284,7 +433,7 @@ export const generationWorker = inngest.createFunction(
             seoData,
             qualityScore: generatedContent.qualityScore,
             generationCost: generatedContent.generationCost,
-            provider: AI_PROVIDERS[generatedContent.provider as AIProvider].name,
+            provider: generatedContent.provider,
           },
         },
       });

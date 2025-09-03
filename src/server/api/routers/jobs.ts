@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 import { TRPCError } from '@trpc/server';
+import { inngest } from '@/lib/inngest';
 
 export const jobsRouter = createTRPCRouter({
   // Submit a new generation job
@@ -70,11 +71,56 @@ export const jobsRouter = createTRPCRouter({
         },
       });
 
-      // TODO: Trigger Inngest job here
-      // await inngest.send({
-      //   name: 'generation/start',
-      //   data: { jobId: job.id }
-      // });
+      // Trigger Inngest job (with fallback for development)
+      try {
+        await inngest.send({
+          name: 'generation/start',
+          data: { jobId: job.id }
+        });
+      } catch (error) {
+        console.warn('Inngest not available, running in development mode:', error);
+        // For development, simulate immediate completion with mock data
+        if (process.env.NODE_ENV === 'development') {
+          setTimeout(async () => {
+            const devAsset = await db.asset.create({
+              data: {
+                userId: user.id,
+                projectId: input.projectId,
+                jobId: job.id,
+                filename: `dev-generated-${Date.now()}.mp4`,
+                mimeType: 'video/mp4',
+                fileSize: 1024 * 1024 * 25, // 25MB
+                duration: input.duration,
+                width: 720,
+                height: 1280,
+                s3Key: `dev/assets/${job.id}.mp4`,
+                s3Bucket: 'dev-bucket',
+                s3Region: 'eu-west-3',
+                publicUrl: '/api/placeholder/720/1280?text=Generated+Video',
+                thumbnailUrl: '/api/placeholder/720/1280?text=Thumbnail',
+                generatedBy: 'Development Mock',
+                prompt: input.prompt,
+                status: 'ready',
+                aiConfig: {
+                  provider: 'dev-mock',
+                  qualityScore: 8,
+                  generationCost: 10,
+                },
+              },
+            });
+            
+            await db.job.update({
+              where: { id: job.id },
+              data: {
+                status: 'completed',
+                progress: 100,
+                completedAt: new Date(),
+                resultAssetId: devAsset.id,
+              },
+            });
+          }, 3000); // 3 second delay for testing
+        }
+      }
 
       return { jobId: job.id };
     }),

@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
         const response = NextResponse.redirect(`${origin}${next}`);
         return response;
       }
-    } catch (err) {
+    } catch (_err) {
       return NextResponse.redirect(`${origin}/auth/signin?error=callback_failed`);
     }
   }
