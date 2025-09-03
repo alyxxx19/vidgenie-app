@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { stripe, STRIPE_CONFIG, SUBSCRIPTION_PLANS } from '@/lib/stripe';
 import { db } from '@/server/api/db';
+import { getCreditsManager } from '@/lib/services/credits-manager';
 import Stripe from 'stripe';
 
 export async function POST(req: NextRequest) {
@@ -128,22 +129,23 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
   if (subscription.status === 'active') {
     const plan = planKey ? SUBSCRIPTION_PLANS[planKey as keyof typeof SUBSCRIPTION_PLANS] : null;
     if (plan) {
-      await db.creditLedger.create({
-        data: {
-          userId: (await db.user.findUnique({ where: { stripeCustomerId: customerId } }))!.id,
-          amount: plan.creditsPerMonth,
-          type: 'subscription_renewal',
-          description: `Crédits ${plan.name} - ${new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`,
-        },
-      });
-
-      // Update user credits balance
-      await db.user.update({
-        where: { stripeCustomerId: customerId },
-        data: {
-          creditsBalance: { increment: plan.creditsPerMonth },
-        },
-      });
+      const user = await db.user.findUnique({ where: { stripeCustomerId: customerId } });
+      if (user) {
+        const creditsManager = getCreditsManager(db);
+        
+        // Utiliser le système de crédits centralisé
+        await creditsManager.addCredits(
+          user.id,
+          plan.creditsPerMonth,
+          'subscription',
+          `${plan.name} plan renewal - ${new Date().toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`,
+          {
+            planName: plan.name,
+          }
+        );
+        
+        console.log(`[STRIPE-WEBHOOK] Added ${plan.creditsPerMonth} credits for user ${user.email} (${plan.name} plan)`);
+      }
     }
   }
 }

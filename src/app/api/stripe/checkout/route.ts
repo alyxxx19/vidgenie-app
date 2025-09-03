@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { createClient } from '@supabase/supabase-js';
 import { StripeCustomerService } from '@/lib/stripe/customer-service';
 import { StripeSubscriptionService } from '@/lib/stripe/subscription-service';
-import { getPriceId } from '@/lib/stripe/config';
+import { getPriceId, isPlanAvailable, PRICING_CONFIG } from '@/lib/stripe/config';
 import { db } from '@/server/api/db';
 import type { PricingPlan } from '@/lib/stripe/config';
 
@@ -13,11 +13,51 @@ interface CheckoutRequest {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('[STRIPE-CHECKOUT] Starting checkout process...');
+    
     const { plan, interval }: CheckoutRequest = await request.json();
+    
+    // Validation des paramètres
+    if (!plan || !interval) {
+      return NextResponse.json(
+        { error: 'Plan and interval are required' },
+        { status: 400 }
+      );
+    }
+
+    if (!['month', 'year'].includes(interval)) {
+      return NextResponse.json(
+        { error: 'Interval must be "month" or "year"' },
+        { status: 400 }
+      );
+    }
+
+    // Vérifier que le plan est disponible
+    if (!isPlanAvailable(plan, interval)) {
+      return NextResponse.json(
+        { error: `Plan ${plan} not available for ${interval}ly billing` },
+        { status: 400 }
+      );
+    }
+
+    console.log(`[STRIPE-CHECKOUT] Creating checkout for ${plan} plan (${interval}ly)`);
 
     // Vérifier l'authentification
-    const supabase = await createServerSupabaseClient();
-    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser();
+    const authHeader = request.headers.get('authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Authorization required' },
+        { status: 401 }
+      );
+    }
+
+    const token = authHeader.split(' ')[1];
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    );
+
+    const { data: { user: authUser }, error: authError } = await supabase.auth.getUser(token);
 
     if (authError || !authUser) {
       return NextResponse.json(
@@ -67,11 +107,14 @@ export async function POST(request: NextRequest) {
     }
 
     // URLs de redirection
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const successUrl = `${baseUrl}/account/billing?success=true`;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3001';
+    const successUrl = `${baseUrl}/account/billing?success=true&plan=${plan}&interval=${interval}`;
     const cancelUrl = `${baseUrl}/pricing?canceled=true`;
 
-    // Créer la session de checkout
+    console.log(`[STRIPE-CHECKOUT] Price ID: ${priceId}`);
+    console.log(`[STRIPE-CHECKOUT] Customer ID: ${customerId}`);
+
+    // Créer la session de checkout avec métadonnées enrichies
     const session = await StripeSubscriptionService.createCheckoutSession({
       customerId,
       priceId,
@@ -80,9 +123,28 @@ export async function POST(request: NextRequest) {
       cancelUrl,
     });
 
+    // Logger pour debugging
+    console.log(`[STRIPE-CHECKOUT] Session created: ${session.id}`);
+    console.log(`[STRIPE-CHECKOUT] Redirect URL: ${session.url}`);
+
+    // Informations sur le plan pour le client
+    const planInfo = PRICING_CONFIG[plan];
+    const monthlyPrice = planInfo.price;
+    const yearlyPrice = Math.round(monthlyPrice * 12 * 0.83); // 17% de réduction
+
     return NextResponse.json({
+      success: true,
       sessionId: session.id,
       url: session.url,
+      plan: {
+        name: planInfo.name,
+        description: planInfo.description,
+        credits: planInfo.credits,
+        storage: planInfo.storage,
+        interval,
+        price: interval === 'month' ? monthlyPrice : yearlyPrice,
+        currency: 'EUR',
+      },
     });
 
   } catch (error) {

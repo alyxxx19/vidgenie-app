@@ -18,7 +18,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     console.log('[DEV-API] Development image generation request');
     console.log('[DEV-API] Request body:', JSON.stringify(req.body, null, 2));
 
-    const { prompt, style, quality, size, projectId } = req.body;
+    const { 
+      prompt, 
+      style, 
+      quality, 
+      size, 
+      projectId,
+      // Advanced prompt options
+      enhanceEnabled = true,
+      temperature = 0.7,
+      negativePrompt,
+      artStyle,
+      composition,
+      mood
+    } = req.body;
 
     // Validation des paramètres
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length < 10) {
@@ -66,7 +79,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           kind: 'IMAGE',
           status: 'GENERATING_IMAGE',
           inputPrompt: prompt.trim(),
-          imagePrompt: prompt.trim(),
+          imagePrompt: prompt.trim(), // Will be updated later with enhanced prompt
           provider: 'openai',
           costCents: 500, // 5 crédits * 100
           startedAt: new Date(),
@@ -81,15 +94,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-      // Améliorer le prompt avec GPT
-      console.log('[DEV-API] Enhancing prompt with GPT...');
-      const enhancedPromptResult = await promptEnhancer.enhanceImagePrompt(prompt.trim());
-      const finalPrompt = enhancedPromptResult.enhancedPrompt || prompt.trim();
+      // Améliorer le prompt avec GPT si activé
+      let finalPrompt = prompt.trim();
+      let enhancedPromptResult: any = { success: false, originalPrompt: prompt.trim() };
       
-      if (enhancedPromptResult.success) {
-        console.log('[DEV-API] Prompt enhanced successfully');
+      if (enhanceEnabled) {
+        console.log('[DEV-API] Enhancing prompt with GPT...');
+        enhancedPromptResult = await promptEnhancer.enhanceImagePrompt(prompt.trim(), {
+          temperature,
+          style: mood,
+          artStyle,
+          composition,
+          negativePrompt
+        });
+        finalPrompt = enhancedPromptResult.enhancedPrompt || prompt.trim();
+        
+        if (enhancedPromptResult.success) {
+          console.log('[DEV-API] Prompt enhanced successfully');
+        } else {
+          console.log('[DEV-API] Using original prompt (enhancement failed)');
+        }
       } else {
-        console.log('[DEV-API] Using original prompt (enhancement failed)');
+        console.log('[DEV-API] GPT enhancement disabled, using original prompt');
       }
 
       // Générer l'image avec OpenAI
@@ -147,8 +173,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             quality: quality || 'hd',
             size: size || '1024x1792',
             originalPrompt: prompt.trim(),
-            enhancedPrompt: finalPrompt,
+            enhancedPrompt: enhanceEnabled ? finalPrompt : undefined,
             revisedPrompt: imageResult.revisedPrompt,
+            enhanceEnabled,
+            promptSettings: {
+              temperature,
+              negativePrompt,
+              artStyle,
+              composition,
+              mood
+            },
           },
         },
       });
@@ -177,9 +211,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         revisedPrompt: imageResult.revisedPrompt,
         creditsUsed: 5,
         remainingCredits: 1000, // Crédits illimités en dev
-        note: enhancedPromptResult.success 
-          ? '✨ Prompt enhanced with GPT-4 before generation' 
-          : '⚠️ Using original prompt (GPT enhancement failed)'
+        note: !enhanceEnabled 
+          ? '🔧 GPT enhancement disabled - using original prompt' 
+          : enhancedPromptResult.success 
+            ? '✨ Prompt enhanced with GPT-4 before generation' 
+            : '⚠️ Using original prompt (GPT enhancement failed)'
       });
 
     } catch (generationError: any) {

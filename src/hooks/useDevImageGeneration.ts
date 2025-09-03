@@ -7,6 +7,13 @@ interface GenerateImageRequest {
   quality?: 'standard' | 'hd';
   size?: '1024x1024' | '1792x1024' | '1024x1792';
   projectId?: string;
+  // Advanced prompt options
+  enhanceEnabled?: boolean;
+  temperature?: number;
+  negativePrompt?: string;
+  artStyle?: string;
+  composition?: string;
+  mood?: string;
 }
 
 interface GenerateImageResponse {
@@ -20,6 +27,14 @@ interface GenerateImageResponse {
   creditsUsed: number;
   remainingCredits: number;
   note?: string;
+  enhanceEnabled?: boolean;
+  promptSettings?: {
+    temperature?: number;
+    negativePrompt?: string;
+    artStyle?: string;
+    composition?: string;
+    mood?: string;
+  };
 }
 
 export function useDevImageGeneration() {
@@ -35,7 +50,7 @@ export function useDevImageGeneration() {
 
       console.log('[DEV-HOOK] Starting image generation:', request.prompt.slice(0, 50));
 
-      const response = await fetch('/api/dev-generate-image', {
+      const response = await fetch('/api/generate-image-real', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -12,6 +12,8 @@ import { Slider } from '@/components/ui/slider';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { PromptBuilder } from '@/components/prompt-builder';
+import { promptUtils } from '@/lib/utils/prompt-utils';
 import { 
   Wand2, 
   Clock, 
@@ -20,22 +22,40 @@ import {
   Video,
   Image,
   PlayCircle,
-  ArrowRight
+  ArrowRight,
+  Sparkles
 } from 'lucide-react';
 import { api } from '@/app/providers';
 import { toast } from 'sonner';
 import Link from 'next/link';
 // import { useMockImageGeneration } from '@/hooks/useMockImageGeneration';
 import { useDevImageGeneration } from '@/hooks/useDevImageGeneration';
+import { useTestPromptEnhancement } from '@/hooks/useTestPromptEnhancement';
+import { useCredits, useCreditsCheck, CREDIT_COSTS } from '@/hooks/useCredits';
+import { CreditsDisplay, CostEstimator } from '@/components/credits-display';
 
 export default function CreatePage() {
   const { user, isLoading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   
+  // Crédits
+  const { balance, hasEnoughCredits, isLoading: creditsLoading } = useCredits();
+  const imageCreditsCheck = useCreditsCheck('IMAGE_GENERATION');
+  const videoCreditsCheck = useCreditsCheck('VIDEO_GENERATION');
+  
   // Image generation states
   const [imagePrompt, setImagePrompt] = useState('');
   const [imageStyle, setImageStyle] = useState<'natural' | 'vivid'>('vivid');
   const [imageQuality, setImageQuality] = useState<'standard' | 'hd'>('hd');
+  const [imageSize, setImageSize] = useState<'1024x1024' | '1792x1024' | '1024x1792'>('1024x1792');
+  
+  // Advanced prompt settings
+  const [enhanceEnabled, setEnhanceEnabled] = useState(true);
+  const [temperature, setTemperature] = useState(0.7);
+  const [negativePrompt, setNegativePrompt] = useState('');
+  const [artStyle, setArtStyle] = useState('');
+  const [composition, setComposition] = useState('');
+  const [mood, setMood] = useState('');
   
   // Video generation states
   const [videoPrompt, setVideoPrompt] = useState('');
@@ -77,6 +97,14 @@ export default function CreatePage() {
     generationResult: realResult,
     error: realError 
   } = useDevImageGeneration();
+  
+  // Test prompt enhancement hook (no DB required)
+  const {
+    testPromptEnhancement,
+    isGenerating: isTestingPrompt,
+    testResult,
+    error: testError
+  } = useTestPromptEnhancement();
 
 
   // Complete workflow mutation
@@ -110,6 +138,14 @@ export default function CreatePage() {
         return;
       }
       
+      // Vérifier les crédits pour le workflow complet
+      const totalCost = CREDIT_COSTS.IMAGE_TO_VIDEO + (enhanceEnabled ? CREDIT_COSTS.GPT_ENHANCEMENT : 0);
+      if (!hasEnoughCredits('IMAGE_TO_VIDEO', enhanceEnabled ? CREDIT_COSTS.GPT_ENHANCEMENT : 0)) {
+        const shortage = totalCost - balance;
+        toast.error(`Insufficient credits. You need ${shortage} more credits for this workflow.`);
+        return;
+      }
+      
       setIsGenerating(true);
       generateCompleteWorkflowMutation.mutate({
         imagePrompt: imagePrompt.trim(),
@@ -127,12 +163,29 @@ export default function CreatePage() {
         return;
       }
       
+      // Vérifier les crédits pour l'image
+      const imageCost = CREDIT_COSTS.IMAGE_GENERATION + (enhanceEnabled ? CREDIT_COSTS.GPT_ENHANCEMENT : 0);
+      if (!hasEnoughCredits('IMAGE_GENERATION', enhanceEnabled ? CREDIT_COSTS.GPT_ENHANCEMENT : 0)) {
+        const shortage = imageCost - balance;
+        toast.error(`Insufficient credits. You need ${shortage} more credits for image generation.`);
+        return;
+      }
+      
+      // Use real OpenAI generation with enhanced prompts
       setIsGenerating(true);
       const result = await generateRealImage({
         prompt: imagePrompt.trim(),
         style: imageStyle,
         quality: imageQuality,
+        size: imageSize,
         projectId: selectedProject,
+        // Advanced options
+        enhanceEnabled,
+        temperature,
+        negativePrompt: negativePrompt.trim() || undefined,
+        artStyle: artStyle || undefined,
+        composition: composition || undefined,
+        mood: mood || undefined,
       });
       
       setIsGenerating(false);
@@ -194,6 +247,11 @@ export default function CreatePage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-6 relative z-10">
+        {/* Affichage des crédits */}
+        <div className="mb-6">
+          <CreditsDisplay variant="compact" />
+        </div>
+        
         <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Input */}
           <div className="lg:col-span-1 space-y-4">
@@ -232,8 +290,15 @@ export default function CreatePage() {
               </CardContent>
             </Card>
 
-            {/* Image Prompt (for complete and image-only modes) */}
-            {(workflowMode === 'complete' || workflowMode === 'image-only') && (
+            {/* Image Prompt - Use advanced PromptBuilder for image-only mode */}
+            {workflowMode === 'image-only' ? (
+              <PromptBuilder
+                value={imagePrompt}
+                onChange={setImagePrompt}
+                onEnhanceToggle={setEnhanceEnabled}
+                enhanceEnabled={enhanceEnabled}
+              />
+            ) : (workflowMode === 'complete' || workflowMode === 'video-from-image') && (
               <Card className="bg-card border-border">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 font-mono text-sm text-white">
@@ -311,9 +376,9 @@ export default function CreatePage() {
                     <SelectTrigger className="bg-white border-border text-black font-mono text-xs mt-1">
                       <SelectValue placeholder="Select project (optional)" />
                     </SelectTrigger>
-                    <SelectContent>
+                    <SelectContent className="bg-black border-white/20 shadow-lg">
                       {userProjects?.map((project) => (
-                        <SelectItem key={project.id} value={project.id} className="font-mono text-xs">
+                        <SelectItem key={project.id} value={project.id} className="font-mono text-xs text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer">
                           {project.name}
                         </SelectItem>
                       ))}
@@ -337,7 +402,10 @@ export default function CreatePage() {
                 {/* Image Configuration */}
                 {(workflowMode === 'complete' || workflowMode === 'image-only') && (
                   <div className="space-y-3 border-b border-border pb-3">
-                    <Label className="font-mono text-xs text-white">image_settings</Label>
+                    <Label className="flex items-center gap-2 font-mono text-xs text-white">
+                      <Settings className="w-3 h-3" />
+                      dalle3_settings
+                    </Label>
                     
                     <div>
                       <Label className="font-mono text-xs text-muted-foreground">style</Label>
@@ -345,9 +413,9 @@ export default function CreatePage() {
                         <SelectTrigger className="bg-white border-border text-black font-mono text-xs mt-1">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="vivid" className="font-mono text-xs">vivid</SelectItem>
-                          <SelectItem value="natural" className="font-mono text-xs">natural</SelectItem>
+                        <SelectContent className="bg-black border-white/20 shadow-lg">
+                          <SelectItem value="vivid" className="font-mono text-xs text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer">vivid (more creative)</SelectItem>
+                          <SelectItem value="natural" className="font-mono text-xs text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer">natural (more realistic)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -358,12 +426,44 @@ export default function CreatePage() {
                         <SelectTrigger className="bg-white border-border text-black font-mono text-xs mt-1">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="hd" className="font-mono text-xs">hd</SelectItem>
-                          <SelectItem value="standard" className="font-mono text-xs">standard</SelectItem>
+                        <SelectContent className="bg-black border-white/20 shadow-lg">
+                          <SelectItem value="hd" className="font-mono text-xs text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer">hd (1024×1792px, 5 credits)</SelectItem>
+                          <SelectItem value="standard" className="font-mono text-xs text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer">standard (1024×1024px, 3 credits)</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
+
+                    <div>
+                      <Label className="font-mono text-xs text-muted-foreground">dimensions</Label>
+                      <Select value={imageSize} onValueChange={(value: any) => setImageSize(value)}>
+                        <SelectTrigger className="bg-white border-border text-black font-mono text-xs mt-1">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent className="bg-black border-white/20 shadow-lg">
+                          <SelectItem value="1024x1792" className="font-mono text-xs text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer">1024×1792 (portrait)</SelectItem>
+                          <SelectItem value="1792x1024" className="font-mono text-xs text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer">1792×1024 (landscape)</SelectItem>
+                          <SelectItem value="1024x1024" className="font-mono text-xs text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer">1024×1024 (square)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {/* Cost Estimation for image-only mode */}
+                    {workflowMode === 'image-only' && (
+                      <div className="p-2 bg-secondary/30 border border-border rounded">
+                        <div className="text-xs font-mono text-white mb-1">cost_estimate:</div>
+                        <CostEstimator 
+                          operations={{
+                            IMAGE_GENERATION: 1,
+                            ...(enhanceEnabled && { GPT_ENHANCEMENT: 1 })
+                          }}
+                        />
+                        {!imageCreditsCheck.canPerform && (
+                          <div className="text-xs text-red-400 font-mono mt-1">
+                            ⚠️ {imageCreditsCheck.message}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -371,6 +471,24 @@ export default function CreatePage() {
                 {(workflowMode === 'complete' || workflowMode === 'video-from-image') && (
                   <div className="space-y-3">
                     <Label className="font-mono text-xs text-white">video_settings</Label>
+                    
+                    {/* Cost estimation pour complete workflow */}
+                    {workflowMode === 'complete' && (
+                      <div className="p-2 bg-secondary/30 border border-border rounded">
+                        <div className="text-xs font-mono text-white mb-1">workflow_cost:</div>
+                        <CostEstimator 
+                          operations={{
+                            IMAGE_TO_VIDEO: 1,
+                            ...(enhanceEnabled && { GPT_ENHANCEMENT: 1 })
+                          }}
+                        />
+                        {!hasEnoughCredits('IMAGE_TO_VIDEO', enhanceEnabled ? CREDIT_COSTS.GPT_ENHANCEMENT : 0) && (
+                          <div className="text-xs text-red-400 font-mono mt-1">
+                            ⚠️ Insufficient credits for complete workflow
+                          </div>
+                        )}
+                      </div>
+                    )}
                     
                     <div>
                       <Label className="font-mono text-xs text-muted-foreground">duration: 8s (fixed)</Label>
@@ -385,9 +503,9 @@ export default function CreatePage() {
                         <SelectTrigger className="bg-white border-border text-black font-mono text-xs mt-1">
                           <SelectValue />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="720p" className="font-mono text-xs">720p</SelectItem>
-                          <SelectItem value="1080p" className="font-mono text-xs">1080p</SelectItem>
+                        <SelectContent className="bg-black border-white/20 shadow-lg">
+                          <SelectItem value="720p" className="font-mono text-xs text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer">720p</SelectItem>
+                          <SelectItem value="1080p" className="font-mono text-xs text-white hover:bg-white/10 focus:bg-white/10 cursor-pointer">1080p</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -421,7 +539,7 @@ export default function CreatePage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 {/* Generation Status */}
-                {realResult ? (
+                {(realResult || testResult) ? (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-mono text-muted-foreground">status</span>
@@ -430,7 +548,7 @@ export default function CreatePage() {
                     
                     <div className="border border-border overflow-hidden">
                       <img 
-                        src={realResult.imageUrl} 
+                        src={(realResult?.imageUrl || testResult?.mockImageUrl) || ''} 
                         alt="Generated image" 
                         className="w-full h-auto"
                         style={{ maxHeight: '200px', objectFit: 'contain' }}
@@ -443,33 +561,69 @@ export default function CreatePage() {
                         <span className="font-mono text-xs text-white">generation_complete</span>
                       </div>
                       
-                      {realResult.enhancedPrompt && realResult.enhancedPrompt !== realResult.originalPrompt && (
-                        <div className="mb-2 p-2 bg-black/30 border border-white/10">
-                          <div className="text-xs font-mono text-white mb-1">gpt_enhanced_prompt:</div>
-                          <div className="text-xs text-muted-foreground font-mono italic">
-                            "{realResult.enhancedPrompt}"
+                      {/* Enhanced Prompt Display */}
+                      {((realResult?.enhancedPrompt && realResult.enhancedPrompt !== realResult.originalPrompt) || 
+                        (testResult?.enhancedPrompt && testResult.enhancedPrompt !== testResult.originalPrompt)) && (
+                        <div className="mb-2 space-y-2">
+                          <div className="p-2 bg-black/30 border border-white/10">
+                            <div className="flex items-center gap-1 text-xs font-mono text-white mb-1">
+                              <Sparkles className="w-3 h-3" />
+                              gpt_enhanced_prompt:
+                            </div>
+                            <div className="text-xs text-muted-foreground font-mono italic">
+                              "{(realResult?.enhancedPrompt || testResult?.enhancedPrompt)}"
+                            </div>
                           </div>
+                          
+                          {/* Prompt Settings */}
+                          {(realResult?.promptSettings || testResult?.settings) && (
+                            <div className="p-2 bg-secondary/20 border border-border/50">
+                              <div className="text-xs font-mono text-white mb-1">enhancement_settings:</div>
+                              <div className="text-xs text-muted-foreground font-mono space-y-1">
+                                {(realResult?.promptSettings?.temperature || testResult?.settings?.temperature) && (
+                                  <div>creativity: {(realResult?.promptSettings?.temperature || testResult?.settings?.temperature)}</div>
+                                )}
+                                {(realResult?.promptSettings?.artStyle || testResult?.settings?.artStyle) && (
+                                  <div>style: {(realResult?.promptSettings?.artStyle || testResult?.settings?.artStyle)}</div>
+                                )}
+                                {(realResult?.promptSettings?.mood || testResult?.settings?.mood) && (
+                                  <div>mood: {(realResult?.promptSettings?.mood || testResult?.settings?.mood)}</div>
+                                )}
+                                {(realResult?.promptSettings?.composition || testResult?.settings?.composition) && (
+                                  <div>composition: {(realResult?.promptSettings?.composition || testResult?.settings?.composition)}</div>
+                                )}
+                              </div>
+                            </div>
+                          )}
                         </div>
                       )}
                       
                       <div className="text-xs text-muted-foreground font-mono mb-2">
-                        Credits used: {realResult.creditsUsed} | Remaining: {realResult.remainingCredits}
+                        {testResult ? (
+                          <span>🧪 Test Mode - No credits used | Enhanced: {testResult.enhancementWorked ? '✅' : '❌'}</span>
+                        ) : (
+                          <span>Credits used: {realResult?.creditsUsed} | Remaining: {realResult?.remainingCredits}</span>
+                        )}
                       </div>
                       
-                      {realResult.note && (
-                        <div className="text-xs text-green-400 font-mono mb-2">
-                          {realResult.note}
+                      {(realResult?.note || testResult?.note) && (
+                        <div className={`text-xs font-mono mb-2 ${
+                          (realResult?.note || testResult?.note || '').includes('enhanced') ? 'text-green-400' :
+                          (realResult?.note || testResult?.note || '').includes('disabled') ? 'text-yellow-400' :
+                          'text-orange-400'
+                        }`}>
+                          {(realResult?.note || testResult?.note)}
                         </div>
                       )}
                       
                       <Button asChild variant="outline" size="sm" className="border-border text-muted-foreground font-mono text-xs h-7">
-                        <a href={realResult.imageUrl} target="_blank" rel="noopener noreferrer">
-                          view_full_size
+                        <a href={(realResult?.imageUrl || testResult?.mockImageUrl) || '#'} target="_blank" rel="noopener noreferrer">
+                          {testResult ? 'view_test_image' : 'view_full_size'}
                         </a>
                       </Button>
                     </div>
                   </div>
-                ) : isGeneratingReal ? (
+                ) : (isGeneratingReal || isTestingPrompt) ? (
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
                       <span className="text-xs font-mono text-muted-foreground">status</span>
@@ -478,7 +632,9 @@ export default function CreatePage() {
                     
                     <div className="space-y-1">
                       <Progress value={50} className="h-1 bg-secondary" />
-                      <div className="text-xs font-mono text-muted-foreground">generating with dall-e 3...</div>
+                      <div className="text-xs font-mono text-muted-foreground">
+                        {isTestingPrompt ? 'testing prompt enhancement...' : 'generating with dall-e 3...'}
+                      </div>
                     </div>
                   </div>
                 ) : (
@@ -496,14 +652,18 @@ export default function CreatePage() {
                     (workflowMode === 'complete' && (!imagePrompt.trim() || !videoPrompt.trim())) ||
                     (workflowMode === 'image-only' && !imagePrompt.trim()) ||
                     (workflowMode === 'video-from-image' && !videoPrompt.trim()) ||
-                    isGenerating || isGeneratingReal
+                    isGenerating || isGeneratingReal || isTestingPrompt ||
+                    // Désactiver si pas assez de crédits
+                    (workflowMode === 'image-only' && !imageCreditsCheck.canPerform) ||
+                    (workflowMode === 'complete' && !hasEnoughCredits('IMAGE_TO_VIDEO', enhanceEnabled ? CREDIT_COSTS.GPT_ENHANCEMENT : 0)) ||
+                    (workflowMode === 'video-from-image' && !videoCreditsCheck.canPerform)
                   }
                   className="w-full bg-white hover:bg-white/90 text-black font-mono text-xs h-8"
                 >
-                  {isGenerating || isGeneratingReal ? (
+                  {isGenerating || isGeneratingReal || isTestingPrompt ? (
                     <>
                       <div className="w-3 h-3 border border-black border-t-transparent rounded-full animate-spin mr-2" />
-                      generating...
+                      {isTestingPrompt ? 'testing...' : 'generating...'}
                     </>
                   ) : (
                     <>
