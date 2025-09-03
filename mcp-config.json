@@ -1,0 +1,36 @@
+{
+  "mcpServers": {
+    "vidgenie-filesystem": {
+      "command": "node",
+      "args": ["mcp/filesystem-server.js"],
+      "cwd": "/Users/alyx19/Desktop/ccc/vidgenie-app",
+      "env": {
+        "NODE_ENV": "development"
+      }
+    },
+    "vidgenie-database": {
+      "command": "node", 
+      "args": ["mcp/database-server.js"],
+      "cwd": "/Users/alyx19/Desktop/ccc/vidgenie-app",
+      "env": {
+        "NODE_ENV": "development",
+        "DATABASE_URL": "prisma+postgres://e35c28151ae37fd6672d2f71943a25de8be4df870ae11522987444876ce86f1b:sk_sRq2_RxtiQk0beBkxjj63@db.prisma.io:5432/postgres?sslmode=require",
+        "NEXT_PUBLIC_SUPABASE_URL": "https://elsrrybullbvyjhkyuzr.supabase.co",
+        "SUPABASE_SERVICE_ROLE_KEY": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVsc3JyeWJ1bGxidnlqaGt5dXpyIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc1NjY2NDA1OSwiZXhwIjoyMDcyMjQwMDU5fQ.W2qUXo3oKdcZe59yNlhTwsxBE5YzntVXdlyDJuRVIDY"
+      }
+    },
+    "vidgenie-api": {
+      "command": "node",
+      "args": ["mcp/api-integration-server.js"],
+      "cwd": "/Users/alyx19/Desktop/ccc/vidgenie-app",
+      "env": {
+        "NODE_ENV": "development",
+        "OPENAI_API_KEY": "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",
+        "STRIPE_SECRET_KEY": "sk_test_51Rs7ruFMj4LP4enMsHJBdYeHeJmv0pNDvIWCN9Z30wmPCPkAS9FrUudUujx3tOkrZ2ALK9S0KqaPDp2NfAdG1es200ssGxYuIs",
+        "FAL_KEY": "e24768ef-9d6d-4022-aabf-aafb731b25e1:7f3e0a94ab9e4607c329ca913eb00ce7",
+        "REPLICATE_API_TOKEN": "r8_your-replicate-token-here",
+        "NEXT_PUBLIC_SUPABASE_URL": "https://elsrrybullbvyjhkyuzr.supabase.co"
+      }
+    }
+  }
+}

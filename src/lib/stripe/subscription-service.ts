@@ -2,7 +2,7 @@ import { stripe, getPlanByPriceId, PRICING_CONFIG } from './config';
 import type { PricingPlan } from './config';
 
 export interface CreateCheckoutSessionParams {
-  customerId: string;
+  customerId: string | null;
   priceId: string;
   userId: string;
   successUrl: string;
@@ -29,8 +29,7 @@ export class StripeSubscriptionService {
     successUrl,
     cancelUrl,
   }: CreateCheckoutSessionParams) {
-    const session = await stripe.checkout.sessions.create({
-      customer: customerId,
+    const sessionParams: any = {
       line_items: [
         {
           price: priceId,
@@ -42,10 +41,6 @@ export class StripeSubscriptionService {
       cancel_url: cancelUrl,
       allow_promotion_codes: true,
       billing_address_collection: 'auto',
-      customer_update: {
-        address: 'auto',
-        name: 'auto',
-      },
       metadata: {
         userId,
       },
@@ -53,10 +48,20 @@ export class StripeSubscriptionService {
         metadata: {
           userId,
         },
-        trial_period_days: 0,
       },
-    });
+    };
 
+    // Only add customer if customerId is provided and not null/empty
+    if (customerId && customerId.trim() !== '') {
+      sessionParams.customer = customerId;
+      sessionParams.customer_update = {
+        address: 'auto',
+        name: 'auto',
+      };
+    }
+    // For subscriptions, Stripe will automatically create a customer if none provided
+
+    const session = await stripe.checkout.sessions.create(sessionParams);
     return session;
   }
 
