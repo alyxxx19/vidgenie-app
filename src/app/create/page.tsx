@@ -13,6 +13,7 @@ import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PromptBuilder } from '@/components/prompt-builder';
+import { VideoPromptBuilder } from '@/components/video-prompt-builder';
 import { promptUtils } from '@/lib/utils/prompt-utils';
 import { 
   Wand2, 
@@ -61,6 +62,7 @@ export default function CreatePage() {
   const [videoPrompt, setVideoPrompt] = useState('');
   const [videoResolution, setVideoResolution] = useState<'720p' | '1080p'>('1080p');
   const [generateAudio, setGenerateAudio] = useState(true);
+  const [videoSettings, setVideoSettings] = useState<any>(null);
   
   // General states
   const [selectedProject, setSelectedProject] = useState<string | undefined>();
@@ -331,31 +333,56 @@ export default function CreatePage() {
 
             {/* Video Prompt (for complete and video-from-image modes) */}
             {(workflowMode === 'complete' || workflowMode === 'video-from-image') && (
+              <VideoPromptBuilder
+                value={videoPrompt}
+                onChange={setVideoPrompt}
+                onSettingsChange={setVideoSettings}
+                onEnhanceToggle={setEnhanceEnabled}
+                enhanceEnabled={enhanceEnabled}
+              />
+            )}
+
+            {/* Video Template Showcase for video modes */}
+            {(workflowMode === 'complete' || workflowMode === 'video-from-image') && (
               <Card className="bg-card border-border">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2 font-mono text-sm text-white">
-                    <Video className="w-4 h-4" />
-                    video_prompt
+                    <Sparkles className="w-4 h-4" />
+                    quick_templates
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Textarea
-                    placeholder="Describe how the image should be animated (e.g., subtle breathing, blinking eyes, gentle movement)..."
-                    value={videoPrompt}
-                    onChange={(e) => setVideoPrompt(e.target.value)}
-                    className="min-h-[60px] bg-white border-border text-black font-mono text-xs"
-                    maxLength={1000}
-                  />
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {predefinedVideoPrompts.slice(0, 3).map((promptText, idx) => (
+                  <div className="grid grid-cols-1 gap-2">
+                    {[
+                      { name: 'Product Showcase', desc: 'Professional 360° rotation', emoji: '📦' },
+                      { name: 'Abstract Motion', desc: 'Fluid patterns & colors', emoji: '🎨' },
+                      { name: 'Character Action', desc: 'Dynamic expressions', emoji: '🎭' },
+                    ].map((template, idx) => (
                       <button
                         key={idx}
-                        onClick={() => setVideoPrompt(promptText)}
-                        className="text-xs text-muted-foreground hover:text-white border border-border hover:border-white/20 px-2 py-1 font-mono transition-colors"
+                        onClick={() => {
+                          // This would normally apply the full template
+                          const samplePrompts = [
+                            'Professional product display with smooth 360° rotation, premium lighting',
+                            'Abstract fluid patterns with organic movement, vibrant colors morphing',
+                            'Dynamic character performing expressive actions, engaging personality'
+                          ];
+                          setVideoPrompt(samplePrompts[idx]);
+                        }}
+                        className="flex items-center gap-3 p-3 text-left border border-border hover:border-white/20 hover:bg-white/5 transition-colors"
                       >
-                        {promptText.split(' ').slice(0, 3).join('_')}
+                        <span className="text-lg">{template.emoji}</span>
+                        <div>
+                          <div className="font-mono text-xs text-white">{template.name}</div>
+                          <div className="font-mono text-xs text-muted-foreground">{template.desc}</div>
+                        </div>
                       </button>
                     ))}
+                  </div>
+                  <div className="mt-3 text-center">
+                    <button className="font-mono text-xs text-muted-foreground hover:text-white transition-colors">
+                      → browse_all_templates (15+)
+                    </button>
                   </div>
                 </CardContent>
               </Card>

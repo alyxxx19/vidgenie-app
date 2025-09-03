@@ -207,23 +207,31 @@ model Post {
 }
 
 model Prompt {
-  id         String    @id @default(cuid())
-  userId     String?
-  title      String
-  content    String
-  category   String?
-  tags       String[]  @default([])
-  usageCount Int       @default(0)
-  lastUsedAt DateTime?
-  isTemplate Boolean   @default(false)
-  isPublic   Boolean   @default(false)
-  isPinned   Boolean   @default(false)
-  createdAt  DateTime  @default(now())
-  updatedAt  DateTime  @updatedAt
-  user       User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                String    @id @default(cuid())
+  userId            String?
+  title             String
+  content           String
+  category          String?
+  tags              String[]  @default([])
+  usageCount        Int       @default(0)
+  lastUsedAt        DateTime?
+  isTemplate        Boolean   @default(false)
+  isPublic          Boolean   @default(false)
+  isPinned          Boolean   @default(false)
+  
+  // Video-specific fields
+  type              String    @default("image") // "image" | "video" | "image-to-video"
+  videoSettings     Json?     // VideoPromptSettings as JSON
+  templateKey       String?   // Reference to predefined template
+  variables         Json?     // Template variables as JSON
+  
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  user              User?     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isPinned])
   @@index([isTemplate, isPublic])
+  @@index([type, category])
   @@map("prompts")
 }
 
