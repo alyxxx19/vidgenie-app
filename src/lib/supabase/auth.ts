@@ -1,5 +1,4 @@
 import { supabase } from './client';
-import { supabaseAdmin } from './server';
 import type { Database } from './types';
 
 export type AuthUser = Database['public']['Tables']['users']['Row'];
@@ -195,15 +194,4 @@ export const authService = {
     return supabase.auth.onAuthStateChange(callback);
   },
 
-  // Server-side: Get user from session token
-  async getServerUser(sessionToken: string) {
-    try {
-      const { data: { user }, error } = await supabaseAdmin.auth.getUser(sessionToken);
-      if (error) throw new AuthError(error.message);
-      return user;
-    } catch (error) {
-      if (error instanceof AuthError) throw error;
-      throw new AuthError('Server user retrieval failed');
-    }
-  },
 };

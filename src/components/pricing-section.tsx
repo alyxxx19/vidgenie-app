@@ -135,13 +135,13 @@ export default function PricingSection() {
     {
       name: "Starter",
       price: billingCycle === 'monthly' ? "€9" : "€72",
-      description: "Perfect for getting started",
+      description: "Agent AI pour débuter l'automatisation",
       features: [
-        "30 videos/month",
-        "Basic templates", 
-        "2 platforms",
-        "Basic analytics",
-        "Email support"
+        "30 workflows AI/mois",
+        "Modèles d'automatisation de base", 
+        "2 plateformes automatisées",
+        "Analytics de base de l'agent",
+        "Support par email"
       ],
       cta: "get started",
       featured: false
@@ -149,14 +149,14 @@ export default function PricingSection() {
     {
       name: "Professional", 
       price: billingCycle === 'monthly' ? "€29" : "€232",
-      description: "For serious creators",
+      description: "Agent AI avancé pour créateurs sérieux",
       features: [
-        "150 videos/month",
-        "All templates",
-        "All platforms", 
-        "Advanced analytics",
-        "Custom AI models",
-        "Priority support"
+        "150 workflows AI/mois",
+        "Tous les modèles d'automatisation",
+        "Toutes plateformes orchestrées", 
+        "Analytics avancées de l'agent",
+        "Personnalisation de l'agent IA",
+        "Support prioritaire"
       ],
       cta: "get started",
       featured: true
@@ -164,14 +164,14 @@ export default function PricingSection() {
     {
       name: "Enterprise",
       price: billingCycle === 'monthly' ? "€99" : "€792", 
-      description: "For teams and agencies",
+      description: "Agent AI sur mesure pour équipes et agences",
       features: [
-        "Unlimited videos",
-        "Custom templates",
-        "API access",
-        "Team management", 
-        "Dedicated training",
-        "24/7 support"
+        "Workflows AI illimités",
+        "Agent personnalisé sur mesure",
+        "API d'orchestration avancée",
+        "Gestion d'équipe multi-agent", 
+        "Formation dédiée à l'agent",
+        "Support 24/7"
       ],
       cta: "contact us",
       featured: false
@@ -189,7 +189,7 @@ export default function PricingSection() {
             Choose your plan
           </h2>
           <p className="text-muted-foreground mb-12">
-            Flexible options for creators at every level
+            Plans flexibles pour déléguer vos workflows vidéo à l'agent AI
           </p>
           
           {/* Billing Toggle */}

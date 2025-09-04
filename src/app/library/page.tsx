@@ -1,8 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/auth-context';
-import { redirect } from 'next/navigation';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -60,6 +59,13 @@ export default function LibraryPage() {
     },
   });
 
+  // Handle auth redirection
+  useEffect(() => {
+    if (!isLoading && !user) {
+      window.location.href = '/auth/signin?redirectTo=' + encodeURIComponent('/library');
+    }
+  }, [isLoading, user]);
+
   if (isLoading || assetsLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -69,7 +75,7 @@ export default function LibraryPage() {
   }
 
   if (!user) {
-    redirect('/auth/signin');
+    return null; // Will redirect via useEffect
   }
 
   // Filter and sort assets

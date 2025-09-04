@@ -29,16 +29,16 @@ const faqData = [
     category: 'Démarrage',
     questions: [
       {
-        q: 'Comment créer ma première vidéo?',
-        a: 'Rendez-vous sur la page "Créer", saisissez votre prompt, sélectionnez vos plateformes et cliquez sur "Générer". L&apos;IA créera votre vidéo en quelques minutes.',
+        q: 'Comment l\'agent AI crée-t-il ma première vidéo?',
+        a: 'L\'agent AI VidGenie orchestre automatiquement le workflow complet : analyse de votre prompt → génération d\'image (DALL-E 3) → création vidéo (VEO3) → optimisation pour chaque plateforme.',
       },
       {
-        q: 'Quels formats vidéo sont supportés?',
-        a: 'VidGenie génère automatiquement au format optimal pour chaque plateforme : 9:16 pour TikTok/Instagram, 16:9 pour YouTube Shorts.',
+        q: 'Comment l\\'agent AI gère-t-il les différents formats?',
+        a: 'L\\'agent AI adapte intelligemment le format selon la destination : 9:16 pour TikTok/Instagram, 16:9 pour YouTube Shorts, avec optimisation automatique du contenu pour chaque plateforme.',
       },
       {
-        q: 'Combien de temps prend la génération?',
-        a: 'En moyenne 2-5 minutes selon la complexité. Vous recevrez une notification quand c&apos;est prêt.',
+        q: 'Combien de temps l\\'agent AI prend-il pour le workflow complet?',
+        a: 'L\\'agent AI exécute le workflow complet (image + vidéo + optimisation) en 2-5 minutes. Il vous notifie à chaque étape et quand le contenu est prêt à publier.',
       },
     ],
   },
@@ -67,8 +67,8 @@ const faqData = [
         a: 'Oui! Utilisez le calendrier éditorial pour programmer vos contenus aux heures optimales.',
       },
       {
-        q: 'Les hashtags sont-ils générés automatiquement?',
-        a: 'Oui, notre IA génère des hashtags optimisés pour chaque plateforme selon votre contenu.',
+        q: 'L\\'agent AI génère-t-il les hashtags automatiquement?',
+        a: 'Oui, l\\'agent AI analyse votre contenu et génère automatiquement des hashtags optimisés, adaptés aux algorithmes de chaque plateforme pour maximiser la visibilité.',
       },
       {
         q: 'Puis-je modifier le contenu avant publication?',
@@ -105,8 +105,8 @@ const tutorialVideos = [
 const helpTopics = [
   {
     icon: <Video className="w-5 h-5" />,
-    title: 'Création de contenu',
-    description: 'Prompts, génération, personnalisation',
+    title: 'Agent AI & Workflows',
+    description: 'Automatisation, orchestration, personnalisation',
     articles: 12,
   },
   {
@@ -169,7 +169,7 @@ export default function HelpPage() {
             </Button>
             <div>
               <h1 className="text-2xl font-bold">Centre d&apos;aide</h1>
-              <p className="text-slate-600">Trouvez des réponses et apprenez à utiliser VidGenie</p>
+              <p className="text-slate-600">Apprenez à maîtriser votre agent AI VidGenie pour automatiser vos workflows vidéo</p>
             </div>
           </div>
         </div>
@@ -285,11 +285,11 @@ export default function HelpPage() {
               <CardContent>
                 <div className="space-y-3">
                   {[
-                    'Guide de démarrage complet',
-                    'Optimiser ses prompts pour de meilleurs résultats',
-                    'Stratégies de publication multi-plateformes',
-                    'Gestion d&apos;équipe et collaboration',
-                    'Analytics et métriques de performance',
+                    'Configuration de votre agent AI VidGenie',
+                    'Optimiser l\\'agent AI pour vos workflows spécifiques',
+                    'Automatisation multi-plateformes avec l\\'agent',
+                    'Orchestrer des workflows d\\'équipe avec l\\'agent AI',
+                    'Analytics automatisées et optimisation continue',
                   ].map((guide, index) => (
                     <div key={index} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 cursor-pointer">
                       <div className="flex items-center gap-3">

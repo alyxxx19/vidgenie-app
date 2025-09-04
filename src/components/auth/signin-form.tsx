@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
-import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,6 +10,8 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { authService } from '@/lib/supabase/auth';
 import { GoogleSignInButton } from './google-signin-button';
+import { AuthButton } from './auth-button';
+import { Github, Mail } from 'lucide-react';
 
 export function SignInForm() {
   const [email, setEmail] = useState('');
@@ -48,11 +49,11 @@ export function SignInForm() {
   };
 
   return (
-    <Card className="w-full max-w-md">
+    <Card className="w-full max-w-md bg-card border-border shadow-card">
       <CardHeader className="text-center">
-        <CardTitle>Sign In</CardTitle>
-        <CardDescription>
-          Enter your email and password to access your account
+        <CardTitle className="text-xl font-mono text-white">signin</CardTitle>
+        <CardDescription className="text-muted-foreground font-mono text-sm">
+          enter_credentials_to_continue
         </CardDescription>
       </CardHeader>
       
@@ -65,79 +66,90 @@ export function SignInForm() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="email">Email</Label>
+            <Label htmlFor="email" className="text-white text-xs font-mono">email</Label>
             <Input
               id="email"
               type="email"
-              placeholder="Enter your email"
+              placeholder="user@domain.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              className="h-10 bg-white border-border text-black placeholder:text-muted-foreground focus:border-border focus:ring-0 font-mono text-sm"
               required
             />
           </div>
           
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <Label htmlFor="password" className="text-white text-xs font-mono">password</Label>
             <Input
               id="password"
               type="password"
-              placeholder="Enter your password"
+              placeholder="••••••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              className="h-10 bg-white border-border text-black placeholder:text-muted-foreground focus:border-border focus:ring-0 font-mono text-sm"
               required
             />
           </div>
           
-          <Button 
+          <AuthButton 
             type="submit" 
-            className="w-full" 
+            className="w-full h-10 bg-white hover:bg-white/90 text-black font-mono text-sm" 
+            isLoading={isLoading}
+            loadingText="authenticating..."
+            icon={<Mail className="w-4 h-4" />}
             disabled={isLoading}
           >
-            {isLoading ? 'Signing in...' : 'Sign In'}
-          </Button>
+            authenticate
+          </AuthButton>
         </form>
 
         <div className="space-y-2">
-          <Separator />
-          <p className="text-center text-sm text-muted-foreground">
-            Or continue with
+          <Separator className="bg-border" />
+          <p className="text-center text-sm text-muted-foreground font-mono">
+            or_continue_with
           </p>
         </div>
 
         <div className="space-y-2">
           <GoogleSignInButton
+            variant="outline"
+            size="default"
+            className="h-10 border-border text-white hover:bg-white hover:text-black font-mono text-sm"
             disabled={isLoading}
             onError={(error) => setError(error)}
             onSuccess={() => router.push('/dashboard')}
+            showText={true}
           />
-          <Button
+          <AuthButton
             variant="outline"
+            size="default"
+            className="h-10 border-border text-white hover:bg-white hover:text-black font-mono text-sm"
             onClick={() => handleOAuthSignIn('github')}
+            icon={<Github className="w-4 h-4" />}
             disabled={isLoading}
-            className="w-full"
           >
-            GitHub
-          </Button>
+            continue_with_github
+          </AuthButton>
         </div>
 
         <div className="text-center">
           <button
             type="button"
-            className="text-sm text-muted-foreground hover:text-primary"
+            className="text-sm text-muted-foreground hover:text-white font-mono"
             onClick={async () => {
               if (email) {
                 try {
                   await authService.resetPassword(email);
-                  setError('Password reset email sent! Check your inbox.');
+                  setError('reset_email_sent_check_inbox');
                 } catch (err: any) {
                   setError(err.message);
                 }
               } else {
-                setError('Please enter your email address first');
+                setError('enter_email_first');
               }
             }}
           >
-            Forgot your password?
+            forgot_password?
           </button>
         </div>
       </CardContent>

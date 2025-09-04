@@ -160,21 +160,21 @@ export default function HomePage() {
           <div className="inline-flex items-center gap-2 px-4 py-2 bg-card border border-border mb-8">
             <div className="w-2 h-2 bg-foreground rounded-full animate-pulse" />
             <span className="text-xs font-mono uppercase tracking-wider text-muted-foreground">
-              AI Content Automation
+              Agent AI Intelligent
             </span>
           </div>
 
           {/* Title */}
           <h1 className="text-6xl md:text-7xl lg:text-8xl font-normal tracking-tight mb-6" style={{ lineHeight: '1', letterSpacing: '-0.02em' }}>
-            <span className="text-foreground">Automated Video</span>
+            <span className="text-foreground">Agent AI</span>
             <br />
-            <span className="text-muted-foreground">Content Generation</span>
+            <span className="text-muted-foreground">Vidéo Intelligent</span>
           </h1>
 
           {/* Description */}
           <p className="text-lg text-muted-foreground max-w-2xl mb-12 font-mono" style={{ lineHeight: '1.6' }}>
-            Generate, optimize and distribute video content across TikTok, 
-            YouTube Shorts, and Instagram Reels using advanced AI automation.
+            Agent AI intelligent qui facilite et automatise vos workflows de création vidéo.
+            Génération, optimisation et distribution automatisées sur TikTok, YouTube Shorts et Instagram Reels.
           </p>
 
           {/* Buttons */}
@@ -203,18 +203,18 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-4">Features</p>
-            <h2 className="text-3xl md:text-4xl font-normal tracking-tight mb-4">Everything you need for viral content</h2>
-            <p className="text-muted-foreground">Advanced AI-powered tools to automate your content creation workflow</p>
+            <h2 className="text-3xl md:text-4xl font-normal tracking-tight mb-4">Agent AI qui automatise vos workflows vidéo</h2>
+            <p className="text-muted-foreground">Outils IA avancés pour faciliter et automatiser complètement votre processus de création de contenu</p>
           </div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-px bg-border border border-border">
             {[
-              { num: "01", title: "AI Generation", desc: "Advanced video synthesis using GPT-4, MidJourney and Sora models." },
-              { num: "02", title: "Scheduling Engine", desc: "Automated publishing optimization based on engagement patterns." },
-              { num: "03", title: "Performance Analytics", desc: "Real-time metrics and performance tracking across platforms." },
-              { num: "04", title: "Custom Templates", desc: "Professional templates adapted to your brand and style." },
-              { num: "05", title: "Multi-Platform", desc: "Publish simultaneously on TikTok, Instagram Reels, YouTube Shorts." },
-              { num: "06", title: "SEO Optimization", desc: "Automatic hashtags, descriptions and titles for maximum visibility." }
+              { num: "01", title: "Agent IA Intelligent", desc: "Agent autonome qui orchestre vos workflows de création vidéo de bout en bout." },
+              { num: "02", title: "Automation Complète", desc: "Automatise l'ensemble du processus : génération, optimisation, publication." },
+              { num: "03", title: "Workflow Orchestration", desc: "Gestion intelligente des étapes : DALL-E 3 → VEO3 → distribution multiplateforme." },
+              { num: "04", title: "Décisions Autonomes", desc: "L'agent prend des décisions intelligentes basées sur vos objectifs et données." },
+              { num: "05", title: "Pipeline Intégré", desc: "Un seul agent gère TikTok, Instagram Reels, YouTube Shorts simultanément." },
+              { num: "06", title: "Apprentissage Continu", desc: "L'agent s'améliore en analysant les performances de vos contenus." }
             ].map((feature) => (
               <div key={feature.num} className="bg-background p-8 hover:bg-card transition-all duration-300 hover:scale-[1.02] cursor-pointer">
                 <div className="font-mono text-2xl mb-4 text-foreground">{feature.num}</div>
@@ -244,26 +244,26 @@ export default function HomePage() {
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
             <p className="text-xs font-mono uppercase tracking-wider text-muted-foreground mb-4">Testimonials</p>
-            <h2 className="text-3xl md:text-4xl font-normal tracking-tight mb-4">What our users say</h2>
-            <p className="text-muted-foreground">Join over 500,000 creators using VidGenie</p>
+            <h2 className="text-3xl md:text-4xl font-normal tracking-tight mb-4">Ce que disent nos utilisateurs</h2>
+            <p className="text-muted-foreground">Rejoignez plus de 500 000 créateurs qui utilisent l'agent AI VidGenie</p>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
             {[
               {
-                content: "VidGenie completely transformed my content strategy. I can now create in 5 minutes what used to take hours.",
+                content: "L'agent AI VidGenie a révolutionné ma stratégie de contenu. Il automatise complètement mon workflow vidéo de A à Z.",
                 author: "sophie.chen",
                 role: "@fashion_influencer",
                 avatar: "SC"
               },
               {
-                content: "The AI perfectly understands my brand. Generated videos are always relevant and engaging.", 
+                content: "L'agent comprend parfaitement ma marque et orchestre intelligent mes workflows. Tout se fait automatiquement.", 
                 author: "marc.dubois",
                 role: "@business_coach",
                 avatar: "MD"
               },
               {
-                content: "My views increased by 300% since using VidGenie. The automatic optimization is truly impressive.",
+                content: "L'agent AI a augmenté mes vues de 300%. L'automatisation des workflows est impressionnante.",
                 author: "anna.lopez", 
                 role: "@fitness_creator",
                 avatar: "AL"
@@ -315,7 +315,7 @@ export default function HomePage() {
             <div>
               <h3 className="text-sm font-mono uppercase tracking-wider text-foreground mb-4">VIDGENIE</h3>
               <p className="text-muted-foreground text-sm font-mono">
-                ai-powered video automation platform for modern creators.
+                agent ai intelligent qui automatise les workflows de création vidéo.
               </p>
             </div>
             <div>

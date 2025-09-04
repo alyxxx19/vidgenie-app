@@ -2,12 +2,12 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ArrowRight, User } from 'lucide-react';
 import { toast } from 'sonner';
+import { AuthButton } from '@/components/auth/auth-button';
 
 export default function DevLoginPage() {
   const [email, setEmail] = useState('test@example.com');
@@ -44,53 +44,62 @@ export default function DevLoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-6">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-black relative flex items-center justify-center p-6">
+      {/* Minimal grid pattern */}
+      <div className="absolute inset-0 bg-grid-minimal opacity-50" />
+      
+      <Card className="w-full max-w-md bg-card border-border shadow-card relative z-10">
         <CardHeader className="text-center">
-          <CardTitle className="text-2xl">Connexion Dev</CardTitle>
-          <CardDescription>
-            Mode développement - Pas d&apos;OAuth requis
+          <CardTitle className="text-xl font-mono text-white">dev_mode</CardTitle>
+          <CardDescription className="text-muted-foreground font-mono text-sm">
+            development_authentication
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleLogin} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-white text-xs font-mono">email</Label>
               <Input
                 id="email"
                 type="email"
+                placeholder="user@domain.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
+                className="h-10 bg-white border-border text-black placeholder:text-muted-foreground focus:border-border focus:ring-0 font-mono text-sm"
                 required
               />
             </div>
             
             <div className="space-y-2">
-              <Label htmlFor="name">Nom</Label>
+              <Label htmlFor="name" className="text-white text-xs font-mono">name</Label>
               <Input
                 id="name"
                 type="text"
+                placeholder="full name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
+                className="h-10 bg-white border-border text-black placeholder:text-muted-foreground focus:border-border focus:ring-0 font-mono text-sm"
                 required
               />
             </div>
             
-            <Button 
+            <AuthButton 
               type="submit" 
-              className="w-full" 
+              className="w-full h-10 bg-white hover:bg-white/90 text-black font-mono text-sm" 
+              isLoading={isLoading}
+              loadingText="connecting..."
+              icon={<User className="w-4 h-4" />}
               disabled={isLoading}
             >
-              <User className="w-4 h-4 mr-2" />
-              Se connecter
+              dev_authenticate
               <ArrowRight className="w-4 h-4 ml-2" />
-            </Button>
+            </AuthButton>
           </form>
 
-          <div className="mt-6 p-3 bg-blue-50 rounded-lg">
-            <p className="text-xs text-blue-700">
-              <strong>Mode dev :</strong> Aucune validation requise. 
-              Créera automatiquement un compte si non existant.
+          <div className="mt-6 p-3 bg-card border border-border rounded-lg">
+            <p className="text-xs text-muted-foreground font-mono">
+              <strong className="text-white">dev_mode:</strong> no_validation_required.<br/>
+              auto_creates_account_if_missing.
             </p>
           </div>
         </CardContent>

@@ -14,6 +14,7 @@ import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { PromptBuilder } from '@/components/prompt-builder';
 import { VideoPromptBuilder } from '@/components/video-prompt-builder';
+import { WorkflowInterface } from '@/components/workflow-interface';
 import { promptUtils } from '@/lib/utils/prompt-utils';
 import { 
   Wand2, 
@@ -66,7 +67,7 @@ export default function CreatePage() {
   
   // General states
   const [selectedProject, setSelectedProject] = useState<string | undefined>();
-  const [workflowMode, setWorkflowMode] = useState<'complete' | 'image-only' | 'video-from-image'>('complete');
+  const [workflowMode, setWorkflowMode] = useState<'complete' | 'image-only' | 'video-from-image' | 'workflow'>('workflow');
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
 
@@ -254,7 +255,14 @@ export default function CreatePage() {
           <CreditsDisplay variant="compact" />
         </div>
         
-        <div className="grid lg:grid-cols-3 gap-6">
+        {/* Smart Workflow Interface */}
+        {workflowMode === 'workflow' && (
+          <WorkflowInterface projectId={selectedProject} />
+        )}
+        
+        {/* Legacy Interface */}
+        {workflowMode !== 'workflow' && (
+          <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Input */}
           <div className="lg:col-span-1 space-y-4">
             {/* Workflow Mode Selection */}
@@ -268,6 +276,7 @@ export default function CreatePage() {
               <CardContent>
                 <div className="space-y-2">
                   {[
+                    { id: 'workflow', label: 'smart_workflow', desc: 'Advanced pipeline with real-time visualization', icon: Sparkles },
                     { id: 'complete', label: 'image_to_video', desc: 'Complete workflow: image → video', icon: ArrowRight },
                     { id: 'image-only', label: 'image_only', desc: 'Generate image with DALL-E 3', icon: Image },
                     { id: 'video-from-image', label: 'video_from_image', desc: 'Create video from existing image', icon: PlayCircle },
@@ -284,6 +293,7 @@ export default function CreatePage() {
                       <div className="flex items-center gap-2 mb-1">
                         <mode.icon className="w-3 h-3 text-white" />
                         <span className="font-mono text-xs text-white">{mode.label}</span>
+                        {mode.id === 'workflow' && <Badge className="bg-green-500 text-white font-mono text-xs">new</Badge>}
                       </div>
                       <p className="text-xs text-muted-foreground font-mono">{mode.desc}</p>
                     </div>
@@ -727,6 +737,7 @@ export default function CreatePage() {
             </Card>
           </div>
         </div>
+        )}
       </div>
     </div>
   );

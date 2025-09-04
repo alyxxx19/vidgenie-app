@@ -44,9 +44,9 @@ export default function DashboardPage() {
     {},
     { enabled: !!user, staleTime: 60000 }
   );
-  const { data: creditBalance } = api.credits.getBalance.useQuery(
+  const { data: creditBalance, refetch: refetchCredits } = api.credits.getBalance.useQuery(
     undefined,
-    { enabled: !!user, staleTime: 30000 }
+    { enabled: !!user, staleTime: 30000, refetchInterval: 60000 } // Refetch every minute
   );
   const { data: generationMetrics } = api.analytics.getGenerationMetrics.useQuery(
     { days: 30 },
@@ -82,7 +82,7 @@ export default function DashboardPage() {
   // Use default values immediately to avoid recalculations
   const stats = {
     creditsUsed: creditBalance?.usedThisMonth ?? 0,
-    creditsTotal: creditBalance?.balance ?? 1000,
+    creditsTotal: creditBalance?.balance ?? 0, // Show 0 instead of 1000 to reflect real data
     contentGenerated: userAssets?.assets?.length ?? 0,
     scheduledPosts: scheduledPosts?.length ?? 0,
     successRate: generationMetrics?.successRate ?? 95,
@@ -213,19 +213,24 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <div className="text-3xl font-[var(--font-poppins)] font-bold text-white mb-2">
-                {stats.creditsTotal - stats.creditsUsed}
+                {creditBalance ? (creditBalance.balance - creditBalance.usedThisMonth) : '...'}
               </div>
               <p className="text-sm text-cyber-textMuted mb-4">
-                sur <span className="text-white font-semibold">{stats.creditsTotal}</span> disponibles
+                sur <span className="text-white font-semibold">{creditBalance?.balance ?? '...'}</span> disponibles
               </p>
               <div className="space-y-2">
                 <Progress 
-                  value={stats.creditsTotal > 0 ? (stats.creditsUsed / stats.creditsTotal) * 100 : 0} 
+                  value={creditBalance && creditBalance.balance > 0 ? (creditBalance.usedThisMonth / creditBalance.balance) * 100 : 0} 
                   className="h-2 bg-secondary"
                 />
                 <div className="flex justify-between text-xs text-cyber-textMuted">
-                  <span>Utilisés: {stats.creditsUsed}</span>
-                  <span>{Math.round((stats.creditsUsed / stats.creditsTotal) * 100)}%</span>
+                  <span>Utilisés: {creditBalance?.usedThisMonth ?? '...'}</span>
+                  <span>
+                    {creditBalance && creditBalance.balance > 0 
+                      ? Math.round((creditBalance.usedThisMonth / creditBalance.balance) * 100) + '%'
+                      : '0%'
+                    }
+                  </span>
                 </div>
               </div>
             </CardContent>

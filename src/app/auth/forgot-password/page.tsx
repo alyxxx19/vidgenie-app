@@ -2,18 +2,17 @@
 
 import { useState } from 'react';
 import { useAuth } from '@/lib/auth/auth-context';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { 
   Mail,
-  Loader2,
   ArrowLeft,
   Sparkles,
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from '@/components/ui/use-toast';
+import { AuthButton } from '@/components/auth/auth-button';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
@@ -45,31 +44,34 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50 flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen bg-black relative flex items-center justify-center p-6">
+      {/* Minimal grid pattern */}
+      <div className="absolute inset-0 bg-grid-minimal opacity-50" />
+      
+      <div className="w-full max-w-md relative z-10">
         {/* Header */}
         <div className="text-center mb-8">
           <div className="flex items-center justify-center mb-4">
-            <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
-              <Sparkles className="w-6 h-6 text-white" />
+            <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
+              <Sparkles className="w-6 h-6 text-black" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">
-            Mot de passe oublié
+          <h1 className="text-xl font-mono text-white mb-2">
+            password_reset
           </h1>
-          <p className="text-slate-600">
-            Saisissez votre email pour recevoir un lien de réinitialisation
+          <p className="text-muted-foreground font-mono text-sm">
+            enter_email_for_reset_link
           </p>
         </div>
 
         {/* Reset Password Card */}
-        <Card className="border-0 shadow-xl">
+        <Card className="bg-card border-border shadow-card">
           <CardHeader className="space-y-1 pb-4">
-            <CardTitle className="text-xl text-center">Réinitialisation</CardTitle>
-            <CardDescription className="text-center">
+            <CardTitle className="text-xl text-white font-mono text-center">reset_password</CardTitle>
+            <CardDescription className="text-center text-muted-foreground font-mono text-sm">
               {emailSent 
-                ? 'Email envoyé ! Vérifiez votre boîte mail.' 
-                : 'Entrez votre adresse email'
+                ? 'email_sent_check_inbox' 
+                : 'enter_email_address'
               }
             </CardDescription>
           </CardHeader>
@@ -77,55 +79,54 @@ export default function ForgotPasswordPage() {
             {!emailSent ? (
               <form onSubmit={handleResetPassword} className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="votre@email.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
-                      required
-                    />
-                  </div>
+                  <Label htmlFor="email" className="text-white text-xs font-mono">email</Label>
+                  <Input
+                    id="email"
+                    type="email"
+                    placeholder="user@domain.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="h-10 bg-white border-border text-black placeholder:text-muted-foreground focus:border-border focus:ring-0 font-mono text-sm"
+                    required
+                  />
                 </div>
 
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? (
-                    <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <Mail className="w-4 h-4 mr-2" />
-                  )}
-                  Envoyer le lien
-                </Button>
+                <AuthButton 
+                  type="submit" 
+                  className="w-full h-10 bg-white hover:bg-white/90 text-black font-mono text-sm" 
+                  isLoading={isLoading}
+                  loadingText="sending..."
+                  icon={<Mail className="w-4 h-4" />}
+                  disabled={isLoading}
+                >
+                  send_reset_link
+                </AuthButton>
               </form>
             ) : (
               <div className="text-center space-y-4">
-                <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                  <p className="text-sm text-green-800">
-                    Un email de réinitialisation a été envoyé à <strong>{email}</strong>
+                <div className="p-4 bg-card border border-border rounded-lg">
+                  <p className="text-sm text-muted-foreground font-mono">
+                    reset_email_sent_to <strong className="text-white">{email}</strong>
                   </p>
                 </div>
                 
-                <Button 
+                <AuthButton 
                   onClick={() => setEmailSent(false)}
                   variant="outline"
-                  className="w-full"
+                  className="w-full h-10 border-border text-white hover:bg-white hover:text-black font-mono text-sm"
                 >
-                  Renvoyer l&apos;email
-                </Button>
+                  resend_email
+                </AuthButton>
               </div>
             )}
 
             <div className="text-center">
               <Link 
                 href="/auth/signin" 
-                className="inline-flex items-center text-sm text-slate-600 hover:text-slate-900"
+                className="inline-flex items-center text-sm text-muted-foreground hover:text-white font-mono"
               >
                 <ArrowLeft className="w-4 h-4 mr-1" />
-                Retour à la connexion
+                back_to_signin
               </Link>
             </div>
           </CardContent>
