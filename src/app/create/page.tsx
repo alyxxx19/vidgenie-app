@@ -15,6 +15,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { PromptBuilder } from '@/components/prompt-builder';
 import { VideoPromptBuilder } from '@/components/video-prompt-builder';
 import { WorkflowInterface } from '@/components/workflow-interface';
+import { WorkflowInterfaceV2 } from '@/components/workflow/workflow-interface-v2';
+import { WorkflowStepsVisualizer } from '@/components/workflow-steps-visualizer';
 import { promptUtils } from '@/lib/utils/prompt-utils';
 import { 
   Wand2, 
@@ -70,6 +72,7 @@ export default function CreatePage() {
   const [workflowMode, setWorkflowMode] = useState<'complete' | 'image-only' | 'video-from-image' | 'workflow'>('workflow');
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
+  const [workflowCurrentStep, setWorkflowCurrentStep] = useState(0);
 
   // Load prompt from URL params if provided
   useEffect(() => {
@@ -131,6 +134,42 @@ export default function CreatePage() {
   );
   
   const jobStatus = jobStatusQuery.data;
+
+  // Mise à jour du workflow step basé sur le statut du job
+  useEffect(() => {
+    if (!jobStatus || workflowMode === 'workflow') return;
+
+    let step = 0;
+    switch (jobStatus.status) {
+      case 'QUEUED':
+        step = 1;
+        break;
+      case 'GENERATING_IMAGE':
+        step = workflowMode === 'complete' ? 2 : 2;
+        break;
+      case 'IMAGE_READY':
+        step = workflowMode === 'complete' ? 3 : workflowMode === 'image-only' ? 3 : 1;
+        break;
+      case 'GENERATING_VIDEO':
+        step = workflowMode === 'complete' ? 4 : 2;
+        break;
+      case 'VIDEO_READY':
+        step = workflowMode === 'complete' ? 5 : 3;
+        break;
+      case 'FAILED':
+        step = workflowCurrentStep; // Garde l'étape courante en cas d'erreur
+        break;
+      default:
+        step = 0;
+    }
+    setWorkflowCurrentStep(step);
+  }, [jobStatus, workflowMode, workflowCurrentStep]);
+
+  // Réinitialiser le workflow step quand on change de mode
+  useEffect(() => {
+    setWorkflowCurrentStep(0);
+    setCurrentJobId(null);
+  }, [workflowMode]);
 
   const { data: userProjects } = api.projects.list.useQuery();
 
@@ -257,7 +296,21 @@ export default function CreatePage() {
         
         {/* Smart Workflow Interface */}
         {workflowMode === 'workflow' && (
-          <WorkflowInterface projectId={selectedProject} />
+          <WorkflowInterfaceV2 projectId={selectedProject} />
+        )}
+
+        {/* Workflow Steps Visualizer - New Design */}
+        {workflowMode !== 'workflow' && (
+          <div className="mb-8">
+            <WorkflowStepsVisualizer 
+              workflowType={workflowMode as 'complete' | 'image-only' | 'video-from-image'}
+              currentStep={workflowCurrentStep}
+              onStepClick={(stepId) => {
+                console.log('Step clicked:', stepId);
+                // Ici on pourrait ajouter une logique pour expliquer chaque étape
+              }}
+            />
+          </div>
         )}
         
         {/* Legacy Interface */}

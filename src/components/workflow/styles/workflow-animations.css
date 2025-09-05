@@ -1,0 +1,253 @@
+/* Workflow Canvas Animations */
+
+/* Keyframe animations */
+@keyframes flow {
+  0% {
+    stroke-dasharray: 8;
+    stroke-dashoffset: 16;
+  }
+  100% {
+    stroke-dasharray: 8;
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(59, 130, 246, 0.3);
+    opacity: 1;
+  }
+  50% {
+    box-shadow: 0 0 20px rgba(59, 130, 246, 0.6);
+    opacity: 0.8;
+  }
+}
+
+@keyframes success-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px rgba(16, 185, 129, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 25px rgba(16, 185, 129, 0.7);
+  }
+}
+
+@keyframes error-shake {
+  0%, 100% { transform: translateX(0); }
+  10%, 30%, 50%, 70%, 90% { transform: translateX(-3px); }
+  20%, 40%, 60%, 80% { transform: translateX(3px); }
+}
+
+@keyframes node-enter {
+  0% {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes progress-fill {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(0%);
+  }
+}
+
+@keyframes spin-slow {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+    opacity: 0.8;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Node state classes */
+.workflow-node {
+  animation: node-enter 0.5s ease-out;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.workflow-node.idle {
+  transform: scale(1);
+  opacity: 0.9;
+}
+
+.workflow-node.loading {
+  animation: pulse-glow 2s infinite;
+}
+
+.workflow-node.success {
+  animation: success-glow 1.5s ease-out;
+}
+
+.workflow-node.error {
+  animation: error-shake 0.6s ease-in-out;
+}
+
+/* Edge animations */
+.react-flow__edge-path.transferring {
+  stroke: #10b981;
+  stroke-width: 3;
+  animation: flow 2s linear infinite;
+}
+
+.react-flow__edge-path.idle {
+  stroke: #9ca3af;
+  stroke-width: 2;
+  transition: stroke 0.3s ease, stroke-width 0.3s ease;
+}
+
+.react-flow__edge-path.active {
+  stroke: #3b82f6;
+  stroke-width: 2.5;
+  transition: stroke 0.3s ease, stroke-width 0.3s ease;
+}
+
+/* Handle animations */
+.react-flow__handle {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.react-flow__handle:hover {
+  transform: scale(1.3);
+  box-shadow: 0 0 10px rgba(59, 130, 246, 0.4);
+}
+
+.react-flow__handle.success {
+  background-color: #10b981;
+  border-color: #10b981;
+  animation: bounce-in 0.5s ease-out;
+}
+
+.react-flow__handle.loading {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+  animation: pulse-glow 2s infinite;
+}
+
+/* Progress bar enhancements */
+.progress-enhanced {
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-enhanced::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+  animation: progress-fill 2s infinite;
+}
+
+/* Badge animations */
+.status-badge {
+  transition: all 0.3s ease;
+}
+
+.status-badge.loading {
+  animation: pulse-glow 2s infinite;
+}
+
+.status-badge.success {
+  animation: bounce-in 0.5s ease-out;
+}
+
+.status-badge.error {
+  animation: error-shake 0.6s ease-in-out;
+}
+
+/* Card hover effects */
+.workflow-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.workflow-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Button press animations */
+.workflow-button {
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.workflow-button:active {
+  transform: scale(0.98);
+}
+
+.workflow-button:hover {
+  transform: translateY(-1px);
+}
+
+/* Loading spinner */
+.loading-spinner {
+  animation: spin-slow 1.5s linear infinite;
+}
+
+/* Cyber theme enhancements */
+.cyber-glow {
+  box-shadow: 0 0 10px rgba(0, 255, 255, 0.2);
+  border: 1px solid rgba(0, 255, 255, 0.3);
+}
+
+.cyber-glow.active {
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.4);
+  border: 1px solid rgba(0, 255, 255, 0.6);
+}
+
+/* React Flow specific enhancements */
+.react-flow__controls-button {
+  transition: all 0.2s ease;
+}
+
+.react-flow__controls-button:hover {
+  transform: scale(1.1);
+  background: rgba(255, 255, 255, 0.2) !important;
+}
+
+.react-flow__minimap {
+  transition: all 0.3s ease;
+}
+
+.react-flow__minimap:hover {
+  transform: scale(1.05);
+}
+
+/* Node selection enhancements */
+.react-flow__node.selected {
+  box-shadow: 0 0 0 2px #3b82f6, 0 0 20px rgba(59, 130, 246, 0.3);
+  animation: pulse-glow 2s infinite;
+}
+
+/* Responsive animations */
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

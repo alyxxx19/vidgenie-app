@@ -20,6 +20,8 @@ model User {
   timezone               String          @default("Europe/Paris")
   planId                 String          @default("free")
   creditsBalance         Int             @default(100)
+  credits                Int             @default(100)
+  creditsUsed            Int             @default(0)
   subscriptionId         String?
   stripeCustomerId       String?         @unique
   stripeSubscriptionId   String?         @unique
@@ -38,6 +40,12 @@ model User {
   stripePayments         StripePayment[]
   usageEvents            UsageEvent[]
   generationJobs         GenerationJob[]
+  
+  // Nouvelles relations PRD V2
+  apiKeys                UserApiKeys?
+  creditTransactions     CreditTransaction[]
+  workflowExecutions     WorkflowExecution[]
+  contents               Content[]
 
   @@map("users")
 }
@@ -47,8 +55,11 @@ model ApiCredential {
   userId        String
   provider      String
   encryptedKey  String
+  encryptionIV  String    // Vecteur d'initialisation pour AES-256
   isActive      Boolean   @default(true)
   lastValidated DateTime?
+  validationStatus String @default("unchecked") // "valid" | "invalid" | "unchecked"
+  lastError     String?   // Message d'erreur si validation échoue
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
@@ -95,9 +106,10 @@ model Project {
   updatedAt   DateTime  @updatedAt
   assets         Asset[]
   jobs           Job[]
-  posts          Post[]
-  generationJobs GenerationJob[]
-  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  posts              Post[]
+  generationJobs     GenerationJob[]
+  workflowExecutions WorkflowExecution[]
+  user               User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("projects")
 }
@@ -413,3 +425,124 @@ model Webhook {
   @@index([jobId])
   @@map("webhooks")
 }
+
+// ============================================
+// NOUVEAUX MODÈLES PRD V2 - WORKFLOW SYSTEM
+// ============================================
+
+model WorkflowExecution {
+  id                   String    @id @default(cuid())
+  userId               String
+  projectId            String?
+  
+  // Configuration du workflow
+  config               Json      // WorkflowConfig complet
+  workflowType         String    // 'complete' | 'image-only' | 'video-from-image'
+  
+  // Status et progress
+  status               String    // 'INITIALIZING' | 'RUNNING' | 'COMPLETED' | 'FAILED' | 'CANCELLED'
+  progress             Int       @default(0) // 0-100
+  currentStep          String?
+  
+  // Coûts et timing
+  estimatedCost        Int       // En crédits
+  actualCost           Int?      // Coût réel déductible
+  estimatedDuration    Int       // En secondes
+  actualDuration       Int?      // Durée réelle
+  
+  // Résultats
+  result               Json?     // { enhancedPrompt, imageUrl, videoUrl, etc. }
+  
+  // Erreurs
+  error                String?   @db.Text
+  
+  // Timestamps
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+  startedAt            DateTime
+  completedAt          DateTime?
+  
+  // Relations
+  user                 User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project              Project?  @relation(fields: [projectId], references: [id])
+  
+  @@index([userId, createdAt])
+  @@index([status])
+  @@index([workflowType])
+  @@map("workflow_executions")
+}
+
+model CreditTransaction {
+  id          String   @id @default(cuid())
+  userId      String
+  
+  // Transaction details
+  type        String   // 'DEBIT' | 'CREDIT'
+  amount      Int      // Montant en crédits
+  reason      String   // 'workflow_prompt_enhancement' | 'workflow_image_generation' | etc.
+  metadata    Json?    // Détails additionnels
+  
+  // Timestamps
+  createdAt   DateTime @default(now())
+  
+  // Relations
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([createdAt])
+  @@map("credit_transactions")
+}
+
+model Content {
+  id              String   @id @default(cuid())
+  userId          String
+  
+  // Content type et métadonnées
+  type            String   // 'image' | 'video'
+  title           String
+  originalPrompt  String   @db.Text
+  enhancedPrompt  String?  @db.Text
+  
+  // URLs des assets
+  imageUrl        String?
+  videoUrl        String?
+  thumbnailUrl    String?
+  
+  // Status et métadonnées
+  status          String   @default("PROCESSING") // 'PROCESSING' | 'COMPLETED' | 'FAILED'
+  metadata        Json?    // Données additionnelles du workflow
+  
+  // Timestamps
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  // Relations
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([status])
+  @@map("content")
+}
+
+// Mise à jour du modèle User pour inclure les nouveaux champs
+model UserApiKeys {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  
+  // Clés API chiffrées (AES-256)
+  openaiKey         String?
+  imageGenKey       String?
+  vo3Key           String?
+  encryptionIV      String
+  
+  // Status de validation
+  validationStatus  Json     @default("{}")
+  lastUpdated       DateTime @default(now())
+  createdAt         DateTime @default(now())
+  
+  // Relations
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_api_keys")
+}
+

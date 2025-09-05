@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
+import { ApiKeysSection } from '@/components/settings/ApiKeysSection';
 
 interface UserSettings {
   profile: {
@@ -167,42 +168,49 @@ export default function SettingsPage() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-cyber-gradient relative">
+      {/* Background Effects */}
+      <div className="absolute inset-0 bg-grid-pattern opacity-10" />
+      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse" />
+      
       {/* Header */}
-      <header className="bg-white border-b border-slate-200">
-        <div className="max-w-7xl mx-auto px-6 py-4">
+      <header className="bg-card border-b border-border relative z-10">
+        <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center gap-4">
-            <Button variant="ghost" asChild>
+            <Button variant="ghost" asChild className="text-muted-foreground hover:text-white hover:bg-secondary font-mono text-xs">
               <Link href="/dashboard">
                 <ArrowLeft className="w-4 h-4 mr-2" />
-                Retour
+                dashboard
               </Link>
             </Button>
-            <div>
-              <h1 className="text-2xl font-bold">Paramètres</h1>
-              <p className="text-slate-600">Gérez vos préférences et paramètres de compte</p>
+            <div className="animate-slide-in">
+              <h1 className="font-mono text-lg text-white mb-1">settings</h1>
+              <p className="text-muted-foreground text-xs font-mono">
+                configuration • preferences • account
+              </p>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-4xl mx-auto px-6 py-8">
-        <Tabs defaultValue="profile" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
-            <TabsTrigger value="profile">Profil</TabsTrigger>
-            <TabsTrigger value="notifications">Notifications</TabsTrigger>
-            <TabsTrigger value="privacy">Confidentialité</TabsTrigger>
-            <TabsTrigger value="preferences">Préférences</TabsTrigger>
-            <TabsTrigger value="account">Compte</TabsTrigger>
+      <div className="max-w-4xl mx-auto px-6 py-8 relative z-10">
+        <Tabs defaultValue="profile" className="space-y-8 animate-fade-in-up">
+          <TabsList className="bg-secondary/50 border-secondary">
+            <TabsTrigger value="profile" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-mono text-xs">profile</TabsTrigger>
+            <TabsTrigger value="apikeys" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-mono text-xs">api_keys</TabsTrigger>
+            <TabsTrigger value="notifications" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-mono text-xs">notifications</TabsTrigger>
+            <TabsTrigger value="privacy" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-mono text-xs">privacy</TabsTrigger>
+            <TabsTrigger value="preferences" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-mono text-xs">preferences</TabsTrigger>
+            <TabsTrigger value="account" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-mono text-xs">account</TabsTrigger>
           </TabsList>
 
           {/* Profile Tab */}
-          <TabsContent value="profile" className="space-y-6">
-            <Card>
+          <TabsContent value="profile" className="space-y-6 animate-fade-in-up">
+            <Card className="bg-card/80 backdrop-blur-sm border-secondary">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-white font-mono text-sm">
                   <User className="w-5 h-5" />
-                  Informations personnelles
+                  user_profile
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
@@ -311,21 +319,26 @@ export default function SettingsPage() {
             </Card>
           </TabsContent>
 
+          {/* API Keys Tab */}
+          <TabsContent value="apikeys" className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            <ApiKeysSection />
+          </TabsContent>
+
           {/* Notifications Tab */}
-          <TabsContent value="notifications" className="space-y-6">
-            <Card>
+          <TabsContent value="notifications" className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+            <Card className="bg-card/80 backdrop-blur-sm border-secondary">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-white font-mono text-sm">
                   <Bell className="w-5 h-5" />
-                  Préférences de notifications
+                  notifications_config
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="text-base">Notifications email</Label>
-                      <p className="text-sm text-slate-500">Recevez des mises à jour par email</p>
+                      <Label className="text-base text-white font-mono">email_notifications</Label>
+                      <p className="text-sm text-muted-foreground font-mono">receive updates via email</p>
                     </div>
                     <Switch
                       checked={settings.notifications.emailNotifications}
@@ -338,8 +351,8 @@ export default function SettingsPage() {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="text-base">Notifications push</Label>
-                      <p className="text-sm text-slate-500">Notifications en temps réel</p>
+                      <Label className="text-base text-white font-mono">push_notifications</Label>
+                      <p className="text-sm text-muted-foreground font-mono">real-time notifications</p>
                     </div>
                     <Switch
                       checked={settings.notifications.pushNotifications}
@@ -352,8 +365,8 @@ export default function SettingsPage() {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="text-base">Rapport hebdomadaire</Label>
-                      <p className="text-sm text-slate-500">Résumé de vos performances</p>
+                      <Label className="text-base text-white font-mono">weekly_report</Label>
+                      <p className="text-sm text-muted-foreground font-mono">performance summary</p>
                     </div>
                     <Switch
                       checked={settings.notifications.weeklyReport}
@@ -366,8 +379,8 @@ export default function SettingsPage() {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="text-base">Rappels de contenu</Label>
-                      <p className="text-sm text-slate-500">Suggestions pour créer du contenu</p>
+                      <Label className="text-base text-white font-mono">content_reminders</Label>
+                      <p className="text-sm text-muted-foreground font-mono">content creation suggestions</p>
                     </div>
                     <Switch
                       checked={settings.notifications.contentReminders}
@@ -380,8 +393,8 @@ export default function SettingsPage() {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="text-base">Mises à jour équipe</Label>
-                      <p className="text-sm text-slate-500">Activité des collaborateurs</p>
+                      <Label className="text-base text-white font-mono">team_updates</Label>
+                      <p className="text-sm text-muted-foreground font-mono">collaborator activity</p>
                     </div>
                     <Switch
                       checked={settings.notifications.teamUpdates}
@@ -393,29 +406,29 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 
-                <Button onClick={() => handleSaveSettings('notifications')}>
+                <Button onClick={() => handleSaveSettings('notifications')} className="bg-white hover:bg-white/90 text-black font-mono text-xs">
                   <Save className="w-4 h-4 mr-2" />
-                  Sauvegarder les notifications
+                  save_notifications
                 </Button>
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* Privacy Tab */}
-          <TabsContent value="privacy" className="space-y-6">
-            <Card>
+          <TabsContent value="privacy" className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <Card className="bg-card/80 backdrop-blur-sm border-secondary">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-white font-mono text-sm">
                   <Shield className="w-5 h-5" />
-                  Confidentialité et sécurité
+                  privacy_security
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="text-base">Profil public</Label>
-                      <p className="text-sm text-slate-500">Votre profil est visible par les autres utilisateurs</p>
+                      <Label className="text-base text-white font-mono">public_profile</Label>
+                      <p className="text-sm text-muted-foreground font-mono">profile visible to others</p>
                     </div>
                     <Switch
                       checked={settings.privacy.profilePublic}
@@ -428,8 +441,8 @@ export default function SettingsPage() {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="text-base">Analytics de contenu</Label>
-                      <p className="text-sm text-slate-500">Permettre l&apos;analyse de vos performances</p>
+                      <Label className="text-base text-white font-mono">content_analytics</Label>
+                      <p className="text-sm text-muted-foreground font-mono">enable performance analysis</p>
                     </div>
                     <Switch
                       checked={settings.privacy.contentAnalytics}
@@ -442,8 +455,8 @@ export default function SettingsPage() {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="text-base">Collecte de données</Label>
-                      <p className="text-sm text-slate-500">Améliorer nos services avec vos données d&apos;usage</p>
+                      <Label className="text-base text-white font-mono">data_collection</Label>
+                      <p className="text-sm text-muted-foreground font-mono">improve services with usage data</p>
                     </div>
                     <Switch
                       checked={settings.privacy.dataCollection}
@@ -459,10 +472,10 @@ export default function SettingsPage() {
                 
                 {/* Password Change */}
                 <div className="space-y-4">
-                  <h3 className="font-medium">Changer le mot de passe</h3>
+                  <h3 className="font-mono text-white text-sm">change_password</h3>
                   
                   <div>
-                    <Label htmlFor="new-password">Nouveau mot de passe</Label>
+                    <Label htmlFor="new-password" className="text-muted-foreground font-mono text-xs">new_password</Label>
                     <div className="relative">
                       <Input
                         id="new-password"
@@ -483,7 +496,7 @@ export default function SettingsPage() {
                   </div>
                   
                   <div>
-                    <Label htmlFor="confirm-password">Confirmer le mot de passe</Label>
+                    <Label htmlFor="confirm-password" className="text-muted-foreground font-mono text-xs">confirm_password</Label>
                     <Input
                       id="confirm-password"
                       type={showPassword ? 'text' : 'password'}
@@ -495,33 +508,34 @@ export default function SettingsPage() {
                   <Button 
                     onClick={handlePasswordChange}
                     disabled={!newPassword || newPassword !== confirmPassword}
+                    className="bg-white hover:bg-white/90 text-black font-mono text-xs"
                   >
                     <Key className="w-4 h-4 mr-2" />
-                    Changer le mot de passe
+                    change_password
                   </Button>
                 </div>
                 
-                <Button onClick={() => handleSaveSettings('privacy')}>
+                <Button onClick={() => handleSaveSettings('privacy')} className="bg-white hover:bg-white/90 text-black font-mono text-xs">
                   <Save className="w-4 h-4 mr-2" />
-                  Sauvegarder la confidentialité
+                  save_privacy
                 </Button>
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* Preferences Tab */}
-          <TabsContent value="preferences" className="space-y-6">
-            <Card>
+          <TabsContent value="preferences" className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+            <Card className="bg-card/80 backdrop-blur-sm border-secondary">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
+                <CardTitle className="flex items-center gap-2 text-white font-mono text-sm">
                   <Palette className="w-5 h-5" />
-                  Préférences de création
+                  creation_preferences
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div>
-                  <Label className="text-base">Plateformes par défaut</Label>
-                  <p className="text-sm text-slate-500 mb-3">Sélectionner automatiquement lors de la création</p>
+                  <Label className="text-base text-white font-mono">default_platforms</Label>
+                  <p className="text-sm text-muted-foreground font-mono mb-3">auto-select on creation</p>
                   <div className="flex gap-2">
                     {['tiktok', 'instagram', 'youtube'].map(platform => (
                       <Button
@@ -545,7 +559,7 @@ export default function SettingsPage() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="video-length">Durée par défaut (secondes)</Label>
+                  <Label htmlFor="video-length" className="text-base text-white font-mono">default_duration_sec</Label>
                   <Select 
                     value={settings.preferences.defaultVideoLength.toString()}
                     onValueChange={(value) => setSettings(prev => ({
@@ -566,7 +580,7 @@ export default function SettingsPage() {
                 </div>
                 
                 <div>
-                  <Label htmlFor="quality">Qualité préférée</Label>
+                  <Label htmlFor="quality" className="text-base text-white font-mono">preferred_quality</Label>
                   <Select 
                     value={settings.preferences.qualityPreference}
                     onValueChange={(value) => setSettings(prev => ({
@@ -588,8 +602,8 @@ export default function SettingsPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="text-base">Programmation automatique</Label>
-                      <p className="text-sm text-slate-500">Programmer automatiquement aux heures optimales</p>
+                      <Label className="text-base text-white font-mono">auto_scheduling</Label>
+                      <p className="text-sm text-muted-foreground font-mono">schedule at optimal times</p>
                     </div>
                     <Switch
                       checked={settings.preferences.autoSchedule}
@@ -602,8 +616,8 @@ export default function SettingsPage() {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="text-base">SEO automatique</Label>
-                      <p className="text-sm text-slate-500">Générer automatiquement hashtags et descriptions</p>
+                      <Label className="text-base text-white font-mono">auto_seo</Label>
+                      <p className="text-sm text-muted-foreground font-mono">auto-generate hashtags & descriptions</p>
                     </div>
                     <Switch
                       checked={settings.preferences.autoSEO}
@@ -616,8 +630,8 @@ export default function SettingsPage() {
                   
                   <div className="flex items-center justify-between">
                     <div>
-                      <Label className="text-base">Mode sombre</Label>
-                      <p className="text-sm text-slate-500">Interface en mode sombre</p>
+                      <Label className="text-base text-white font-mono">dark_mode</Label>
+                      <p className="text-sm text-muted-foreground font-mono">dark interface mode</p>
                     </div>
                     <Switch
                       checked={settings.preferences.darkMode}
@@ -629,79 +643,79 @@ export default function SettingsPage() {
                   </div>
                 </div>
                 
-                <Button onClick={() => handleSaveSettings('preferences')}>
+                <Button onClick={() => handleSaveSettings('preferences')} className="bg-white hover:bg-white/90 text-black font-mono text-xs">
                   <Save className="w-4 h-4 mr-2" />
-                  Sauvegarder les préférences
+                  save_preferences
                 </Button>
               </CardContent>
             </Card>
           </TabsContent>
 
           {/* Account Tab */}
-          <TabsContent value="account" className="space-y-6">
-            <Card>
+          <TabsContent value="account" className="space-y-6 animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
+            <Card className="bg-card/80 backdrop-blur-sm border-secondary">
               <CardHeader>
-                <CardTitle>Informations du compte</CardTitle>
+                <CardTitle className="text-white font-mono text-sm">account_information</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="grid grid-cols-2 gap-6">
                   <div>
-                    <Label className="text-sm text-slate-500">Plan actuel</Label>
+                    <Label className="text-sm text-muted-foreground font-mono">current_plan</Label>
                     <div className="flex items-center gap-2">
-                      <Badge className="bg-blue-100 text-blue-800">Pro</Badge>
-                      <span className="text-sm">1500 crédits/mois</span>
+                      <Badge className="bg-white/10 text-white font-mono">pro</Badge>
+                      <span className="text-sm text-white font-mono">1500 credits/month</span>
                     </div>
                   </div>
                   
                   <div>
-                    <Label className="text-sm text-slate-500">Membre depuis</Label>
-                    <p className="font-medium">15 janvier 2024</p>
+                    <Label className="text-sm text-muted-foreground font-mono">member_since</Label>
+                    <p className="font-mono text-white">2024-01-15</p>
                   </div>
                   
                   <div>
-                    <Label className="text-sm text-slate-500">Dernière connexion</Label>
-                    <p className="font-medium">Aujourd&apos;hui à 14:32</p>
+                    <Label className="text-sm text-muted-foreground font-mono">last_login</Label>
+                    <p className="font-mono text-white">today 14:32</p>
                   </div>
                   
                   <div>
-                    <Label className="text-sm text-slate-500">Contenu créé</Label>
-                    <p className="font-medium">127 vidéos</p>
+                    <Label className="text-sm text-muted-foreground font-mono">content_created</Label>
+                    <p className="font-mono text-white">127 videos</p>
                   </div>
                 </div>
               </CardContent>
             </Card>
             
-            <Card>
+            <Card className="bg-card/80 backdrop-blur-sm border-secondary">
               <CardHeader>
-                <CardTitle className="text-red-600">Zone de danger</CardTitle>
-                <CardDescription>
-                  Actions irréversibles sur votre compte
+                <CardTitle className="text-red-400 font-mono text-sm">danger_zone</CardTitle>
+                <CardDescription className="text-muted-foreground font-mono text-xs">
+                  irreversible account actions
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
-                <div className="flex items-center justify-between p-4 border border-blue-200 rounded-lg">
+                <div className="flex items-center justify-between p-4 border border-secondary/50 rounded-lg">
                   <div>
-                    <Label className="text-base">Exporter mes données</Label>
-                    <p className="text-sm text-slate-500">Télécharger toutes vos données personnelles</p>
+                    <Label className="text-base text-white font-mono">export_data</Label>
+                    <p className="text-sm text-muted-foreground font-mono">download all personal data</p>
                   </div>
-                  <Button variant="outline" onClick={handleExportData}>
+                  <Button variant="outline" onClick={handleExportData} className="border-secondary text-white hover:bg-secondary/50 font-mono text-xs">
                     <Download className="w-4 h-4 mr-2" />
-                    Exporter
+                    export
                   </Button>
                 </div>
                 
-                <div className="flex items-center justify-between p-4 border border-red-200 rounded-lg">
+                <div className="flex items-center justify-between p-4 border border-red-500/30 rounded-lg">
                   <div>
-                    <Label className="text-base text-red-600">Supprimer le compte</Label>
-                    <p className="text-sm text-slate-500">Suppression définitive de votre compte et données</p>
+                    <Label className="text-base text-red-400 font-mono">delete_account</Label>
+                    <p className="text-sm text-muted-foreground font-mono">permanent account deletion</p>
                   </div>
                   <Button 
                     variant="outline" 
-                    className="text-red-600 border-red-200 hover:bg-red-50"
+                    className="text-red-400 border-red-500/30 hover:bg-red-500/10 font-mono text-xs"
                     onClick={handleDeleteAccount}
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
-                    Supprimer
+                    delete
                   </Button>
                 </div>
               </CardContent>

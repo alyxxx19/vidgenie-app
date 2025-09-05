@@ -16,7 +16,8 @@ import {
   Clock,
   AlertCircle,
   LogOut,
-  CreditCard
+  CreditCard,
+  Settings
 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/app/providers';
@@ -177,6 +178,12 @@ export default function DashboardPage() {
                 <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-white hover:bg-secondary text-xs font-mono">
                   <Link href="/account/billing">
                     billing
+                  </Link>
+                </Button>
+                <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-white hover:bg-secondary text-xs font-mono">
+                  <Link href="/settings">
+                    <Settings className="w-3 h-3 mr-1" />
+                    settings
                   </Link>
                 </Button>
               </div>
