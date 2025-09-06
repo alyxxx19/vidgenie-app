@@ -86,9 +86,9 @@ export default function DashboardPage() {
     creditsTotal: creditBalance?.balance ?? 0, // Show 0 instead of 1000 to reflect real data
     contentGenerated: userAssets?.assets?.length ?? 0,
     scheduledPosts: scheduledPosts?.length ?? 0,
-    successRate: generationMetrics?.successRate ?? 95,
+    successRate: generationMetrics?.successRate ?? 0,
     weeklyContent: usagePatterns?.weeklyContent ?? 0,
-    avgGenerationTime: generationMetrics?.avgGenerationTime ? Math.round(generationMetrics.avgGenerationTime / 60) : 5,
+    avgGenerationTime: generationMetrics?.avgGenerationTime ? Math.round(generationMetrics.avgGenerationTime / 60) : 0,
   };
 
 
@@ -120,67 +120,81 @@ export default function DashboardPage() {
     status: asset.status,
     platforms: (asset.aiConfig as any)?.platforms || ['tiktok'],
     duration: asset.duration || 0,
-    views: Math.floor(Math.random() * 10000 + 100),
   })) || [];
 
   const _getStatusBadge = (status: string) => {
     switch (status) {
       case 'completed':
-        return <Badge className="bg-green-100 text-green-800">Terminé</Badge>;
+        return <Badge className="bg-secondary text-foreground font-mono text-xs">terminé</Badge>;
       case 'running':
-        return <Badge className="bg-blue-100 text-blue-800">En cours</Badge>;
+        return <Badge className="bg-secondary text-foreground font-mono text-xs">en cours</Badge>;
       case 'pending':
-        return <Badge className="bg-yellow-100 text-yellow-800">En attente</Badge>;
+        return <Badge className="bg-secondary text-muted-foreground font-mono text-xs">en attente</Badge>;
       case 'failed':
-        return <Badge className="bg-red-100 text-red-800">Échec</Badge>;
+        return <Badge className="bg-secondary text-muted-foreground font-mono text-xs">échec</Badge>;
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge className="bg-secondary text-muted-foreground font-mono text-xs">{status}</Badge>;
     }
   };
 
   return (
-    <div className="min-h-screen bg-cyber-gradient relative">
-      {/* Background Effects */}
-      <div className="absolute inset-0 bg-grid-pattern opacity-10" />
-      <div className="absolute top-0 right-0 w-96 h-96 bg-primary/5 rounded-full blur-3xl animate-pulse" />
+    <div className="min-h-screen relative" style={{
+      background: 'linear-gradient(180deg, #000000 0%, #111111 100%)'
+    }}>
+      {/* Grid Background */}
+      <div className="absolute inset-0 opacity-50" style={{
+        backgroundImage: `repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 39px,
+          rgba(38, 38, 38, 0.3) 39px,
+          rgba(38, 38, 38, 0.3) 40px
+        ),
+        repeating-linear-gradient(
+          90deg,
+          transparent,
+          transparent 39px,
+          rgba(38, 38, 38, 0.3) 39px,
+          rgba(38, 38, 38, 0.3) 40px
+        )`
+      }} />
       
       {/* Header */}
-      <header className="bg-card border-b border-border relative z-10">
+      <header className="relative z-10 bg-background/95 backdrop-blur-md border-b border-border">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between">
-            <div className="animate-slide-in">
-              <h1 className="font-mono text-lg text-white mb-1">dashboard</h1>
-              <div className="flex items-center gap-4">
-                <p className="text-muted-foreground text-xs font-mono flex items-center gap-2">
-                  <span className="w-1 h-1 bg-white animate-minimal-pulse" />
+            <div>
+              <h1 className="text-xl font-mono uppercase tracking-wide text-foreground">dashboard</h1>
+              <div className="flex items-center gap-4 mt-1">
+                <p className="text-xs font-mono text-muted-foreground">
                   {user?.name || 'user'} • online
                 </p>
                 <TimeDisplay />
               </div>
             </div>
-            <div className="flex items-center gap-1 animate-slide-in">
+            <div className="flex items-center gap-2">
               <div className="hidden xl:flex items-center gap-1">
-                <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-white hover:bg-secondary text-xs font-mono">
+                <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground font-mono lowercase text-xs transition-all duration-200 hover:scale-105">
                   <Link href="/projects">
                     projects
                   </Link>
                 </Button>
-                <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-white hover:bg-secondary text-xs font-mono">
+                <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground font-mono lowercase text-xs transition-all duration-200 hover:scale-105">
                   <Link href="/library">
                     library
                   </Link>
                 </Button>
-                <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-white hover:bg-secondary text-xs font-mono">
+                <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground font-mono lowercase text-xs transition-all duration-200 hover:scale-105">
                   <Link href="/analytics">
                     analytics
                   </Link>
                 </Button>
-                <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-white hover:bg-secondary text-xs font-mono">
+                <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground font-mono lowercase text-xs transition-all duration-200 hover:scale-105">
                   <Link href="/account/billing">
                     billing
                   </Link>
                 </Button>
-                <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-white hover:bg-secondary text-xs font-mono">
+                <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground font-mono lowercase text-xs transition-all duration-200 hover:scale-105">
                   <Link href="/settings">
                     <Settings className="w-3 h-3 mr-1" />
                     settings
@@ -188,7 +202,7 @@ export default function DashboardPage() {
                 </Button>
               </div>
               
-              <Button asChild className="bg-white hover:bg-white/90 text-black font-mono text-xs px-4 h-8 ml-2">
+              <Button asChild className="bg-foreground text-background hover:bg-transparent hover:text-foreground hover:border-foreground border border-transparent transition-all duration-300 hover:scale-105 font-mono lowercase text-xs px-4 h-8 ml-2">
                 <Link href="/create">
                   <Plus className="w-3 h-3 mr-1" />
                   create
@@ -199,39 +213,47 @@ export default function DashboardPage() {
                 variant="ghost"
                 size="sm"
                 onClick={() => signOut()}
-                className="text-muted-foreground hover:text-white hover:bg-secondary ml-1"
+                className="text-muted-foreground hover:text-foreground ml-1 transition-all duration-200"
               >
-                <LogOut className="w-3 h-3" />
+                <LogOut className="w-4 h-4" />
               </Button>
             </div>
           </div>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8 relative z-10">
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-12">
-          <Card className="bg-card/80 backdrop-blur-sm border-secondary hover:border-primary/50 transition-all duration-300 group hover:shadow-glow animate-fade-in-up">
+          <Card className="bg-card border border-border hover:bg-card/80 transition-all duration-300 hover:scale-[1.02]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-cyber-textMuted uppercase tracking-wide">CRÉDITS DISPONIBLES</CardTitle>
-              <div className="p-2 bg-primary/20 rounded-lg group-hover:bg-primary/30 transition-colors">
-                <Zap className="h-5 w-5 text-primary" />
+              <CardTitle className="text-xs font-mono uppercase tracking-wider text-muted-foreground">crédits disponibles</CardTitle>
+              <div className="p-2 bg-background border border-border">
+                <Zap className="h-5 w-5 text-foreground" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-[var(--font-poppins)] font-bold text-white mb-2">
-                {creditBalance ? (creditBalance.balance - creditBalance.usedThisMonth) : '...'}
+              <div className="text-3xl font-mono text-foreground mb-2">
+                {creditBalance !== undefined ? (
+                  creditBalance.balance - creditBalance.usedThisMonth
+                ) : (
+                  <span className="inline-block w-20 h-8 bg-secondary animate-pulse" />
+                )}
               </div>
-              <p className="text-sm text-cyber-textMuted mb-4">
-                sur <span className="text-white font-semibold">{creditBalance?.balance ?? '...'}</span> disponibles
+              <p className="text-xs font-mono text-muted-foreground mb-4">
+                {creditBalance !== undefined ? (
+                  <>sur <span className="text-foreground">{creditBalance.balance}</span> disponibles</>
+                ) : (
+                  <span className="inline-block w-32 h-4 bg-secondary animate-pulse" />
+                )}
               </p>
               <div className="space-y-2">
                 <Progress 
                   value={creditBalance && creditBalance.balance > 0 ? (creditBalance.usedThisMonth / creditBalance.balance) * 100 : 0} 
                   className="h-2 bg-secondary"
                 />
-                <div className="flex justify-between text-xs text-cyber-textMuted">
-                  <span>Utilisés: {creditBalance?.usedThisMonth ?? '...'}</span>
+                <div className="flex justify-between text-xs font-mono text-muted-foreground">
+                  <span>{creditBalance ? `Utilisés: ${creditBalance.usedThisMonth}` : ''}</span>
                   <span>
                     {creditBalance && creditBalance.balance > 0 
                       ? Math.round((creditBalance.usedThisMonth / creditBalance.balance) * 100) + '%'
@@ -243,53 +265,57 @@ export default function DashboardPage() {
             </CardContent>
           </Card>
 
-          <Card className="bg-card/80 backdrop-blur-sm border-secondary hover:border-success/50 transition-all duration-300 group hover:shadow-glow animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
+          <Card className="bg-card border border-border hover:bg-card/80 transition-all duration-300 hover:scale-[1.02]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-cyber-textMuted uppercase tracking-wide">CONTENUS GÉNÉRÉS</CardTitle>
-              <div className="p-2 bg-success/20 rounded-lg group-hover:bg-success/30 transition-colors">
-                <Video className="h-5 w-5 text-success" />
+              <CardTitle className="text-xs font-mono uppercase tracking-wider text-muted-foreground">contenus générés</CardTitle>
+              <div className="p-2 bg-background border border-border">
+                <Video className="h-5 w-5 text-foreground" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-[var(--font-poppins)] font-bold text-white mb-2">
+              <div className="text-3xl font-mono text-foreground mb-2">
                 {stats.contentGenerated}
               </div>
-              <p className="text-sm text-cyber-textMuted">
-                ce mois-ci • <span className="text-success">+12%</span> vs mois dernier
+              <p className="text-xs font-mono text-muted-foreground">
+                {stats.contentGenerated > 0 ? 'ce mois-ci' : 'Aucun contenu généré'}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-card/80 backdrop-blur-sm border-secondary hover:border-accent/50 transition-all duration-300 group hover:shadow-glow animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+          <Card className="bg-card border border-border hover:bg-card/80 transition-all duration-300 hover:scale-[1.02]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-cyber-textMuted uppercase tracking-wide">PUBLICATIONS PROGRAM.</CardTitle>
-              <div className="p-2 bg-accent/20 rounded-lg group-hover:bg-accent/30 transition-colors">
-                <Calendar className="h-5 w-5 text-accent" />
+              <CardTitle className="text-xs font-mono uppercase tracking-wider text-muted-foreground">publications programmées</CardTitle>
+              <div className="p-2 bg-background border border-border">
+                <Calendar className="h-5 w-5 text-foreground" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-[var(--font-poppins)] font-bold text-white mb-2">
+              <div className="text-3xl font-mono text-foreground mb-2">
                 {stats.scheduledPosts}
               </div>
-              <p className="text-sm text-cyber-textMuted">
-                cette semaine • <span className="text-accent">En attente</span>
+              <p className="text-xs font-mono text-muted-foreground">
+                {stats.scheduledPosts > 0 ? `cette semaine • ${stats.scheduledPosts} post${stats.scheduledPosts > 1 ? 's' : ''}` : 'Aucune publication programmée'}
               </p>
             </CardContent>
           </Card>
 
-          <Card className="bg-card/80 backdrop-blur-sm border-secondary hover:border-warning/50 transition-all duration-300 group hover:shadow-glow animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
+          <Card className="bg-card border border-border hover:bg-card/80 transition-all duration-300 hover:scale-[1.02]">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-              <CardTitle className="text-sm font-medium text-cyber-textMuted uppercase tracking-wide">TAUX DE RÉUSSITE</CardTitle>
-              <div className="p-2 bg-warning/20 rounded-lg group-hover:bg-warning/30 transition-colors">
-                <TrendingUp className="h-5 w-5 text-warning" />
+              <CardTitle className="text-xs font-mono uppercase tracking-wider text-muted-foreground">taux de réussite</CardTitle>
+              <div className="p-2 bg-background border border-border">
+                <TrendingUp className="h-5 w-5 text-foreground" />
               </div>
             </CardHeader>
             <CardContent>
-              <div className="text-3xl font-[var(--font-poppins)] font-bold text-white mb-2">
-                {stats.successRate}%
+              <div className="text-3xl font-mono text-foreground mb-2">
+                {stats.successRate > 0 ? `${stats.successRate}%` : '-'}
               </div>
-              <p className="text-sm text-cyber-textMuted">
-                génération IA • <span className="text-success">Excellent</span>
+              <p className="text-xs font-mono text-muted-foreground">
+                {stats.successRate > 0 ? (
+                  <>génération IA • <span className="text-foreground">
+                    {stats.successRate >= 90 ? 'excellent' : stats.successRate >= 70 ? 'bon' : 'à améliorer'}
+                  </span></>
+                ) : 'aucune donnée'}
               </p>
             </CardContent>
           </Card>
@@ -297,13 +323,13 @@ export default function DashboardPage() {
 
         {/* Subscription Status */}
         {subscription && (
-          <Card className="mb-8 bg-card/80 backdrop-blur-sm border-secondary animate-fade-in-up">
+          <Card className="mb-8 bg-card border border-border">
             <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-white font-mono">
-                <div className="p-2 bg-primary/20 rounded-lg">
-                  <CreditCard className="w-6 h-6 text-primary" />
+              <CardTitle className="flex items-center gap-3 text-foreground font-mono">
+                <div className="p-2 bg-background border border-border">
+                  <CreditCard className="w-6 h-6 text-foreground" />
                 </div>
-                ABONNEMENT {subscription.planName.toUpperCase()}
+                abonnement {subscription.planName}
               </CardTitle>
             </CardHeader>
             <CardContent>
@@ -311,27 +337,23 @@ export default function DashboardPage() {
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <Badge 
-                      className={
-                        subscription.status === 'active' 
-                          ? "bg-green-100 text-green-800" 
-                          : "bg-yellow-100 text-yellow-800"
-                      }
+                      className="bg-secondary text-foreground font-mono text-xs"
                     >
-                      {subscription.status === 'active' ? 'Actif' : subscription.status}
+                      {subscription.status === 'active' ? 'actif' : subscription.status}
                     </Badge>
                     {subscription.cancelAtPeriodEnd && (
-                      <Badge variant="outline" className="text-warning">
-                        Annulation programmée
+                      <Badge className="bg-secondary text-muted-foreground font-mono text-xs">
+                        annulation programmée
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-cyber-textMuted">
+                  <p className="text-xs font-mono text-muted-foreground">
                     Prochaine facturation : {subscription.currentPeriodEnd.toLocaleDateString('fr-FR')}
                   </p>
                 </div>
-                <Button asChild variant="outline" size="sm" className="text-xs font-mono">
+                <Button asChild variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground font-mono text-xs">
                   <Link href="/account/billing">
-                    Gérer l'abonnement
+                    gérer l'abonnement
                   </Link>
                 </Button>
               </div>
@@ -341,26 +363,26 @@ export default function DashboardPage() {
 
         {/* Upgrade Prompt for Free Users */}
         {(!subscription || subscription.planName === 'free') && (
-          <Card className="mb-8 bg-primary/10 border-primary/30 backdrop-blur-sm animate-fade-in-up">
+          <Card className="mb-8 bg-card border border-border">
             <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-primary font-mono">
-                <div className="p-2 bg-primary/20 rounded-lg">
-                  <Zap className="w-6 h-6" />
+              <CardTitle className="flex items-center gap-3 text-foreground font-mono">
+                <div className="p-2 bg-background border border-border">
+                  <Zap className="w-6 h-6 text-foreground" />
                 </div>
-                PASSEZ AU NIVEAU SUPÉRIEUR
+                passez au niveau supérieur
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
                 <div>
-                  <p className="text-white font-semibold mb-1">Débloquez plus de fonctionnalités</p>
-                  <p className="text-sm text-cyber-textMuted">
-                    Plus de crédits, génération avancée, analytics détaillées
+                  <p className="text-foreground font-mono mb-1">débloquez plus de fonctionnalités</p>
+                  <p className="text-xs font-mono text-muted-foreground">
+                    plus de crédits, génération avancée, analytics détaillées
                   </p>
                 </div>
-                <Button asChild className="bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-mono">
+                <Button asChild className="bg-foreground text-background hover:bg-transparent hover:text-foreground hover:border-foreground border border-transparent transition-all duration-300 hover:scale-105 font-mono text-xs">
                   <Link href="/pricing">
-                    Voir les plans
+                    voir les plans
                   </Link>
                 </Button>
               </div>
@@ -369,53 +391,55 @@ export default function DashboardPage() {
         )}
 
         {/* KPI Alerts */}
-        {((stats.successRate < 90) || (stats.weeklyContent < 3) || (stats.avgGenerationTime > 10)) && (
-          <Card className="mb-12 bg-error/10 border-error/30 backdrop-blur-sm animate-fade-in-up">
+        {((stats.successRate < 90 && stats.successRate > 0) || (stats.weeklyContent < 3) || (stats.avgGenerationTime > 10 && stats.avgGenerationTime > 0)) && (
+          <Card className="mb-12 bg-card border border-border">
             <CardHeader>
-              <CardTitle className="flex items-center gap-3 text-error font-[var(--font-poppins)]">
-                <div className="p-2 bg-error/20 rounded-lg animate-pulse">
-                  <AlertCircle className="w-6 h-6" />
+              <CardTitle className="flex items-center gap-3 text-foreground font-mono">
+                <div className="p-2 bg-background border border-border">
+                  <AlertCircle className="w-6 h-6 text-foreground" />
                 </div>
-                ALERTES PERFORMANCE
+                alertes performance
               </CardTitle>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {stats.successRate < 90 && (
-                  <div className="flex items-center gap-4 p-4 bg-error/20 border border-error/30 rounded-xl backdrop-blur-sm">
-                    <div className="p-2 bg-error/30 rounded-lg">
-                      <AlertCircle className="w-6 h-6 text-error" />
+                {stats.successRate < 90 && stats.successRate > 0 && (
+                  <div className="flex items-center gap-4 p-4 bg-secondary border border-border">
+                    <div className="p-2 bg-background border border-border">
+                      <AlertCircle className="w-5 h-5 text-foreground" />
                     </div>
                     <div>
-                      <p className="font-semibold text-white mb-1">Taux de réussite critique</p>
-                      <p className="text-sm text-cyber-textMuted">
-                        Performance actuelle : <span className="text-error font-semibold">{stats.successRate}%</span> (objectif : 90%+)
+                      <p className="font-mono text-foreground mb-1">taux de réussite critique</p>
+                      <p className="text-xs font-mono text-muted-foreground">
+                        performance actuelle : <span className="text-foreground">{stats.successRate}%</span> (objectif : 90%+)
                       </p>
                     </div>
                   </div>
                 )}
                 
                 {stats.weeklyContent < 3 && (
-                  <div className="flex items-center gap-4 p-4 bg-warning/20 border border-warning/30 rounded-xl backdrop-blur-sm">
-                    <div className="p-2 bg-warning/30 rounded-lg">
-                      <AlertCircle className="w-6 h-6 text-warning" />
+                  <div className="flex items-center gap-4 p-4 bg-orange-100 dark:bg-orange-900/30 border border-orange-200 dark:border-orange-800 rounded-lg">
+                    <div className="p-2 bg-orange-200 dark:bg-orange-900/50 rounded-lg">
+                      <AlertCircle className="w-5 h-5 text-orange-600 dark:text-orange-400" />
                     </div>
                     <div>
-                      <p className="font-semibold text-white mb-1">Activité en baisse</p>
-                      <p className="text-sm text-cyber-textMuted">
-                        Contenus cette semaine : <span className="text-warning font-semibold">{stats.weeklyContent}</span> (recommandé : 3+)
+                      <p className="font-semibold text-gray-900 dark:text-white mb-1">Activité en baisse</p>
+                      <p className="text-xs font-mono text-muted-foreground">
+                        Contenus cette semaine : <span className="text-orange-600 dark:text-orange-400 font-semibold">{stats.weeklyContent}</span> (recommandé : 3+)
                       </p>
                     </div>
                   </div>
                 )}
                 
-                {stats.avgGenerationTime > 10 && (
-                  <div className="flex items-center gap-3 p-3 bg-secondary border border-border">
-                    <Clock className="w-4 h-4 text-white" />
+                {stats.avgGenerationTime > 10 && stats.avgGenerationTime > 0 && (
+                  <div className="flex items-center gap-4 p-4 bg-yellow-100 dark:bg-yellow-900/30 border border-yellow-200 dark:border-yellow-800 rounded-lg">
+                    <div className="p-2 bg-yellow-200 dark:bg-yellow-900/50 rounded-lg">
+                      <Clock className="w-5 h-5 text-yellow-600 dark:text-yellow-400" />
+                    </div>
                     <div>
-                      <p className="font-mono text-sm text-white mb-1">high_processing_time</p>
-                      <p className="text-xs text-muted-foreground font-mono">
-                        avg: {stats.avgGenerationTime}min (target: ≤10min)
+                      <p className="font-semibold text-gray-900 dark:text-white mb-1">Temps de traitement élevé</p>
+                      <p className="text-xs font-mono text-muted-foreground">
+                        Moyenne : <span className="text-yellow-600 dark:text-yellow-400 font-semibold">{stats.avgGenerationTime} min</span> (objectif : ≤10 min)
                       </p>
                     </div>
                   </div>
@@ -426,31 +450,31 @@ export default function DashboardPage() {
         )}
 
         {/* Calendar and Content Management */}
-        <Tabs defaultValue="calendar" className="space-y-8 animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
+        <Tabs defaultValue="calendar" className="space-y-8">
           <div className="flex items-center justify-between">
-            <TabsList className="bg-secondary/50 border-secondary">
-              <TabsTrigger value="calendar" className="flex items-center gap-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
+            <TabsList className="bg-secondary border border-border">
+              <TabsTrigger value="calendar" className="flex items-center gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground font-mono text-xs">
                 <Calendar className="w-4 h-4" />
-                CALENDRIER ÉDITORIAL
+                calendrier éditorial
               </TabsTrigger>
-              <TabsTrigger value="history" className="flex items-center gap-3 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground font-semibold">
+              <TabsTrigger value="history" className="flex items-center gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground font-mono text-xs">
                 <Video className="w-4 h-4" />
-                HISTORIQUE CONTENU
+                historique contenu
               </TabsTrigger>
             </TabsList>
             
             <div className="flex items-center gap-3">
-              <Button variant="ghost" size="sm" className="text-cyber-textMuted hover:text-primary transition-colors">
+              <Button variant="outline" size="sm" className="border-border text-muted-foreground hover:text-foreground font-mono text-xs transition-all duration-200">
                 <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                 </svg>
-                EXPORTER
+                exporter
               </Button>
             </div>
           </div>
 
-          <TabsContent value="calendar" className="animate-fade-in-up">
-            <Card className="bg-card/80 backdrop-blur-sm border-secondary">
+          <TabsContent value="calendar">
+            <Card className="bg-card border border-border">
               <CardContent className="p-6">
                 <ContentCalendar
                   events={calendarEvents}
@@ -460,8 +484,8 @@ export default function DashboardPage() {
             </Card>
           </TabsContent>
 
-          <TabsContent value="history" className="animate-fade-in-up">
-            <Card className="bg-card/80 backdrop-blur-sm border-secondary">
+          <TabsContent value="history">
+            <Card className="bg-card border border-border">
               <CardContent className="p-6">
                 <ContentHistory
                   content={contentHistory}
