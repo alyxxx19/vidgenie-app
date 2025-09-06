@@ -11,9 +11,16 @@ model User {
   id                     String          @id @default(cuid())
   email                  String          @unique
   name                   String?
+  firstName              String?
+  lastName               String?
+  phone                  String?
   avatar                 String?
+  bio                    String?
+  website                String?
+  location               String?
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt
+  lastLoginAt            DateTime?
   creatorType            String          @default("solo")
   platforms              String[]
   preferredLang          String          @default("fr")
@@ -46,6 +53,7 @@ model User {
   creditTransactions     CreditTransaction[]
   workflowExecutions     WorkflowExecution[]
   contents               Content[]
+  userSettings           UserSettings?
 
   @@map("users")
 }
@@ -544,5 +552,41 @@ model UserApiKeys {
   user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   @@map("user_api_keys")
+}
+
+// Paramètres utilisateur
+model UserSettings {
+  id                     String   @id @default(cuid())
+  userId                 String   @unique
+  
+  // Notifications
+  emailNotifications     Boolean  @default(true)
+  pushNotifications      Boolean  @default(true)
+  weeklyReport           Boolean  @default(true)
+  contentReminders       Boolean  @default(false)
+  teamUpdates            Boolean  @default(true)
+  marketingEmails        Boolean  @default(false)
+  
+  // Confidentialité
+  profilePublic          Boolean  @default(false)
+  contentAnalytics       Boolean  @default(true)
+  dataCollection         Boolean  @default(true)
+  thirdPartyIntegrations Boolean  @default(true)
+  
+  // Préférences de création
+  defaultPlatforms       String[] @default(["tiktok"])
+  autoSchedule           Boolean  @default(false)
+  defaultVideoLength     Int      @default(30)
+  qualityPreference      String   @default("high")
+  autoSEO                Boolean  @default(true)
+  
+  // Timestamps
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  
+  // Relations
+  user                   User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@map("user_settings")
 }
 

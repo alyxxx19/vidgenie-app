@@ -17,7 +17,7 @@ import {
   AlertCircle,
   LogOut,
   CreditCard,
-  Settings
+  User
 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/app/providers';
@@ -195,9 +195,9 @@ export default function DashboardPage() {
                   </Link>
                 </Button>
                 <Button variant="ghost" size="sm" asChild className="text-muted-foreground hover:text-foreground font-mono lowercase text-xs transition-all duration-200 hover:scale-105">
-                  <Link href="/settings">
-                    <Settings className="w-3 h-3 mr-1" />
-                    settings
+                  <Link href="/profile">
+                    <User className="w-3 h-3 mr-1" />
+                    profile
                   </Link>
                 </Button>
               </div>

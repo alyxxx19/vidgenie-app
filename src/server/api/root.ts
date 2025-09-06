@@ -9,6 +9,7 @@ import { analyticsRouter } from './routers/analytics';
 import { stripeRouter } from './routers/stripe';
 import { projectsRouter } from './routers/projects';
 import { generationRouter } from './routers/generation';
+import { userRouter } from './routers/user';
 
 export const appRouter = createTRPCRouter({
   jobs: jobsRouter,
@@ -21,6 +22,7 @@ export const appRouter = createTRPCRouter({
   stripe: stripeRouter,
   projects: projectsRouter,
   generation: generationRouter,
+  user: userRouter,
 });
 
 export type AppRouter = typeof appRouter;
