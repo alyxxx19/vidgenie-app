@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthUser } from '@/lib/auth/server-auth';
+import { getServerUser } from '@/lib/auth/server-auth';
 import { db } from '@/server/api/db';
 
 export interface WorkflowCancelResponse {
@@ -19,7 +19,7 @@ export async function POST(
 ): Promise<NextResponse> {
   try {
     // Authentification
-    const user = await getAuthUser();
+    const user = await getServerUser(request);
     if (!user) {
       return NextResponse.json(
         { error: 'Authentication required' },

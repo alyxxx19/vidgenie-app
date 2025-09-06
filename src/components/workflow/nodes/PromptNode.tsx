@@ -4,10 +4,10 @@ import { Handle, Position } from 'reactflow';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { MessageSquare, AlertCircle, CheckCircle } from 'lucide-react';
+import { CheckCircle, AlertCircle, Clock } from 'lucide-react';
 import { useWorkflowStore } from '../store/workflow-store';
 import { WorkflowNodeData } from '../types/workflow';
+import { NODE_THEMES, STATUS_COLORS, NODE_SIZES, HANDLE_STYLES } from '../constants/node-themes';
 import { useState, useEffect } from 'react';
 
 interface PromptNodeProps {
@@ -20,6 +20,9 @@ export function PromptNode({ id, data, selected }: PromptNodeProps) {
   const { updateNodeData, updateNodeStatus } = useWorkflowStore();
   const [prompt, setPrompt] = useState(data.promptData?.originalPrompt || '');
   const [charCount, setCharCount] = useState(data.promptData?.characterCount || 0);
+  
+  const theme = NODE_THEMES.prompt;
+  const statusColors = STATUS_COLORS[data.status];
 
   // Mettre à jour le store quand le prompt change
   useEffect(() => {
@@ -51,101 +54,113 @@ export function PromptNode({ id, data, selected }: PromptNodeProps) {
     }
   };
 
-  const getNodeStyle = () => {
-    const baseStyle = 'workflow-node workflow-card transition-all duration-300 ease-in-out';
+  const getNodeClasses = () => {
+    const baseClasses = `${NODE_SIZES.default} ${statusColors.bg} border-2 transition-all duration-300 rounded-xl shadow-lg backdrop-blur-sm`;
     
+    let borderClasses = statusColors.border;
+    let effectClasses = '';
+
+    // Styles spécifiques selon l'état
     switch (data.status) {
       case 'loading':
-        return `${baseStyle} loading border-blue-500 bg-blue-50/50 shadow-lg`;
+        borderClasses = `border-[${theme.accent}]`;
+        effectClasses = 'animate-pulse shadow-lg shadow-blue-500/20';
+        break;
       case 'success':
-        return `${baseStyle} success border-green-500 bg-green-50/50 shadow-lg`;
+        effectClasses = 'shadow-lg shadow-green-500/20';
+        break;
       case 'error':
-        return `${baseStyle} error border-red-500 bg-red-50/50 shadow-lg`;
+        effectClasses = 'animate-shake shadow-lg shadow-red-500/20';
+        break;
       default:
-        return `${baseStyle} idle border-gray-300 bg-white/80 backdrop-blur-sm ${
-          selected ? 'border-primary shadow-lg' : ''
-        }`;
+        if (selected) {
+          borderClasses = `border-[${theme.accent}]`;
+          effectClasses = `shadow-xl shadow-[${theme.accent}]/30`;
+        }
     }
+
+    return `${baseClasses} ${borderClasses} ${effectClasses}`;
   };
 
   const getStatusIcon = () => {
     switch (data.status) {
       case 'loading':
-        return (
-          <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-        );
+        return <div className="w-4 h-4 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />;
       case 'success':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-green-400" />;
       case 'error':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
+        return <AlertCircle className="w-4 h-4 text-red-400" />;
       default:
-        return <MessageSquare className="w-4 h-4 text-gray-500" />;
+        return <Clock className="w-4 h-4 text-gray-400" />;
     }
   };
 
   const getStatusBadge = () => {
-    switch (data.status) {
-      case 'loading':
-        return <Badge className="status-badge loading bg-blue-500 text-white font-mono text-xs">processing</Badge>;
-      case 'success':
-        return <Badge className="status-badge success bg-green-500 text-white font-mono text-xs">ready</Badge>;
-      case 'error':
-        return <Badge className="status-badge error bg-red-500 text-white font-mono text-xs">error</Badge>;
-      default:
-        return <Badge className="status-badge bg-gray-500 text-white font-mono text-xs">idle</Badge>;
-    }
+    const badgeTexts = {
+      idle: 'awaiting_input',
+      loading: 'processing',
+      success: 'ready',
+      error: 'error'
+    };
+
+    return (
+      <Badge className={`${statusColors.badge} font-mono text-xs px-2 py-1`}>
+        {badgeTexts[data.status]}
+      </Badge>
+    );
   };
 
   const maxLength = data.config?.prompt?.maxLength || 1000;
-  const placeholder = data.config?.prompt?.placeholder || 'Enter your prompt...';
+  const placeholder = data.config?.prompt?.placeholder || 'Describe the image you want to generate...';
   const isValid = prompt.trim().length > 0;
   const isNearLimit = charCount > maxLength * 0.8;
+  const IconComponent = theme.icon;
 
   return (
-    <Card className={`w-80 min-h-[200px] ${getNodeStyle()}`}>
-      {/* Header */}
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 font-mono text-sm text-gray-800">
+    <div className={getNodeClasses()}>
+      {/* Header avec thème coloré */}
+      <div className={`border-b border-[#333333] bg-gradient-to-r from-[${theme.accent}]/10 to-transparent p-4`}>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <div className={`flex items-center justify-center w-8 h-8 rounded-lg bg-[${theme.accent}]/20 border border-[${theme.accent}]/30`}>
+              <IconComponent className={`w-4 h-4 text-[${theme.accent}]`} />
+            </div>
+            <div>
+              <h3 className="font-mono text-sm text-white font-medium">{theme.name}</h3>
+              <p className="text-xs text-gray-400 font-mono">user input processing</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
             {getStatusIcon()}
-            {data.label}
-          </CardTitle>
-          {getStatusBadge()}
+            {getStatusBadge()}
+          </div>
         </div>
-        
-        {/* Coût en crédits */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="font-mono">cost: {data.config?.costCredits || 0} credits</span>
-          {data.config?.estimatedDuration && (
-            <span className="font-mono">• eta: {data.config.estimatedDuration / 1000}s</span>
-          )}
-        </div>
-      </CardHeader>
+      </div>
 
-      {/* Content */}
-      <CardContent className="space-y-3">
+      {/* Contenu principal */}
+      <div className="p-4 space-y-4">
         {/* Zone de saisie du prompt */}
         <div className="space-y-2">
-          <Label className="text-sm font-mono text-gray-700">your_idea</Label>
+          <Label className="text-xs font-mono text-gray-300">your_prompt</Label>
           <Textarea
             value={prompt}
             onChange={(e) => handlePromptChange(e.target.value)}
             placeholder={placeholder}
-            className="min-h-[80px] bg-white/80 border-gray-200 text-black font-mono text-xs resize-none focus:border-blue-500 transition-colors"
+            className="min-h-[100px] bg-[#0A0A0A] border-[#333333] text-white font-mono text-sm resize-none focus:border-blue-500/60 focus:ring-1 focus:ring-blue-500/20 transition-colors"
             disabled={data.status === 'loading'}
           />
           
-          {/* Compteur de caractères */}
-          <div className="flex items-center justify-between text-xs">
+          {/* Validation et compteur */}
+          <div className="flex items-center justify-between text-xs font-mono">
             <div className="flex items-center gap-2">
               {isValid ? (
-                <span className="text-green-600 font-mono">✓ valid</span>
+                <span className="text-green-400">✓ valid_prompt</span>
               ) : (
-                <span className="text-gray-500 font-mono">enter prompt</span>
+                <span className="text-gray-500">enter_your_idea</span>
               )}
             </div>
-            <span className={`font-mono ${
-              isNearLimit ? 'text-orange-500' : 'text-gray-500'
+            <span className={`${
+              isNearLimit ? 'text-orange-400' : 'text-gray-500'
             }`}>
               {charCount}/{maxLength}
             </span>
@@ -154,33 +169,50 @@ export function PromptNode({ id, data, selected }: PromptNodeProps) {
 
         {/* Message d'erreur */}
         {data.status === 'error' && data.errorMessage && (
-          <div className="p-2 bg-red-100 border border-red-300 rounded text-xs text-red-700 font-mono">
-            {data.errorMessage}
+          <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+              <span className="text-xs text-red-400 font-mono">{data.errorMessage}</span>
+            </div>
           </div>
         )}
 
         {/* Informations de temps d'exécution */}
         {data.startTime && (
-          <div className="text-xs text-muted-foreground font-mono">
-            {data.status === 'loading' && 'started...'}
+          <div className="text-xs text-gray-400 font-mono">
+            {data.status === 'loading' && 'processing_started...'}
             {data.endTime && data.startTime && (
-              `completed in ${Math.round((data.endTime - data.startTime) / 1000)}s`
+              `completed_in_${Math.round((data.endTime - data.startTime) / 1000)}s`
             )}
           </div>
         )}
-      </CardContent>
+      </div>
+
+      {/* Footer avec informations techniques */}
+      <div className="border-t border-[#333333] p-3 bg-[#111111]/50">
+        <div className="flex items-center justify-between text-xs font-mono text-gray-400">
+          <div className="flex items-center gap-3">
+            <span>cost: {data.config?.costCredits || 0}_credits</span>
+            {data.config?.estimatedDuration && (
+              <span>eta: ~{data.config.estimatedDuration / 1000}s</span>
+            )}
+          </div>
+          <span className="text-gray-500">user_input</span>
+        </div>
+      </div>
 
       {/* Handle pour la connexion sortante */}
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className={`w-3 h-3 border-2 border-gray-400 bg-white ${data.status === 'success' ? 'success' : data.status === 'loading' ? 'loading' : ''}`}
-        style={{
-          backgroundColor: data.status === 'success' ? '#10b981' : '#9ca3af',
-          borderColor: data.status === 'success' ? '#10b981' : '#9ca3af'
-        }}
+        className={`${HANDLE_STYLES.base} ${
+          data.status === 'success' ? HANDLE_STYLES.success :
+          data.status === 'loading' ? HANDLE_STYLES.active :
+          data.status === 'error' ? HANDLE_STYLES.error :
+          HANDLE_STYLES.idle
+        }`}
       />
-    </Card>
+    </div>
   );
 }

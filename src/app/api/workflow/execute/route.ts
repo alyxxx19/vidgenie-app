@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getAuthUser } from '@/lib/auth/server-auth';
+import { getServerUser } from '@/lib/auth/server-auth';
 import { inngest } from '@/lib/inngest';
 import { db } from '@/server/api/db';
 import { EncryptionService } from '@/services/encryption';
@@ -39,7 +39,7 @@ export interface WorkflowExecuteResponse {
 export async function POST(request: NextRequest): Promise<NextResponse> {
   try {
     // Authentification
-    const user = await getAuthUser();
+    const user = await getServerUser(request);
     if (!user) {
       return NextResponse.json(
         { error: 'Authentication required' },

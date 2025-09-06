@@ -20,21 +20,8 @@ import './styles/workflow-animations.css';
 import { useWorkflowStore } from './store/workflow-store';
 import { WorkflowNode, WorkflowEdge, NODE_TYPES } from './types/workflow';
 
-// Import des composants de nœuds
-import { PromptNode } from './nodes/PromptNode';
-import { EnhanceNode } from './nodes/EnhanceNode';
-import { ImageGenNode } from './nodes/ImageGenNode';
-import { VideoGenNode } from './nodes/VideoGenNode';
-import { OutputNode } from './nodes/OutputNode';
-
-// Types de nœuds React Flow
-const nodeTypes = {
-  [NODE_TYPES.PROMPT]: PromptNode,
-  [NODE_TYPES.ENHANCE]: EnhanceNode,
-  [NODE_TYPES.IMAGE]: ImageGenNode,
-  [NODE_TYPES.VIDEO]: VideoGenNode,
-  [NODE_TYPES.OUTPUT]: OutputNode,
-};
+// Import des composants de nœuds depuis l'index
+import { nodeTypes } from './nodes';
 
 interface WorkflowCanvasProps {
   className?: string;

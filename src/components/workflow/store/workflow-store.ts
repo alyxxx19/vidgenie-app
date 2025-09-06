@@ -6,6 +6,8 @@ import {
   WorkflowConfig,
   WorkflowNodeStatus,
   WorkflowNodeData,
+  WorkflowType,
+  WORKFLOW_TEMPLATES,
   NODE_IDS,
   NODE_TYPES,
   DEFAULT_NODE_POSITIONS,
@@ -149,8 +151,170 @@ const createInitialEdges = (): WorkflowEdge[] => [
   }
 ];
 
+// Fonction pour créer des nœuds selon le type de workflow
+const createNodesForWorkflowType = (workflowType: WorkflowType): WorkflowNode[] => {
+  const template = WORKFLOW_TEMPLATES[workflowType];
+  const nodes: WorkflowNode[] = [];
+  
+  template.nodes.forEach((nodeType, index) => {
+    const nodeId = Object.values(NODE_IDS).find(id => id.includes(nodeType)) || `${nodeType}-node`;
+    const position = {
+      x: 100 + (index * 300),
+      y: 100
+    };
+    
+    let nodeData: WorkflowNodeData;
+    
+    switch (nodeType) {
+      case NODE_TYPES.PROMPT:
+        nodeData = {
+          label: 'prompt_input',
+          status: 'idle',
+          config: {
+            costCredits: NODE_CREDIT_COSTS[NODE_TYPES.PROMPT],
+            estimatedDuration: NODE_ESTIMATED_DURATIONS[NODE_TYPES.PROMPT],
+            prompt: {
+              maxLength: 1000,
+              placeholder: workflowType === 'text-to-video' 
+                ? 'Describe the video you want to generate...'
+                : 'Describe the image you want to generate...'
+            }
+          },
+          promptData: {
+            originalPrompt: '',
+            characterCount: 0
+          }
+        };
+        break;
+
+      case NODE_TYPES.ENHANCE:
+        nodeData = {
+          label: 'gpt_enhance',
+          status: 'idle',
+          config: {
+            costCredits: NODE_CREDIT_COSTS[NODE_TYPES.ENHANCE],
+            estimatedDuration: NODE_ESTIMATED_DURATIONS[NODE_TYPES.ENHANCE],
+            enhance: {
+              model: 'gpt-4-turbo',
+              temperature: 0.7
+            }
+          }
+        };
+        break;
+
+      case NODE_TYPES.IMAGE:
+        nodeData = {
+          label: 'dalle3_gen',
+          status: 'idle',
+          config: {
+            costCredits: NODE_CREDIT_COSTS[NODE_TYPES.IMAGE],
+            estimatedDuration: NODE_ESTIMATED_DURATIONS[NODE_TYPES.IMAGE],
+            image: {
+              provider: 'dalle',
+              style: 'vivid',
+              quality: 'hd',
+              size: '1024x1792'
+            }
+          }
+        };
+        break;
+
+      case NODE_TYPES.VIDEO:
+        nodeData = {
+          label: 'veo3_video',
+          status: 'idle',
+          config: {
+            costCredits: NODE_CREDIT_COSTS[NODE_TYPES.VIDEO],
+            estimatedDuration: NODE_ESTIMATED_DURATIONS[NODE_TYPES.VIDEO],
+            video: {
+              provider: 'vo3',
+              duration: 8,
+              resolution: '1080p',
+              generateAudio: true
+            }
+          }
+        };
+        break;
+
+      case NODE_TYPES.OUTPUT:
+        nodeData = {
+          label: 'final_output',
+          status: 'idle',
+          config: {
+            costCredits: NODE_CREDIT_COSTS[NODE_TYPES.OUTPUT],
+            estimatedDuration: NODE_ESTIMATED_DURATIONS[NODE_TYPES.OUTPUT],
+            output: {
+              formats: workflowType === 'text-to-image' ? ['png', 'jpg'] : ['mp4', 'webm'],
+              quality: 'high',
+              downloadEnabled: true
+            }
+          }
+        };
+        break;
+
+      case NODE_TYPES.IMAGE_UPLOAD:
+        nodeData = {
+          label: 'image_upload',
+          status: 'idle',
+          config: {
+            costCredits: NODE_CREDIT_COSTS[NODE_TYPES.IMAGE_UPLOAD],
+            estimatedDuration: NODE_ESTIMATED_DURATIONS[NODE_TYPES.IMAGE_UPLOAD],
+            imageUpload: {
+              acceptedFormats: ['png', 'jpg', 'jpeg', 'webp'],
+              maxFileSize: 10 * 1024 * 1024, // 10MB
+              maxDimensions: { width: 2048, height: 2048 }
+            }
+          }
+        };
+        break;
+
+      default:
+        nodeData = {
+          label: nodeType,
+          status: 'idle',
+          config: {
+            costCredits: 0,
+            estimatedDuration: 0
+          }
+        };
+    }
+
+    nodes.push({
+      id: nodeId,
+      type: nodeType,
+      position,
+      data: nodeData
+    });
+  });
+
+  return nodes;
+};
+
+// Fonction pour créer des edges selon le type de workflow
+const createEdgesForWorkflowType = (workflowType: WorkflowType): WorkflowEdge[] => {
+  const template = WORKFLOW_TEMPLATES[workflowType];
+  const edges: WorkflowEdge[] = [];
+  
+  template.edges.forEach(({ from, to }, index) => {
+    const sourceId = Object.values(NODE_IDS).find(id => id.includes(from)) || `${from}-node`;
+    const targetId = Object.values(NODE_IDS).find(id => id.includes(to)) || `${to}-node`;
+    
+    edges.push({
+      id: `${from}-${to}`,
+      source: sourceId,
+      target: targetId,
+      type: 'smoothstep',
+      style: { stroke: '#64748b', strokeWidth: 2 },
+      data: { transferring: false, transferProgress: 0 }
+    });
+  });
+
+  return edges;
+};
+
 export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
   // État initial
+  selectedWorkflowType: null,
   nodes: createInitialNodes(),
   edges: createInitialEdges(),
   isRunning: false,
@@ -161,6 +325,37 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
   totalCreditsUsed: 0,
   estimatedTotalCost: 0,
   executionHistory: [],
+
+  // Actions pour la gestion du type de workflow
+  selectWorkflowType: (type: WorkflowType) => {
+    set({ selectedWorkflowType: type });
+  },
+
+  generateWorkflowFromTemplate: (type: WorkflowType) => {
+    const nodes = createNodesForWorkflowType(type);
+    const edges = createEdgesForWorkflowType(type);
+    
+    // Calculer le coût total estimé
+    const estimatedTotalCost = nodes.reduce((total, node) => 
+      total + (node.data.config?.costCredits || 0), 0
+    );
+
+    set({
+      selectedWorkflowType: type,
+      nodes,
+      edges,
+      totalSteps: nodes.length,
+      estimatedTotalCost,
+      // Reset workflow state
+      isRunning: false,
+      isPaused: false,
+      overallProgress: 0,
+      currentStep: 0,
+      totalCreditsUsed: 0,
+      result: undefined,
+      error: undefined
+    });
+  },
 
   // Actions pour les nœuds
   updateNodeData: (nodeId: string, data: Partial<WorkflowNodeData>) => {

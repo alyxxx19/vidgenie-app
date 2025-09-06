@@ -26,6 +26,7 @@ import { useWorkflowStore } from './store/workflow-store';
 import { WorkflowConfig } from './types/workflow';
 import { useState } from 'react';
 import { useCredits } from '@/hooks/useCredits';
+import { useAuth } from '@/lib/auth/auth-context';
 import { toast } from 'sonner';
 
 interface WorkflowControlsProps {
@@ -52,6 +53,7 @@ export function WorkflowControls({ className, projectId }: WorkflowControlsProps
   } = useWorkflowStore();
 
   const { balance, hasEnoughCredits } = useCredits();
+  const { user, loading: authLoading } = useAuth();
 
   // États du formulaire
   const [imagePrompt, setImagePrompt] = useState('');
@@ -65,6 +67,25 @@ export function WorkflowControls({ className, projectId }: WorkflowControlsProps
   const canStart = !isRunning && imagePrompt.trim() && videoPrompt.trim() && hasEnoughCredits('IMAGE_TO_VIDEO');
 
   const handleStart = async () => {
+    // Vérification de l'authentification
+    console.log('[WORKFLOW-CONTROLS] Starting workflow - Auth check:', { 
+      user: !!user, 
+      userId: user?.id, 
+      authLoading 
+    });
+
+    if (authLoading) {
+      toast.error('Authentication in progress, please wait');
+      return;
+    }
+
+    if (!user) {
+      toast.error('Authentication required', {
+        description: 'Please sign in to start a workflow'
+      });
+      return;
+    }
+
     if (!canStart) {
       if (!hasEnoughCredits('IMAGE_TO_VIDEO')) {
         toast.error('Insufficient credits', {
@@ -93,9 +114,33 @@ export function WorkflowControls({ className, projectId }: WorkflowControlsProps
     };
 
     try {
+      console.log('[WORKFLOW-CONTROLS] Starting workflow with config:', config);
       await startWorkflow(config);
     } catch (error) {
-      console.error('Failed to start workflow:', error);
+      console.error('[WORKFLOW-CONTROLS] Failed to start workflow:', error);
+      
+      // Gestion des erreurs spécifiques
+      if (error instanceof Error) {
+        if (error.message.includes('401') || error.message.includes('Authentication required')) {
+          toast.error('Authentication failed', {
+            description: 'Please sign out and sign in again'
+          });
+        } else if (error.message.includes('403')) {
+          toast.error('Access denied', {
+            description: 'You do not have permission to start workflows'
+          });
+        } else if (error.message.includes('Insufficient credits')) {
+          toast.error('Insufficient credits', {
+            description: 'Please add more credits to your account'
+          });
+        } else {
+          toast.error('Workflow failed to start', {
+            description: error.message
+          });
+        }
+      } else {
+        toast.error('Unexpected error occurred');
+      }
     }
   };
 
@@ -135,158 +180,204 @@ export function WorkflowControls({ className, projectId }: WorkflowControlsProps
   return (
     <div className={`space-y-4 ${className}`}>
       {/* En-tête avec progression globale */}
-      <Card className="bg-card/80 backdrop-blur-sm border-secondary">
-        <CardHeader className="pb-3">
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 font-mono text-sm text-white">
-              <Wand2 className="w-4 h-4" />
-              workflow_control
-            </CardTitle>
+      <Card className="bg-card border border-border">
+        <div className="border-b border-border bg-secondary/50">
+          <div className="flex items-center justify-between px-6 py-4">
             <div className="flex items-center gap-3">
-              <Badge className={`text-white font-mono text-xs ${getStatusColor()}`}>
-                {getStatusIcon()}
-                {isRunning ? 'running' : isPaused ? 'paused' : result ? 'completed' : error ? 'error' : 'idle'}
+              <div className="flex items-center justify-center w-6 h-6 bg-blue-500/20 border border-blue-500/30 rounded">
+                <Wand2 className="w-3 h-3 text-blue-400" />
+              </div>
+              <div>
+                <h3 className="font-mono text-sm text-white">workflow_control</h3>
+                <p className="text-xs text-muted-foreground font-mono">pipeline execution management</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <Badge className={`font-mono text-xs ${
+                getProgressStatus() === 'running' ? 'bg-blue-500 text-white' :
+                getProgressStatus() === 'completed' ? 'bg-green-500 text-white' :
+                getProgressStatus() === 'error' ? 'bg-red-500 text-white' :
+                'bg-muted text-muted-foreground'
+              }`}>
+                {getProgressStatus()}
               </Badge>
-              <Badge className="bg-white/10 text-white font-mono text-xs">
-                credits: {balance}
+              <Badge className="bg-secondary/50 text-white font-mono text-xs">
+                {balance}_credits
               </Badge>
             </div>
           </div>
-          
-          {/* Progression globale */}
-          {(isRunning || result || error) && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
-                <span>step {currentStep}/{totalSteps}</span>
-                <span>{Math.round(overallProgress)}%</span>
+        </div>
+        
+        {/* Progression globale */}
+        {(isRunning || result || error) && (
+          <div className="p-6 border-b border-border">
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-mono text-white">execution_progress</div>
+                <div className="text-right">
+                  <div className="font-mono text-lg text-white">{Math.round(overallProgress)}%</div>
+                  <div className="text-xs text-muted-foreground font-mono">
+                    step {currentStep}/{totalSteps}
+                  </div>
+                </div>
               </div>
-              <Progress value={overallProgress} className="progress-enhanced h-2" />
+              <div className="relative">
+                <Progress value={overallProgress} className="h-3 bg-muted" />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="text-xs font-mono text-black font-medium">
+                    {overallProgress > 10 && `${Math.round(overallProgress)}%`}
+                  </div>
+                </div>
+              </div>
               {totalCreditsUsed > 0 && (
-                <div className="text-xs text-muted-foreground font-mono">
-                  credits used: {totalCreditsUsed}/{estimatedTotalCost}
+                <div className="text-xs text-muted-foreground font-mono text-center">
+                  credits_used: {totalCreditsUsed}/{estimatedTotalCost}
                 </div>
               )}
             </div>
-          )}
-        </CardHeader>
+          </div>
+        )}
 
         {/* Contrôles principaux */}
-        <CardContent>
-          <div className="flex items-center gap-2">
+        <div className="p-6">
+          <div className="space-y-3">
             <Button
               onClick={handleStart}
               disabled={!canStart}
-              className="workflow-button bg-white hover:bg-white/90 text-black font-mono text-xs h-8 px-4 transition-all duration-200"
+              className="w-full bg-blue-600 hover:bg-blue-700 text-white font-mono text-sm h-10 hover:scale-105 transition-all duration-200 shadow-sm"
             >
-              <Play className="w-3 h-3 mr-1" />
-              start
+              <Play className="w-4 h-4 mr-2" />
+              start_pipeline
             </Button>
 
             {isRunning && (
-              <>
+              <div className="grid grid-cols-2 gap-2">
                 <Button
                   onClick={handlePauseResume}
                   variant="outline"
-                  size="sm"
-                  className="workflow-button border-secondary text-white hover:bg-secondary/50 font-mono text-xs h-8 transition-all duration-200"
+                  className="border-border hover:border-white/40 hover:bg-white/5 text-white font-mono text-xs h-8 transition-all duration-200"
                 >
-                  {isPaused ? <Play className="w-3 h-3" /> : <Pause className="w-3 h-3" />}
+                  {isPaused ? <Play className="w-3 h-3 mr-1" /> : <Pause className="w-3 h-3 mr-1" />}
+                  {isPaused ? 'resume' : 'pause'}
                 </Button>
                 
                 <Button
                   onClick={cancelWorkflow}
                   variant="outline"
-                  size="sm"
-                  className="workflow-button border-red-500 text-red-400 hover:bg-red-500/10 font-mono text-xs h-8 transition-all duration-200"
+                  className="border-red-500/40 hover:border-red-500 hover:bg-red-500/10 text-red-400 hover:text-red-300 font-mono text-xs h-8 transition-all duration-200"
                 >
-                  <Square className="w-3 h-3" />
+                  <Square className="w-3 h-3 mr-1" />
+                  cancel
                 </Button>
-              </>
+              </div>
             )}
 
             <Button
               onClick={resetWorkflow}
               variant="outline"
-              size="sm"
               disabled={isRunning}
-              className="border-secondary text-white hover:bg-secondary/50 font-mono text-xs h-8"
+              className="w-full border-border hover:border-white/40 hover:bg-white/5 text-white font-mono text-xs h-8 transition-all duration-200"
             >
-              <RotateCcw className="w-3 h-3" />
+              <RotateCcw className="w-3 h-3 mr-2" />
+              reset_workflow
             </Button>
           </div>
-        </CardContent>
+        </div>
       </Card>
 
       {/* Configuration des prompts */}
-      <Card className="bg-card/80 backdrop-blur-sm border-secondary">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 font-mono text-sm text-white">
-            <Image className="w-4 h-4" />
-            image_prompt
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card className="bg-card border border-border">
+        <div className="border-b border-border bg-secondary/50">
+          <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-6 h-6 bg-green-500/20 border border-green-500/30 rounded">
+                <Image className="w-3 h-3 text-green-400" />
+              </div>
+              <div>
+                <h3 className="font-mono text-sm text-white">image_prompt</h3>
+                <p className="text-xs text-muted-foreground font-mono">describe your image concept</p>
+              </div>
+            </div>
+            <Badge className="bg-muted text-muted-foreground font-mono text-xs">
+              {imagePrompt.length}/1000
+            </Badge>
+          </div>
+        </div>
+        <div className="p-6">
           <Textarea
             value={imagePrompt}
             onChange={(e) => setImagePrompt(e.target.value)}
-            placeholder="Describe the image you want to generate..."
-            className="min-h-[80px] bg-secondary/50 border-secondary text-white font-mono text-xs"
+            placeholder="A modern entrepreneur working in a bright office with plants, professional atmosphere, natural lighting..."
+            className="min-h-[100px] bg-background border-border text-white font-mono text-sm resize-none focus:ring-1 focus:ring-white/20"
             maxLength={1000}
             disabled={isRunning}
           />
-          <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground font-mono">
-            <span>{imagePrompt.length}/1000</span>
-            <span>cost: 5 credits</span>
+          <div className="mt-3 text-xs text-muted-foreground font-mono text-center">
+            cost_estimate: 5_credits
           </div>
-        </CardContent>
+        </div>
       </Card>
 
-      <Card className="bg-card/80 backdrop-blur-sm border-secondary">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 font-mono text-sm text-white">
-            <Video className="w-4 h-4" />
-            video_prompt
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
+      <Card className="bg-card border border-border">
+        <div className="border-b border-border bg-secondary/50">
+          <div className="flex items-center justify-between px-6 py-4">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-6 h-6 bg-red-500/20 border border-red-500/30 rounded">
+                <Video className="w-3 h-3 text-red-400" />
+              </div>
+              <div>
+                <h3 className="font-mono text-sm text-white">video_prompt</h3>
+                <p className="text-xs text-muted-foreground font-mono">describe animation and movement</p>
+              </div>
+            </div>
+            <Badge className="bg-muted text-muted-foreground font-mono text-xs">
+              {videoPrompt.length}/500
+            </Badge>
+          </div>
+        </div>
+        <div className="p-6">
           <Textarea
             value={videoPrompt}
             onChange={(e) => setVideoPrompt(e.target.value)}
-            placeholder="Describe how the image should be animated..."
-            className="min-h-[60px] bg-secondary/50 border-secondary text-white font-mono text-xs"
+            placeholder="Subtle breathing motion, eyes blinking naturally, hair moving gently in a breeze, professional demeanor..."
+            className="min-h-[80px] bg-background border-border text-white font-mono text-sm resize-none focus:ring-1 focus:ring-white/20"
             maxLength={500}
             disabled={isRunning}
           />
-          <div className="flex justify-between items-center mt-2 text-xs text-muted-foreground font-mono">
-            <span>{videoPrompt.length}/500</span>
-            <span>cost: 15 credits</span>
+          <div className="mt-3 text-xs text-muted-foreground font-mono text-center">
+            cost_estimate: 15_credits
           </div>
-        </CardContent>
+        </div>
       </Card>
 
       {/* Configuration technique */}
-      <Card className="bg-card/80 backdrop-blur-sm border-secondary">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 font-mono text-sm text-white">
-            <Settings className="w-4 h-4" />
-            technical_config
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-4">
+      <Card className="bg-card border border-border">
+        <div className="border-b border-border bg-secondary/50">
+          <div className="flex items-center gap-3 px-6 py-4">
+            <div className="flex items-center justify-center w-6 h-6 bg-amber-500/20 border border-amber-500/30 rounded">
+              <Settings className="w-3 h-3 text-amber-400" />
+            </div>
+            <div>
+              <h3 className="font-mono text-sm text-white">technical_config</h3>
+              <p className="text-xs text-muted-foreground font-mono">generation parameters</p>
+            </div>
+          </div>
+        </div>
+        <div className="p-6 space-y-6">
           {/* Configuration image */}
-          <div className="space-y-3">
-            <Label className="font-mono text-xs text-white">dalle3_settings</Label>
+          <div className="space-y-4">
+            <Label className="font-mono text-sm text-white">dalle3_settings</Label>
             
-            <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-3">
               <div>
                 <Label className="font-mono text-xs text-muted-foreground">style</Label>
                 <Select value={imageStyle} onValueChange={setImageStyle} disabled={isRunning}>
-                  <SelectTrigger className="bg-secondary/50 border-secondary text-white font-mono text-xs mt-1">
+                  <SelectTrigger className="bg-background border-border text-white font-mono text-sm h-10 mt-2">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="vivid">vivid</SelectItem>
-                    <SelectItem value="natural">natural</SelectItem>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="vivid" className="font-mono">vivid (creative)</SelectItem>
+                    <SelectItem value="natural" className="font-mono">natural (realistic)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -294,103 +385,138 @@ export function WorkflowControls({ className, projectId }: WorkflowControlsProps
               <div>
                 <Label className="font-mono text-xs text-muted-foreground">quality</Label>
                 <Select value={imageQuality} onValueChange={setImageQuality} disabled={isRunning}>
-                  <SelectTrigger className="bg-secondary/50 border-secondary text-white font-mono text-xs mt-1">
+                  <SelectTrigger className="bg-background border-border text-white font-mono text-sm h-10 mt-2">
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="hd">hd</SelectItem>
-                    <SelectItem value="standard">standard</SelectItem>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="hd" className="font-mono">hd (1024×1792px)</SelectItem>
+                    <SelectItem value="standard" className="font-mono">standard (1024×1024px)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div>
+                <Label className="font-mono text-xs text-muted-foreground">aspect_ratio</Label>
+                <Select value={imageSize} onValueChange={setImageSize} disabled={isRunning}>
+                  <SelectTrigger className="bg-background border-border text-white font-mono text-sm h-10 mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="1024x1792" className="font-mono">1024×1792 (portrait)</SelectItem>
+                    <SelectItem value="1792x1024" className="font-mono">1792×1024 (landscape)</SelectItem>
+                    <SelectItem value="1024x1024" className="font-mono">1024×1024 (square)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
-
-            <div>
-              <Label className="font-mono text-xs text-muted-foreground">aspect_ratio</Label>
-              <Select value={imageSize} onValueChange={setImageSize} disabled={isRunning}>
-                <SelectTrigger className="bg-secondary/50 border-secondary text-white font-mono text-xs mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1024x1792">1024×1792 (portrait)</SelectItem>
-                  <SelectItem value="1792x1024">1792×1024 (landscape)</SelectItem>
-                  <SelectItem value="1024x1024">1024×1024 (square)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
 
           {/* Configuration vidéo */}
-          <div className="border-t border-secondary pt-3 space-y-3">
-            <Label className="font-mono text-xs text-white">veo3_settings</Label>
+          <div className="border-t border-border pt-4 space-y-4">
+            <Label className="font-mono text-sm text-white">veo3_settings</Label>
             
-            <div>
-              <Label className="font-mono text-xs text-muted-foreground">resolution</Label>
-              <Select value={videoResolution} onValueChange={setVideoResolution} disabled={isRunning}>
-                <SelectTrigger className="bg-secondary/50 border-secondary text-white font-mono text-xs mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1080p">1080p</SelectItem>
-                  <SelectItem value="720p">720p</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <div className="space-y-3">
+              <div>
+                <Label className="font-mono text-xs text-muted-foreground">resolution</Label>
+                <Select value={videoResolution} onValueChange={setVideoResolution} disabled={isRunning}>
+                  <SelectTrigger className="bg-background border-border text-white font-mono text-sm h-10 mt-2">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-card border-border">
+                    <SelectItem value="1080p" className="font-mono">1080p (recommended)</SelectItem>
+                    <SelectItem value="720p" className="font-mono">720p (faster)</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={generateAudio}
-                onCheckedChange={setGenerateAudio}
-                disabled={isRunning}
-              />
-              <Label className="font-mono text-xs text-white">generate_audio</Label>
-            </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <Label className="font-mono text-xs text-muted-foreground">duration</Label>
+                  <Badge className="bg-muted text-muted-foreground font-mono text-xs">8s_fixed</Badge>
+                </div>
+                <div className="p-3 bg-secondary/30 border border-border rounded text-xs font-mono text-muted-foreground">
+                  VEO3 supports fixed 8-second duration
+                </div>
+              </div>
 
-            <div className="text-xs text-muted-foreground font-mono">
-              duration: 8s (fixed for veo3)
+              <div className="flex items-center space-x-3">
+                <Switch
+                  checked={generateAudio}
+                  onCheckedChange={setGenerateAudio}
+                  disabled={isRunning}
+                />
+                <label className="font-mono text-sm text-white">
+                  generate_audio
+                </label>
+              </div>
             </div>
           </div>
-        </CardContent>
+        </div>
       </Card>
 
       {/* Résultat ou erreur */}
       {(result || error) && (
-        <Card className={`border-secondary ${
-          result ? 'bg-green-500/10 border-green-500/30' : 'bg-red-500/10 border-red-500/30'
+        <Card className={`border border-border ${
+          result ? 'bg-green-500/10 border-green-500/40' : 'bg-red-500/10 border-red-500/40'
         }`}>
-          <CardHeader>
-            <CardTitle className={`flex items-center gap-2 font-mono text-sm ${
-              result ? 'text-green-400' : 'text-red-400'
-            }`}>
-              {result ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
-              {result ? 'workflow_completed' : 'workflow_error'}
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
+          <div className="border-b border-border bg-secondary/50">
+            <div className="flex items-center gap-3 px-6 py-4">
+              <div className={`flex items-center justify-center w-6 h-6 rounded ${
+                result ? 'bg-green-500' : 'bg-red-500'
+              }`}>
+                {result ? <CheckCircle2 className="w-3 h-3 text-white" /> : <AlertCircle className="w-3 h-3 text-white" />}
+              </div>
+              <div>
+                <h3 className={`font-mono text-sm ${
+                  result ? 'text-green-400' : 'text-red-400'
+                }`}>
+                  {result ? 'workflow_completed' : 'workflow_error'}
+                </h3>
+                <p className="text-xs text-muted-foreground font-mono">
+                  {result ? 'pipeline execution successful' : 'pipeline execution failed'}
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="p-6">
             {result && (
-              <div className="space-y-2">
-                <div className="text-xs text-green-400 font-mono">
+              <div className="space-y-3">
+                <div className="text-sm text-green-400 font-mono">
                   ✓ Video generated successfully!
                 </div>
-                {result.imageUrl && (
-                  <div className="text-xs text-muted-foreground font-mono">
-                    Image: {result.imageUrl.substring(0, 50)}...
-                  </div>
-                )}
-                {result.videoUrl && (
-                  <div className="text-xs text-muted-foreground font-mono">
-                    Video: {result.videoUrl.substring(0, 50)}...
-                  </div>
-                )}
+                <div className="space-y-2 text-xs font-mono">
+                  {result.imageUrl && (
+                    <div className="p-2 bg-secondary/30 border border-border rounded">
+                      <span className="text-muted-foreground">image_url:</span>
+                      <span className="text-white ml-2">{result.imageUrl.substring(0, 40)}...</span>
+                    </div>
+                  )}
+                  {result.videoUrl && (
+                    <div className="p-2 bg-secondary/30 border border-border rounded">
+                      <span className="text-muted-foreground">video_url:</span>
+                      <span className="text-white ml-2">{result.videoUrl.substring(0, 40)}...</span>
+                    </div>
+                  )}
+                </div>
               </div>
             )}
             
             {error && (
-              <div className="text-xs text-red-400 font-mono">
-                Error in {error.nodeId}: {error.message}
+              <div className="space-y-3">
+                <div className="text-sm text-red-400 font-mono">
+                  ✗ Pipeline execution failed
+                </div>
+                <div className="p-3 bg-red-500/10 border border-red-500/20 rounded">
+                  <div className="text-xs text-red-400 font-mono">
+                    <span className="text-muted-foreground">node:</span> {error.nodeId}
+                  </div>
+                  <div className="text-xs text-red-400 font-mono mt-1">
+                    <span className="text-muted-foreground">error:</span> {error.message}
+                  </div>
+                </div>
               </div>
             )}
-          </CardContent>
+          </div>
         </Card>
       )}
     </div>

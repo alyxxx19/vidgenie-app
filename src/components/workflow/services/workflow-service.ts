@@ -74,6 +74,7 @@ export class WorkflowService {
         headers: {
           'Content-Type': 'application/json',
         },
+        credentials: 'include', // Important: inclure les cookies de session
         body: JSON.stringify({
           imagePrompt: config.imagePrompt,
           videoPrompt: config.videoPrompt,
@@ -84,7 +85,26 @@ export class WorkflowService {
       });
 
       if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+        let errorMessage = `HTTP error! status: ${response.status}`;
+        
+        // Essayer de récupérer le message d'erreur du serveur
+        try {
+          const errorData = await response.json();
+          if (errorData.error) {
+            errorMessage = errorData.error;
+          }
+        } catch {
+          // Si la réponse n'est pas du JSON, utiliser le message par défaut
+        }
+        
+        console.error('[WORKFLOW-SERVICE] API error:', { 
+          status: response.status, 
+          statusText: response.statusText,
+          errorMessage,
+          url: response.url 
+        });
+        
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();

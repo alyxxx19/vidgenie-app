@@ -2,11 +2,11 @@
 
 import { Handle, Position } from 'reactflow';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Image, AlertCircle, CheckCircle, Download, ExternalLink } from 'lucide-react';
+import { CheckCircle, AlertCircle, Clock, Download, ExternalLink } from 'lucide-react';
 import { WorkflowNodeData } from '../types/workflow';
+import { NODE_THEMES, STATUS_COLORS, NODE_SIZES, HANDLE_STYLES } from '../constants/node-themes';
 
 interface ImageGenNodeProps {
   id: string;
@@ -15,86 +15,104 @@ interface ImageGenNodeProps {
 }
 
 export function ImageGenNode({ id, data, selected }: ImageGenNodeProps) {
-  const getNodeStyle = () => {
-    const baseStyle = 'transition-all duration-300 ease-in-out';
+  const theme = NODE_THEMES.image;
+  const statusColors = STATUS_COLORS[data.status];
+  
+  const getNodeClasses = () => {
+    const baseClasses = `${NODE_SIZES.default} ${statusColors.bg} border-2 transition-all duration-300 rounded-xl shadow-lg backdrop-blur-sm`;
     
+    let borderClasses = statusColors.border;
+    let effectClasses = '';
+
+    // Styles spécifiques selon l'état
     switch (data.status) {
       case 'loading':
-        return `${baseStyle} border-orange-500 bg-orange-50/50 shadow-lg`;
+        borderClasses = `border-[${theme.accent}]`;
+        effectClasses = 'animate-pulse shadow-lg shadow-green-500/20';
+        break;
       case 'success':
-        return `${baseStyle} border-green-500 bg-green-50/50 shadow-lg`;
+        effectClasses = 'shadow-lg shadow-green-500/20';
+        break;
       case 'error':
-        return `${baseStyle} border-red-500 bg-red-50/50 shadow-lg animate-shake`;
+        effectClasses = 'animate-shake shadow-lg shadow-red-500/20';
+        break;
       default:
-        return `${baseStyle} border-gray-300 bg-white/80 backdrop-blur-sm ${
-          selected ? 'border-primary shadow-lg' : ''
-        }`;
+        if (selected) {
+          borderClasses = `border-[${theme.accent}]`;
+          effectClasses = `shadow-xl shadow-[${theme.accent}]/30`;
+        }
     }
+
+    return `${baseClasses} ${borderClasses} ${effectClasses}`;
   };
 
   const getStatusIcon = () => {
     switch (data.status) {
       case 'loading':
-        return <Image className="w-4 h-4 text-orange-500 animate-pulse" />;
+        return <div className="w-4 h-4 border-2 border-green-400 border-t-transparent rounded-full animate-spin" />;
       case 'success':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-green-400" />;
       case 'error':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
+        return <AlertCircle className="w-4 h-4 text-red-400" />;
       default:
-        return <Image className="w-4 h-4 text-gray-500" />;
+        return <Clock className="w-4 h-4 text-gray-400" />;
     }
   };
 
   const getStatusBadge = () => {
-    switch (data.status) {
-      case 'loading':
-        return <Badge className="bg-orange-500 text-white font-mono text-xs animate-pulse">generating</Badge>;
-      case 'success':
-        return <Badge className="bg-green-500 text-white font-mono text-xs">generated</Badge>;
-      case 'error':
-        return <Badge className="bg-red-500 text-white font-mono text-xs">failed</Badge>;
-      default:
-        return <Badge className="bg-gray-500 text-white font-mono text-xs">waiting</Badge>;
-    }
+    const badgeTexts = {
+      idle: 'awaiting_prompt',
+      loading: 'generating',
+      success: 'generated',
+      error: 'error'
+    };
+
+    return (
+      <Badge className={`${statusColors.badge} font-mono text-xs px-2 py-1`}>
+        {badgeTexts[data.status]}
+      </Badge>
+    );
   };
 
+  const IconComponent = theme.icon;
+  const progress = data.progress || 0;
   const imageConfig = data.config?.image;
   const imageData = data.imageData;
   const hasImage = data.status === 'success' && imageData?.imageUrl;
 
   return (
-    <Card className={`w-80 min-h-[200px] ${getNodeStyle()}`}>
-      {/* Handle d'entrée */}
+    <div className={getNodeClasses()}>
+      {/* Handle pour la connexion entrante */}
       <Handle
         type="target"
         position={Position.Left}
         id="input"
-        className="w-3 h-3 border-2 border-gray-400 bg-white"
+        className={`${HANDLE_STYLES.base} ${HANDLE_STYLES.idle}`}
       />
 
-      {/* Header */}
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 font-mono text-sm text-gray-800">
+      {/* Header avec thème coloré vert */}
+      <div className={`border-b border-[#333333] bg-gradient-to-r from-[${theme.accent}]/10 to-transparent p-4`}>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <div className={`flex items-center justify-center w-8 h-8 rounded-lg bg-[${theme.accent}]/20 border border-[${theme.accent}]/30`}>
+              <IconComponent className={`w-4 h-4 text-[${theme.accent}] ${data.status === 'loading' ? 'animate-pulse' : ''}`} />
+            </div>
+            <div>
+              <h3 className="font-mono text-sm text-white font-medium">{theme.name}</h3>
+              <p className="text-xs text-gray-400 font-mono">dall-e 3 generation</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
             {getStatusIcon()}
-            {data.label}
-          </CardTitle>
-          {getStatusBadge()}
+            {getStatusBadge()}
+          </div>
         </div>
-        
-        {/* Coût et temps estimé */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="font-mono">cost: {data.config?.costCredits || 5} credits</span>
-          {data.config?.estimatedDuration && (
-            <span className="font-mono">• eta: {Math.round(data.config.estimatedDuration / 1000)}s</span>
-          )}
-        </div>
-      </CardHeader>
+      </div>
 
-      {/* Content */}
-      <CardContent className="space-y-3">
+      {/* Contenu principal */}
+      <div className="p-4 space-y-4">
         {/* Configuration */}
-        <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground font-mono">
+        <div className="grid grid-cols-2 gap-2 text-xs text-gray-400 font-mono">
           <span>provider: {imageConfig?.provider || 'dalle'}</span>
           <span>style: {imageConfig?.style || 'vivid'}</span>
           <span>quality: {imageConfig?.quality || 'hd'}</span>
@@ -102,52 +120,42 @@ export function ImageGenNode({ id, data, selected }: ImageGenNodeProps) {
         </div>
 
         {/* État d'attente */}
-        {data.status === 'idle' && (
-          <div className="flex items-center justify-center py-6 text-center">
-            <div className="space-y-2">
-              <Image className="w-8 h-8 text-gray-400 mx-auto" />
-              <p className="text-xs text-muted-foreground font-mono">
-                waiting for enhanced prompt
-              </p>
+        {data.status === 'idle' && !data.input && (
+          <div className="py-6 text-center">
+            <div className="w-12 h-12 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center mx-auto mb-3">
+              <IconComponent className="w-5 h-5 text-gray-500" />
+            </div>
+            <div className="text-xs text-gray-500 font-mono">
+              waiting_for_enhanced_prompt
             </div>
           </div>
         )}
 
-        {/* État de chargement */}
+        {/* Barre de progression pendant le processing */}
         {data.status === 'loading' && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Image className="w-4 h-4 text-orange-500 animate-pulse" />
-              <span className="text-sm font-mono text-orange-700">
-                generating image with dall-e 3...
-              </span>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-green-400">generating_image</span>
+              <span className="text-gray-400">{Math.round(progress)}%</span>
             </div>
-            
-            {typeof data.progress === 'number' && (
-              <Progress value={data.progress} className="h-2" />
-            )}
-            
-            <div className="text-xs text-muted-foreground font-mono">
-              creating {imageConfig?.size || '1024x1792'} {imageConfig?.quality || 'hd'} image
+            <div className="relative">
+              <Progress value={progress} className="h-2 bg-[#0A0A0A] border border-[#333333]" />
+              <div className="absolute inset-0 bg-gradient-to-r from-green-500/20 to-transparent opacity-50 animate-pulse" />
             </div>
-
-            {/* Simulation de progression par étapes */}
-            {typeof data.progress === 'number' && (
-              <div className="text-xs text-muted-foreground font-mono">
-                {data.progress < 30 && 'processing prompt...'}
-                {data.progress >= 30 && data.progress < 70 && 'rendering image...'}
-                {data.progress >= 70 && 'finalizing...'}
-              </div>
-            )}
+            <div className="text-xs text-green-400 font-mono">
+              {progress < 30 && 'processing_prompt'}
+              {progress >= 30 && progress < 70 && 'rendering_image'}
+              {progress >= 70 && 'finalizing_output'}
+            </div>
           </div>
         )}
 
         {/* État de succès avec aperçu de l'image */}
         {data.status === 'success' && hasImage && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs text-green-600">
+            <div className="flex items-center gap-2 text-xs text-green-400 font-mono">
               <CheckCircle className="w-3 h-3" />
-              <span className="font-mono">image generated successfully</span>
+              <span>image_generated_successfully</span>
             </div>
 
             {/* Aperçu de l'image */}
@@ -155,7 +163,7 @@ export function ImageGenNode({ id, data, selected }: ImageGenNodeProps) {
               <img
                 src={imageData?.imageUrl}
                 alt="Generated image"
-                className="w-full h-32 object-cover rounded border"
+                className="w-full h-32 object-cover rounded-lg border border-[#333333]"
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                 }}
@@ -164,21 +172,21 @@ export function ImageGenNode({ id, data, selected }: ImageGenNodeProps) {
                 <img
                   src={imageData.thumbnailUrl}
                   alt="Thumbnail"
-                  className="absolute top-2 right-2 w-8 h-8 object-cover rounded border-2 border-white shadow"
+                  className="absolute top-2 right-2 w-8 h-8 object-cover rounded border-2 border-white shadow-lg"
                 />
               )}
             </div>
 
             {/* Métadonnées de l'image */}
-            <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground font-mono">
+            <div className="grid grid-cols-2 gap-2 text-xs text-gray-400 font-mono">
               {imageData?.width && imageData?.height && (
-                <span>size: {imageData.width}×{imageData.height}</span>
+                <span>resolution: {imageData.width}×{imageData.height}</span>
               )}
               {imageData?.fileSize && (
-                <span>size: {Math.round(imageData.fileSize / 1024)}KB</span>
+                <span>file_size: {Math.round(imageData.fileSize / 1024)}KB</span>
               )}
               {imageData?.generationTime && (
-                <span>time: {Math.round(imageData.generationTime / 1000)}s</span>
+                <span>gen_time: {Math.round(imageData.generationTime / 1000)}s</span>
               )}
               <span>format: PNG</span>
             </div>
@@ -188,16 +196,16 @@ export function ImageGenNode({ id, data, selected }: ImageGenNodeProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 h-7 text-xs font-mono"
+                className="flex-1 h-7 text-xs font-mono bg-[#0A0A0A] border-[#333333] text-white hover:bg-green-500/10 hover:border-green-500/30"
                 onClick={() => window.open(imageData?.imageUrl, '_blank')}
               >
                 <ExternalLink className="w-3 h-3 mr-1" />
-                view
+                view_full
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 h-7 text-xs font-mono"
+                className="flex-1 h-7 text-xs font-mono bg-[#0A0A0A] border-[#333333] text-white hover:bg-green-500/10 hover:border-green-500/30"
                 onClick={() => {
                   const link = document.createElement('a');
                   link.href = imageData?.imageUrl || '';
@@ -208,47 +216,60 @@ export function ImageGenNode({ id, data, selected }: ImageGenNodeProps) {
                 }}
               >
                 <Download className="w-3 h-3 mr-1" />
-                save
+                download
               </Button>
+            </div>
+
+            <div className="text-xs text-green-400 font-mono">
+              ✓ Ready for video generation
             </div>
           </div>
         )}
 
-        {/* État d'erreur */}
-        {data.status === 'error' && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-red-600">
-              <AlertCircle className="w-4 h-4" />
-              <span className="text-sm font-mono">generation failed</span>
+        {/* Message d'erreur */}
+        {data.status === 'error' && data.errorMessage && (
+          <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+              <span className="text-xs text-red-400 font-mono">{data.errorMessage}</span>
             </div>
-            
-            {data.errorMessage && (
-              <div className="p-2 bg-red-100 border border-red-300 rounded text-xs text-red-700 font-mono">
-                {data.errorMessage}
-              </div>
+          </div>
+        )}
+
+        {/* Informations de temps d'exécution */}
+        {data.startTime && (
+          <div className="text-xs text-gray-400 font-mono">
+            {data.status === 'loading' && 'generation_in_progress...'}
+            {data.endTime && data.startTime && (
+              `generated_in_${Math.round((data.endTime - data.startTime) / 1000)}s`
             )}
           </div>
         )}
+      </div>
 
-        {/* Temps d'exécution */}
-        {data.startTime && data.endTime && (
-          <div className="text-xs text-muted-foreground font-mono">
-            completed in {Math.round((data.endTime - data.startTime) / 1000)}s
+      {/* Footer avec informations techniques */}
+      <div className="border-t border-[#333333] p-3 bg-[#111111]/50">
+        <div className="flex items-center justify-between text-xs font-mono text-gray-400">
+          <div className="flex items-center gap-3">
+            <span>cost: {data.config?.costCredits || 5}_credits</span>
+            <span>model: {imageConfig?.provider || 'dalle-3'}</span>
           </div>
-        )}
-      </CardContent>
+          <span className="text-gray-500">image_generation</span>
+        </div>
+      </div>
 
-      {/* Handle de sortie */}
+      {/* Handle pour la connexion sortante */}
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="w-3 h-3 border-2 border-gray-400 bg-white"
-        style={{
-          backgroundColor: data.status === 'success' ? '#10b981' : '#9ca3af',
-          borderColor: data.status === 'success' ? '#10b981' : '#9ca3af'
-        }}
+        className={`${HANDLE_STYLES.base} ${
+          data.status === 'success' ? HANDLE_STYLES.success :
+          data.status === 'loading' ? HANDLE_STYLES.active :
+          data.status === 'error' ? HANDLE_STYLES.error :
+          HANDLE_STYLES.idle
+        }`}
       />
-    </Card>
+    </div>
   );
 }

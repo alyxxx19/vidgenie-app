@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { 
   CheckCircle, 
   Clock, 
@@ -16,7 +17,10 @@ import {
   Upload,
   Download,
   ArrowDown,
-  Play
+  Play,
+  Zap,
+  RefreshCw,
+  Info
 } from 'lucide-react';
 
 export type WorkflowType = 'complete' | 'image-only' | 'video-from-image';
@@ -25,11 +29,13 @@ export interface WorkflowStep {
   id: string;
   title: string;
   description: string;
+  technicalDescription: string;
   icon: React.ComponentType<{ className?: string }>;
   status: 'pending' | 'active' | 'completed' | 'error';
   estimatedTime?: string;
   provider?: string;
   cost?: number;
+  apiEndpoint?: string;
 }
 
 interface WorkflowStepsVisualizerProps {
@@ -51,84 +57,97 @@ export function WorkflowStepsVisualizer({
       case 'complete':
         return [
           {
-            id: 'prompt',
-            title: 'Create Prompt',
-            description: 'Describe your image idea with natural language',
+            id: 'prompt_input',
+            title: 'prompt_input',
+            description: 'User provides image and video description',
+            technicalDescription: 'Natural language processing of user requirements',
             icon: Wand2,
             status: currentStep >= 1 ? 'completed' : currentStep === 0 ? 'active' : 'pending',
-            estimatedTime: '30s',
-            cost: 0
+            estimatedTime: '~30s',
+            cost: 0,
+            apiEndpoint: '/api/prompt/validate'
           },
           {
-            id: 'enhance',
-            title: 'GPT Enhancement',
-            description: 'AI optimizes your prompt for better results',
+            id: 'gpt_enhance',
+            title: 'gpt_enhancement',
+            description: 'AI optimizes prompts for better generation',
+            technicalDescription: 'GPT-4 analyzes and enhances user prompts with artistic techniques',
             icon: Sparkles,
             status: currentStep >= 2 ? 'completed' : currentStep === 1 ? 'active' : 'pending',
-            estimatedTime: '15s',
-            provider: 'OpenAI GPT-4',
-            cost: 1
+            estimatedTime: '~15s',
+            provider: 'openai_gpt4',
+            cost: 1,
+            apiEndpoint: '/api/ai/enhance-prompt'
           },
           {
-            id: 'image',
-            title: 'Generate Image',
-            description: 'DALL-E 3 creates high-quality image from prompt',
+            id: 'dalle_gen',
+            title: 'image_generation',
+            description: 'DALL-E 3 creates high-quality image',
+            technicalDescription: 'Advanced diffusion model generates 1024x1792 image from enhanced prompt',
             icon: Image,
             status: currentStep >= 3 ? 'completed' : currentStep === 2 ? 'active' : 'pending',
-            estimatedTime: '45s',
-            provider: 'DALL-E 3',
-            cost: 5
+            estimatedTime: '~45s',
+            provider: 'openai_dalle3',
+            cost: 5,
+            apiEndpoint: '/api/ai/generate-image'
           },
           {
-            id: 'video',
-            title: 'Animate Video',
-            description: 'VEO3 transforms static image into 8s video',
+            id: 'veo3_gen',
+            title: 'video_generation',
+            description: 'VEO3 transforms image into 8s video',
+            technicalDescription: 'State-of-the-art video diffusion model animates static content',
             icon: Video,
             status: currentStep >= 4 ? 'completed' : currentStep === 3 ? 'active' : 'pending',
-            estimatedTime: '3min',
-            provider: 'Google VEO3',
-            cost: 15
+            estimatedTime: '~180s',
+            provider: 'google_veo3',
+            cost: 15,
+            apiEndpoint: '/api/ai/generate-video'
           },
           {
-            id: 'output',
-            title: 'Final Output',
-            description: 'Process complete, download your video',
+            id: 'finalization',
+            title: 'output_delivery',
+            description: 'Process assets and deliver final results',
+            technicalDescription: 'Storage optimization, metadata generation, and user delivery',
             icon: Download,
             status: currentStep >= 5 ? 'completed' : currentStep === 4 ? 'active' : 'pending',
-            estimatedTime: '10s',
-            cost: 0
+            estimatedTime: '~10s',
+            cost: 0,
+            apiEndpoint: '/api/assets/finalize'
           }
         ];
 
       case 'image-only':
         return [
           {
-            id: 'prompt',
-            title: 'Create Prompt',
-            description: 'Describe your image idea with natural language',
+            id: 'prompt_input',
+            title: 'prompt_input',
+            description: 'User provides image description',
+            technicalDescription: 'Natural language processing for image generation',
             icon: Wand2,
             status: currentStep >= 1 ? 'completed' : currentStep === 0 ? 'active' : 'pending',
-            estimatedTime: '30s',
+            estimatedTime: '~30s',
             cost: 0
           },
           {
-            id: 'enhance',
-            title: 'GPT Enhancement',
-            description: 'AI optimizes your prompt for better results',
+            id: 'gpt_enhance',
+            title: 'gpt_enhancement',
+            description: 'AI optimizes prompt for DALL-E 3',
+            technicalDescription: 'GPT-4 enhances prompt with artistic terminology and composition',
             icon: Sparkles,
             status: currentStep >= 2 ? 'completed' : currentStep === 1 ? 'active' : 'pending',
-            estimatedTime: '15s',
-            provider: 'OpenAI GPT-4',
+            estimatedTime: '~15s',
+            provider: 'openai_gpt4',
             cost: 1
           },
           {
-            id: 'image',
-            title: 'Generate Image',
-            description: 'DALL-E 3 creates high-quality image from prompt',
+            id: 'dalle_gen',
+            title: 'image_generation',
+            description: 'DALL-E 3 creates high-quality image',
+            technicalDescription: 'Advanced diffusion model generates high-resolution image',
             icon: Image,
             status: currentStep >= 3 ? 'completed' : currentStep === 2 ? 'active' : 'pending',
-            estimatedTime: '45s',
-            provider: 'DALL-E 3',
+            estimatedTime: '~45s',
+            provider: 'openai_dalle3',
             cost: 5
           }
         ];
@@ -136,31 +155,34 @@ export function WorkflowStepsVisualizer({
       case 'video-from-image':
         return [
           {
-            id: 'upload',
-            title: 'Upload Image',
-            description: 'Provide the image you want to animate',
+            id: 'image_upload',
+            title: 'image_upload',
+            description: 'Upload and validate source image',
+            technicalDescription: 'Image processing, validation, and optimization for video generation',
             icon: Upload,
             status: currentStep >= 1 ? 'completed' : currentStep === 0 ? 'active' : 'pending',
-            estimatedTime: '10s',
+            estimatedTime: '~10s',
             cost: 0
           },
           {
-            id: 'video',
-            title: 'Animate Video',
-            description: 'VEO3 transforms your image into 8s video',
+            id: 'veo3_gen',
+            title: 'video_generation',
+            description: 'VEO3 transforms image into 8s video',
+            technicalDescription: 'Advanced video diffusion model creates smooth animation',
             icon: Video,
             status: currentStep >= 2 ? 'completed' : currentStep === 1 ? 'active' : 'pending',
-            estimatedTime: '3min',
-            provider: 'Google VEO3',
+            estimatedTime: '~180s',
+            provider: 'google_veo3',
             cost: 15
           },
           {
-            id: 'output',
-            title: 'Final Output',
-            description: 'Process complete, download your video',
+            id: 'finalization',
+            title: 'output_delivery',
+            description: 'Process and deliver final video',
+            technicalDescription: 'Video optimization, encoding, and user delivery',
             icon: Download,
             status: currentStep >= 3 ? 'completed' : currentStep === 2 ? 'active' : 'pending',
-            estimatedTime: '10s',
+            estimatedTime: '~10s',
             cost: 0
           }
         ];
@@ -175,167 +197,270 @@ export function WorkflowStepsVisualizer({
   const getStatusIcon = (status: WorkflowStep['status']) => {
     switch (status) {
       case 'completed':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-green-400" />;
       case 'active':
-        return <Clock className="w-4 h-4 text-blue-500 animate-spin" />;
+        return <RefreshCw className="w-4 h-4 text-blue-400 animate-spin" />;
       case 'error':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
+        return <AlertCircle className="w-4 h-4 text-red-400" />;
       default:
-        return <div className="w-4 h-4 rounded-full border-2 border-gray-300" />;
+        return <Clock className="w-4 h-4 text-muted-foreground" />;
     }
   };
 
-  const getStatusColor = (status: WorkflowStep['status']) => {
+  const getStatusColors = (status: WorkflowStep['status']) => {
     switch (status) {
-      case 'completed': return 'border-green-500 bg-green-50';
-      case 'active': return 'border-blue-500 bg-blue-50 shadow-md';
-      case 'error': return 'border-red-500 bg-red-50';
-      default: return 'border-gray-200 bg-white';
+      case 'completed': return {
+        border: 'border-green-500/40',
+        bg: 'bg-green-500/10',
+        text: 'text-green-400'
+      };
+      case 'active': return {
+        border: 'border-blue-500/40',
+        bg: 'bg-blue-500/10',
+        text: 'text-blue-400'
+      };
+      case 'error': return {
+        border: 'border-red-500/40',
+        bg: 'bg-red-500/10',
+        text: 'text-red-400'
+      };
+      default: return {
+        border: 'border-border',
+        bg: 'bg-secondary/20',
+        text: 'text-muted-foreground'
+      };
     }
   };
 
-  const getStepNumber = (index: number, status: WorkflowStep['status']) => {
-    if (status === 'completed') {
-      return <CheckCircle className="w-5 h-5 text-white" />;
-    }
+  const getStepIndicator = (index: number, status: WorkflowStep['status']) => {
+    const colors = getStatusColors(status);
+    
     return (
-      <span className="text-sm font-mono font-semibold text-white">
-        {index + 1}
-      </span>
+      <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full border-2 ${colors.border} ${colors.bg} flex items-center justify-center flex-shrink-0 transition-all duration-200`}>
+        {status === 'completed' ? (
+          <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-400" />
+        ) : status === 'active' ? (
+          <RefreshCw className="w-4 h-4 sm:w-5 sm:h-5 text-blue-400 animate-spin" />
+        ) : status === 'error' ? (
+          <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-400" />
+        ) : (
+          <span className={`text-xs sm:text-sm font-mono font-medium ${colors.text}`}>
+            {index + 1}
+          </span>
+        )}
+        
+        {/* Processing Ring */}
+        {status === 'active' && (
+          <div className="absolute inset-0 rounded-full border-2 border-blue-400/30 animate-ping" />
+        )}
+      </div>
     );
   };
 
-  const getStepNumberBg = (status: WorkflowStep['status']) => {
-    switch (status) {
-      case 'completed': return 'bg-green-500';
-      case 'active': return 'bg-blue-500';
-      case 'error': return 'bg-red-500';
-      default: return 'bg-gray-400';
+  const totalCost = steps.reduce((sum, step) => sum + (step.cost || 0), 0);
+  const totalTime = steps.length > 3 ? '4-6min' : steps.length > 2 ? '2-3min' : '1-2min';
+  const completedSteps = steps.filter(s => s.status === 'completed').length;
+
+  const getWorkflowTitle = () => {
+    switch (workflowType) {
+      case 'complete': return 'image_to_video_pipeline';
+      case 'image-only': return 'dalle3_image_generation';
+      case 'video-from-image': return 'veo3_video_generation';
+      default: return 'ai_workflow';
     }
   };
 
-  const totalCost = steps.reduce((sum, step) => sum + (step.cost || 0), 0);
-  const totalTime = steps.length > 3 ? '4-6 min' : steps.length > 2 ? '2-3 min' : '1-2 min';
+  const getWorkflowDescription = () => {
+    switch (workflowType) {
+      case 'complete': return 'complete pipeline: text → image → video';
+      case 'image-only': return 'create stunning images with dall-e 3';
+      case 'video-from-image': return 'transform images into animated videos';
+      default: return 'ai generation workflow';
+    }
+  };
 
   return (
-    <div className={`max-w-4xl mx-auto ${className}`}>
-      {/* En-tête du workflow */}
-      <div className="text-center mb-8">
-        <div className="flex items-center justify-center gap-3 mb-3">
-          <div className="p-2 bg-black rounded-full">
-            <FileVideo className="w-6 h-6 text-white" />
+    <div className={`w-full ${className}`}>
+      {/* Header Section */}
+      <div className="bg-card border border-border rounded-lg overflow-hidden mb-6">
+        <div className="border-b border-border bg-secondary/50">
+          <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-4">
+            <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+              <div className="flex items-center justify-center w-6 h-6 bg-white rounded flex-shrink-0">
+                <FileVideo className="w-3 h-3 text-black" />
+              </div>
+              <div className="min-w-0">
+                <h2 className="font-mono text-sm sm:text-base text-white truncate">
+                  {getWorkflowTitle()}
+                </h2>
+                <p className="text-xs text-muted-foreground font-mono hidden sm:block">
+                  {getWorkflowDescription()}
+                </p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <Badge className="bg-muted text-muted-foreground font-mono text-xs">
+                {totalCost}_credits
+              </Badge>
+              <Badge className="bg-secondary/50 text-white font-mono text-xs hidden sm:inline-flex">
+                ~{totalTime}
+              </Badge>
+            </div>
           </div>
-          <h2 className="text-xl font-mono font-semibold text-gray-800">
-            {workflowType === 'complete' && 'Image to Video Workflow'}
-            {workflowType === 'image-only' && 'Image Generation Workflow'}
-            {workflowType === 'video-from-image' && 'Video from Image Workflow'}
-          </h2>
         </div>
-        <p className="text-gray-600 font-mono text-sm">
-          {workflowType === 'complete' && 'Complete pipeline: text prompt → AI image → animated video'}
-          {workflowType === 'image-only' && 'Create stunning images with DALL-E 3'}
-          {workflowType === 'video-from-image' && 'Transform your images into animated videos'}
-        </p>
-        <div className="flex items-center justify-center gap-6 mt-3">
-          <Badge className="bg-black text-white font-mono text-xs">
-            {totalCost} credits total
-          </Badge>
-          <Badge variant="outline" className="font-mono text-xs">
-            ~{totalTime} estimated
-          </Badge>
+        
+        {/* Progress Overview */}
+        <div className="p-4 sm:p-6">
+          <div className="grid grid-cols-3 gap-3 sm:gap-4">
+            <div className="text-center p-3 bg-secondary/30 border border-border rounded">
+              <div className="text-lg sm:text-xl font-mono text-white font-medium">
+                {completedSteps}
+              </div>
+              <div className="text-xs text-muted-foreground font-mono">completed</div>
+            </div>
+            <div className="text-center p-3 bg-secondary/30 border border-border rounded">
+              <div className="text-lg sm:text-xl font-mono text-white font-medium">
+                {steps.length}
+              </div>
+              <div className="text-xs text-muted-foreground font-mono">total_steps</div>
+            </div>
+            <div className="text-center p-3 bg-secondary/30 border border-border rounded">
+              <div className="text-lg sm:text-xl font-mono text-white font-medium">
+                {totalCost}
+              </div>
+              <div className="text-xs text-muted-foreground font-mono">credits</div>
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* Grille des étapes */}
-      <div className="relative">
-        {/* Ligne de connexion verticale */}
-        <div className="absolute left-6 top-12 bottom-12 w-0.5 bg-gradient-to-b from-gray-200 via-gray-300 to-gray-200"></div>
-        
-        <div className="space-y-6">
-          {steps.map((step, index) => (
+      {/* Pipeline Steps */}
+      <div className="space-y-4 sm:space-y-6">
+        {steps.map((step, index) => {
+          const colors = getStatusColors(step.status);
+          
+          return (
             <div key={step.id} className="relative">
-              {/* Numéro de l'étape */}
-              <div className={`absolute left-4 w-8 h-8 rounded-full flex items-center justify-center z-10 ${getStepNumberBg(step.status)}`}>
-                {getStepNumber(index, step.status)}
-              </div>
-
-              {/* Carte de l'étape */}
-              <Card 
-                className={`ml-16 transition-all duration-300 cursor-pointer hover:shadow-lg ${getStatusColor(step.status)}`}
-                onClick={() => onStepClick?.(step.id)}
-              >
-                <CardContent className="p-4">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2 mb-2">
-                        <step.icon className="w-5 h-5 text-gray-700" />
-                        <h3 className="font-mono font-semibold text-gray-800">
-                          {step.title}
-                        </h3>
-                        {step.status === 'active' && (
-                          <div className="flex items-center gap-1">
-                            <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                            <span className="text-xs text-blue-600 font-mono">running</span>
-                          </div>
-                        )}
+              {/* Connection Line */}
+              {index < steps.length - 1 && (
+                <div className="absolute left-4 sm:left-5 top-12 sm:top-14 w-px h-6 sm:h-8 bg-border" />
+              )}
+              
+              {/* Step Card */}
+              <div className="flex items-start gap-3 sm:gap-4">
+                {/* Step Indicator */}
+                <div className="relative">
+                  {getStepIndicator(index, step.status)}
+                </div>
+                
+                {/* Step Content */}
+                <div className="flex-1 min-w-0">
+                  <div className={`bg-card border-2 ${colors.border} ${colors.bg} rounded-lg overflow-hidden transition-all duration-200 cursor-pointer hover:scale-[1.02]`}
+                       onClick={() => onStepClick?.(step.id)}>
+                    <div className="border-b border-border bg-secondary/50">
+                      <div className="flex items-center justify-between px-4 py-3">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <step.icon className={`w-4 h-4 ${colors.text} flex-shrink-0`} />
+                          <h3 className={`font-mono text-sm ${colors.text} font-medium truncate`}>
+                            {step.title}
+                          </h3>
+                        </div>
+                        <div className="flex items-center gap-2 flex-shrink-0">
+                          {step.cost !== undefined && step.cost > 0 && (
+                            <Badge className="bg-muted text-muted-foreground font-mono text-xs">
+                              {step.cost}c
+                            </Badge>
+                          )}
+                          {getStatusIcon(step.status)}
+                        </div>
                       </div>
-                      
-                      <p className="text-sm text-gray-600 font-mono mb-3">
+                    </div>
+                    
+                    <div className="p-4">
+                      <p className="text-sm text-white font-mono mb-3">
                         {step.description}
                       </p>
-
-                      <div className="flex items-center gap-4 text-xs font-mono text-gray-500">
-                        {step.estimatedTime && (
+                      
+                      <div className="text-xs text-muted-foreground font-mono mb-3 hidden sm:block">
+                        {step.technicalDescription}
+                      </div>
+                      
+                      <div className="flex items-center justify-between text-xs font-mono">
+                        <div className="flex items-center gap-3 text-muted-foreground">
+                          {step.estimatedTime && (
+                            <div className="flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              <span>{step.estimatedTime}</span>
+                            </div>
+                          )}
+                          {step.provider && (
+                            <div className="flex items-center gap-1">
+                              <Settings className="w-3 h-3" />
+                              <span className="hidden sm:inline">{step.provider}</span>
+                              <span className="sm:hidden">API</span>
+                            </div>
+                          )}
+                        </div>
+                        
+                        {step.status === 'active' && (
                           <div className="flex items-center gap-1">
-                            <Clock className="w-3 h-3" />
-                            <span>{step.estimatedTime}</span>
+                            <div className="w-2 h-2 bg-blue-400 rounded-full animate-pulse" />
+                            <span className={colors.text}>processing</span>
                           </div>
-                        )}
-                        {step.provider && (
-                          <div className="flex items-center gap-1">
-                            <Settings className="w-3 h-3" />
-                            <span>{step.provider}</span>
-                          </div>
-                        )}
-                        {step.cost !== undefined && step.cost > 0 && (
-                          <Badge variant="outline" className="text-xs">
-                            {step.cost} credits
-                          </Badge>
                         )}
                       </div>
                     </div>
-
-                    <div className="ml-4">
-                      {getStatusIcon(step.status)}
-                    </div>
                   </div>
-                </CardContent>
-              </Card>
-
-              {/* Flèche de connexion */}
-              {index < steps.length - 1 && (
-                <div className="absolute left-6 -bottom-3 transform -translate-x-1/2 z-10">
-                  <ArrowDown className="w-4 h-4 text-gray-400" />
                 </div>
-              )}
+              </div>
             </div>
-          ))}
-        </div>
+          );
+        })}
       </div>
 
-      {/* Pied de page avec résumé */}
-      <div className="mt-8 p-4 bg-gray-50 rounded-lg border border-gray-200">
-        <div className="flex items-center justify-between text-sm font-mono">
-          <div className="flex items-center gap-4">
-            <span className="text-gray-600">
-              {steps.filter(s => s.status === 'completed').length}/{steps.length} steps completed
-            </span>
-            <span className="text-gray-600">•</span>
-            <span className="text-gray-600">Total cost: {totalCost} credits</span>
+      {/* Footer Summary */}
+      <div className="mt-6 bg-card border border-border rounded-lg overflow-hidden">
+        <div className="border-b border-border bg-secondary/50">
+          <div className="flex items-center gap-3 px-4 py-3">
+            <div className="flex items-center justify-center w-5 h-5 bg-white rounded">
+              <Info className="w-2.5 h-2.5 text-black" />
+            </div>
+            <h3 className="font-mono text-sm text-white">pipeline_summary</h3>
           </div>
-          <div className="flex items-center gap-2">
-            <Play className="w-3 h-3 text-gray-500" />
-            <span className="text-gray-500">Ready to start</span>
+        </div>
+        <div className="p-4">
+          <div className="flex items-center justify-between text-sm font-mono">
+            <div className="flex items-center gap-4">
+              <span className="text-white">
+                progress: {completedSteps}/{steps.length}
+              </span>
+              <span className="text-muted-foreground">•</span>
+              <span className="text-white">
+                cost: {totalCost}_credits
+              </span>
+              <span className="text-muted-foreground hidden sm:inline">•</span>
+              <span className="text-white hidden sm:inline">
+                eta: ~{totalTime}
+              </span>
+            </div>
+            <div className="flex items-center gap-2">
+              {currentStep === 0 ? (
+                <>
+                  <Play className="w-3 h-3 text-green-400" />
+                  <span className="text-green-400">ready</span>
+                </>
+              ) : completedSteps === steps.length ? (
+                <>
+                  <CheckCircle className="w-3 h-3 text-green-400" />
+                  <span className="text-green-400">complete</span>
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="w-3 h-3 text-blue-400 animate-spin" />
+                  <span className="text-blue-400">running</span>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>

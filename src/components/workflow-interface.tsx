@@ -21,7 +21,8 @@ import {
   Sparkles,
   AlertCircle,
   Info,
-  Zap
+  Zap,
+  ArrowRight
 } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -122,262 +123,363 @@ export function WorkflowInterface({ className, projectId }: WorkflowInterfacePro
   ];
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      {/* En-tête avec crédits */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2 font-mono text-sm text-white">
-              <Wand2 className="w-4 h-4" />
+    <div className={`max-w-6xl mx-auto space-y-8 ${className}`}>
+      {/* Header moderne avec indicateurs */}
+      <div className="border-b border-border pb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div className="space-y-2">
+            <h1 className="flex items-center gap-3 font-mono text-xl text-white">
+              <div className="flex items-center justify-center w-8 h-8 bg-white rounded border">
+                <Wand2 className="w-4 h-4 text-black" />
+              </div>
               image_to_video_workflow
-            </CardTitle>
-            <div className="flex items-center gap-3">
-              <Badge className="bg-white text-black font-mono text-xs">
-                credits: {creditsLoading ? '...' : balance}
-              </Badge>
-              <Badge className="bg-purple-500 text-white font-mono text-xs">
-                cost: {WORKFLOW_COST}
-              </Badge>
+            </h1>
+            <p className="text-sm text-muted-foreground font-mono max-w-md">
+              Complete AI pipeline: DALL-E 3 image generation → VEO 3 video creation
+            </p>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <div className="text-right">
+              <div className="text-xs text-muted-foreground font-mono">available credits</div>
+              <div className="font-mono text-lg text-white">
+                {creditsLoading ? '...' : balance}
+              </div>
+            </div>
+            <div className="w-px h-8 bg-border" />
+            <div className="text-right">
+              <div className="text-xs text-muted-foreground font-mono">workflow cost</div>
+              <div className="font-mono text-lg text-white">
+                {WORKFLOW_COST}
+              </div>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center gap-2 text-xs text-muted-foreground font-mono">
-            <Info className="w-3 h-3" />
-            <span>Complete pipeline: DALL-E 3 image generation → Google VEO 3 video creation</span>
-          </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {/* Interface principale */}
-      <div className="grid lg:grid-cols-2 gap-6">
-        {/* Colonne gauche - Configuration */}
-        <div className="space-y-4">
-          {/* Prompts */}
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-mono text-sm text-white">
-                <Image className="w-4 h-4" />
-                image_prompt
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
+      {/* Interface principale - Layout moderne */}
+      <div className="grid lg:grid-cols-3 gap-8">
+        {/* Configuration Panel */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Image Prompt Section */}
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="border-b border-border bg-secondary/50">
+              <div className="flex items-center gap-3 px-6 py-4">
+                <div className="flex items-center justify-center w-6 h-6 bg-white rounded">
+                  <Image className="w-3 h-3 text-black" />
+                </div>
+                <div>
+                  <h3 className="font-mono text-sm text-white">image_prompt</h3>
+                  <p className="text-xs text-muted-foreground font-mono">describe your image concept</p>
+                </div>
+                <div className="ml-auto">
+                  <Badge className="bg-muted text-muted-foreground font-mono text-xs">
+                    {imagePrompt.length}/2000
+                  </Badge>
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
               <Textarea
-                placeholder="Describe the image you want to generate..."
+                placeholder="A modern entrepreneur working in a bright office with plants, professional atmosphere, natural lighting..."
                 value={imagePrompt}
                 onChange={(e) => setImagePrompt(e.target.value)}
-                className="min-h-[80px] bg-white border-border text-black font-mono text-xs"
+                className="min-h-[100px] bg-background border-border text-white font-mono text-sm resize-none focus:ring-1 focus:ring-white/20"
                 maxLength={2000}
                 disabled={isRunning}
               />
-              <div className="mt-2 flex flex-wrap gap-1">
-                {predefinedImagePrompts.slice(0, 2).map((prompt, idx) => (
-                  <button
-                    key={idx}
-                    onClick={() => setImagePrompt(prompt)}
-                    disabled={isRunning}
-                    className="text-xs text-muted-foreground hover:text-white border border-border hover:border-white/20 px-2 py-1 font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    example_{idx + 1}
-                  </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Video Prompt - Simple ou Avancé */}
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <Label className="flex items-center gap-2 font-mono text-sm text-white">
-                <Video className="w-4 h-4" />
-                video_prompt
-              </Label>
-              <div className="flex items-center gap-2">
-                <Label className="font-mono text-xs text-muted-foreground">advanced</Label>
-                <Switch
-                  checked={useAdvancedPrompting}
-                  onCheckedChange={setUseAdvancedPrompting}
-                  disabled={isRunning}
-                />
+              <div className="mt-4 space-y-3">
+                <div className="text-xs text-muted-foreground font-mono">quick templates:</div>
+                <div className="flex flex-wrap gap-2">
+                  {predefinedImagePrompts.slice(0, 3).map((prompt, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => setImagePrompt(prompt)}
+                      disabled={isRunning}
+                      className="px-3 py-1.5 text-xs font-mono border border-border hover:border-white/40 hover:bg-white/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed rounded"
+                    >
+                      template_{idx + 1}
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
+          </div>
 
-            {useAdvancedPrompting ? (
-              <VideoPromptBuilder
-                value={videoPrompt}
-                onChange={setVideoPrompt}
-                onSettingsChange={setVideoSettings}
-              />
-            ) : (
-              <Card className="bg-card border-border">
-                <CardContent className="pt-4">
+          {/* Video Prompt Section */}
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="border-b border-border bg-secondary/50">
+              <div className="flex items-center justify-between px-6 py-4">
+                <div className="flex items-center gap-3">
+                  <div className="flex items-center justify-center w-6 h-6 bg-white rounded">
+                    <Video className="w-3 h-3 text-black" />
+                  </div>
+                  <div>
+                    <h3 className="font-mono text-sm text-white">video_prompt</h3>
+                    <p className="text-xs text-muted-foreground font-mono">describe animation and movement</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="text-xs text-muted-foreground font-mono">advanced mode</div>
+                  <Switch
+                    checked={useAdvancedPrompting}
+                    onCheckedChange={setUseAdvancedPrompting}
+                    disabled={isRunning}
+                  />
+                </div>
+              </div>
+            </div>
+            <div className="p-6">
+              {useAdvancedPrompting ? (
+                <VideoPromptBuilder
+                  value={videoPrompt}
+                  onChange={setVideoPrompt}
+                  onSettingsChange={setVideoSettings}
+                />
+              ) : (
+                <>
                   <Textarea
-                    placeholder="Describe how the image should be animated (e.g., subtle breathing, blinking eyes, gentle movement)..."
+                    placeholder="Subtle breathing motion, eyes blinking naturally, hair moving gently in a breeze, professional demeanor..."
                     value={videoPrompt}
                     onChange={(e) => setVideoPrompt(e.target.value)}
-                    className="min-h-[60px] bg-white border-border text-black font-mono text-xs"
+                    className="min-h-[80px] bg-background border-border text-white font-mono text-sm resize-none focus:ring-1 focus:ring-white/20"
                     maxLength={1000}
                     disabled={isRunning}
                   />
-                  <div className="mt-2 flex flex-wrap gap-1">
-                    {predefinedVideoPrompts.slice(0, 2).map((prompt, idx) => (
+                  <div className="mt-4 flex items-center justify-between">
+                    <div className="text-xs text-muted-foreground font-mono">motion templates:</div>
+                    <Badge className="bg-muted text-muted-foreground font-mono text-xs">
+                      {videoPrompt.length}/1000
+                    </Badge>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {predefinedVideoPrompts.slice(0, 3).map((prompt, idx) => (
                       <button
                         key={idx}
                         onClick={() => setVideoPrompt(prompt)}
                         disabled={isRunning}
-                        className="text-xs text-muted-foreground hover:text-white border border-border hover:border-white/20 px-2 py-1 font-mono transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="px-3 py-1.5 text-xs font-mono border border-border hover:border-white/40 hover:bg-white/5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed rounded"
                       >
                         motion_{idx + 1}
                       </button>
                     ))}
                   </div>
-                </CardContent>
-              </Card>
-            )}
+                </>
+              )}
+            </div>
           </div>
 
-          {/* Configuration technique */}
-          <Card className="bg-card border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 font-mono text-sm text-white">
-                <Settings className="w-4 h-4" />
-                technical_settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Image Settings */}
-              <div className="space-y-3">
-                <Label className="font-mono text-xs text-white">dalle3_configuration</Label>
-                
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <Label className="font-mono text-xs text-muted-foreground">style</Label>
-                    <Select value={imageStyle} onValueChange={setImageStyle} disabled={isRunning}>
-                      <SelectTrigger className="bg-white border-border text-black font-mono text-xs mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="vivid">vivid (creative)</SelectItem>
-                        <SelectItem value="natural">natural (realistic)</SelectItem>
-                      </SelectContent>
-                    </Select>
+          {/* Technical Configuration */}
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* DALL-E Settings */}
+            <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <div className="border-b border-border bg-secondary/50">
+                <div className="flex items-center gap-3 px-6 py-4">
+                  <div className="flex items-center justify-center w-6 h-6 bg-white rounded">
+                    <Settings className="w-3 h-3 text-black" />
                   </div>
-
                   <div>
-                    <Label className="font-mono text-xs text-muted-foreground">quality</Label>
-                    <Select value={imageQuality} onValueChange={setImageQuality} disabled={isRunning}>
-                      <SelectTrigger className="bg-white border-border text-black font-mono text-xs mt-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="hd">hd (1024×1792px)</SelectItem>
-                        <SelectItem value="standard">standard (1024×1024px)</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <h3 className="font-mono text-sm text-white">dall_e_config</h3>
+                    <p className="text-xs text-muted-foreground font-mono">image generation settings</p>
                   </div>
                 </div>
-
-                <div>
-                  <Label className="font-mono text-xs text-muted-foreground">aspect_ratio</Label>
-                  <Select value={imageSize} onValueChange={setImageSize} disabled={isRunning}>
-                    <SelectTrigger className="bg-white border-border text-black font-mono text-xs mt-1">
+              </div>
+              <div className="p-6 space-y-5">
+                <div className="space-y-2">
+                  <Label className="font-mono text-xs text-muted-foreground">style</Label>
+                  <Select value={imageStyle} onValueChange={setImageStyle} disabled={isRunning}>
+                    <SelectTrigger className="bg-background border-border text-white font-mono text-sm h-10">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1024x1792">1024×1792 (portrait)</SelectItem>
-                      <SelectItem value="1792x1024">1792×1024 (landscape)</SelectItem>
-                      <SelectItem value="1024x1024">1024×1024 (square)</SelectItem>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="vivid" className="font-mono">vivid (creative)</SelectItem>
+                      <SelectItem value="natural" className="font-mono">natural (realistic)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="font-mono text-xs text-muted-foreground">quality</Label>
+                  <Select value={imageQuality} onValueChange={setImageQuality} disabled={isRunning}>
+                    <SelectTrigger className="bg-background border-border text-white font-mono text-sm h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="hd" className="font-mono">hd (1024×1792px)</SelectItem>
+                      <SelectItem value="standard" className="font-mono">standard (1024×1024px)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="font-mono text-xs text-muted-foreground">aspect_ratio</Label>
+                  <Select value={imageSize} onValueChange={setImageSize} disabled={isRunning}>
+                    <SelectTrigger className="bg-background border-border text-white font-mono text-sm h-10">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="1024x1792" className="font-mono">1024×1792 (portrait)</SelectItem>
+                      <SelectItem value="1792x1024" className="font-mono">1792×1024 (landscape)</SelectItem>
+                      <SelectItem value="1024x1024" className="font-mono">1024×1024 (square)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </div>
+            </div>
 
-              <div className="border-t border-border pt-3 space-y-3">
-                <Label className="font-mono text-xs text-white">veo3_configuration</Label>
-                
-                <div>
+            {/* VEO Settings */}
+            <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <div className="border-b border-border bg-secondary/50">
+                <div className="flex items-center gap-3 px-6 py-4">
+                  <div className="flex items-center justify-center w-6 h-6 bg-white rounded">
+                    <Video className="w-3 h-3 text-black" />
+                  </div>
+                  <div>
+                    <h3 className="font-mono text-sm text-white">veo3_config</h3>
+                    <p className="text-xs text-muted-foreground font-mono">video generation settings</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 space-y-5">
+                <div className="space-y-2">
                   <Label className="font-mono text-xs text-muted-foreground">resolution</Label>
                   <Select value={videoResolution} onValueChange={setVideoResolution} disabled={isRunning}>
-                    <SelectTrigger className="bg-white border-border text-black font-mono text-xs mt-1">
+                    <SelectTrigger className="bg-background border-border text-white font-mono text-sm h-10">
                       <SelectValue />
                     </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="1080p">1080p (recommended)</SelectItem>
-                      <SelectItem value="720p">720p (faster)</SelectItem>
+                    <SelectContent className="bg-card border-border">
+                      <SelectItem value="1080p" className="font-mono">1080p (recommended)</SelectItem>
+                      <SelectItem value="720p" className="font-mono">720p (faster)</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
-                <div className="flex items-center justify-between">
-                  <Label className="font-mono text-xs text-muted-foreground">duration</Label>
-                  <Badge className="bg-muted text-muted-foreground font-mono text-xs">8s_fixed</Badge>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label className="font-mono text-xs text-muted-foreground">duration</Label>
+                    <Badge className="bg-muted text-muted-foreground font-mono text-xs">8s_fixed</Badge>
+                  </div>
+                  <div className="p-3 bg-secondary/30 border border-border rounded text-xs font-mono text-muted-foreground">
+                    VEO3 supports fixed 8-second duration
+                  </div>
                 </div>
 
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-3">
                   <Switch
                     id="generateAudio"
                     checked={generateAudio}
                     onCheckedChange={setGenerateAudio}
                     disabled={isRunning}
                   />
-                  <label htmlFor="generateAudio" className="font-mono text-xs text-white">
+                  <label htmlFor="generateAudio" className="font-mono text-sm text-white">
                     generate_audio
                   </label>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Action Button */}
-          <div className="space-y-2">
-            <Button
-              onClick={isRunning ? handleCancel : handleStartWorkflow}
-              disabled={!isRunning && (!canGenerate || creditsLoading)}
-              className={`w-full font-mono text-xs h-10 ${
-                isRunning 
-                  ? 'bg-red-500 hover:bg-red-600 text-white' 
-                  : 'bg-white hover:bg-white/90 text-black'
-              }`}
-            >
-              {isRunning ? (
-                <>
-                  <AlertCircle className="w-3 h-3 mr-2" />
-                  cancel_workflow
-                </>
-              ) : (
-                <>
-                  <Play className="w-3 h-3 mr-2" />
-                  start_generation
-                </>
-              )}
-            </Button>
-
-            {/* Informations de coût et temps */}
-            <div className="text-center text-xs text-muted-foreground font-mono space-y-1">
-              <p>cost: {WORKFLOW_COST} credits | eta: ~3 minutes</p>
-              <p>pipeline: dalle3 → veo3 → cdn_upload</p>
             </div>
-
-            {/* Avertissements */}
-            {!hasEnoughCredits('IMAGE_TO_VIDEO') && (
-              <div className="flex items-center gap-2 p-2 bg-red-500/10 border border-red-500/20 rounded text-xs text-red-400">
-                <AlertCircle className="w-3 h-3" />
-                <span className="font-mono">Insufficient credits: {balance}/{WORKFLOW_COST}</span>
-              </div>
-            )}
-
-            {(!imagePrompt.trim() || !videoPrompt.trim()) && (
-              <div className="flex items-center gap-2 p-2 bg-yellow-500/10 border border-yellow-500/20 rounded text-xs text-yellow-400">
-                <AlertCircle className="w-3 h-3" />
-                <span className="font-mono">Please provide both image and video prompts</span>
-              </div>
-            )}
           </div>
+
         </div>
 
-        {/* Colonne droite - Visualisation */}
-        <div className="space-y-4">
-          {workflowId && (
+        {/* Control Panel - Right Column */}
+        <div className="space-y-6">
+          {/* Workflow Status */}
+          <div className="bg-card border border-border rounded-lg overflow-hidden">
+            <div className="border-b border-border bg-secondary/50">
+              <div className="flex items-center gap-3 px-6 py-4">
+                <div className="flex items-center justify-center w-6 h-6 bg-white rounded">
+                  <Zap className="w-3 h-3 text-black" />
+                </div>
+                <div>
+                  <h3 className="font-mono text-sm text-white">execution_control</h3>
+                  <p className="text-xs text-muted-foreground font-mono">workflow management</p>
+                </div>
+              </div>
+            </div>
+            <div className="p-6 space-y-6">
+              {/* Cost and Timing Info */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="text-center p-4 bg-secondary/30 border border-border rounded">
+                  <div className="text-xs text-muted-foreground font-mono mb-1">estimated_cost</div>
+                  <div className="text-lg font-mono text-white">{WORKFLOW_COST}</div>
+                  <div className="text-xs text-muted-foreground font-mono">credits</div>
+                </div>
+                <div className="text-center p-4 bg-secondary/30 border border-border rounded">
+                  <div className="text-xs text-muted-foreground font-mono mb-1">estimated_time</div>
+                  <div className="text-lg font-mono text-white">~3</div>
+                  <div className="text-xs text-muted-foreground font-mono">minutes</div>
+                </div>
+              </div>
+
+              {/* Pipeline Preview */}
+              <div className="space-y-3">
+                <div className="text-xs text-muted-foreground font-mono">pipeline_overview:</div>
+                <div className="flex items-center text-xs font-mono text-white">
+                  <span>prompt</span>
+                  <ArrowRight className="w-3 h-3 mx-2 text-muted-foreground" />
+                  <span>dall_e_3</span>
+                  <ArrowRight className="w-3 h-3 mx-2 text-muted-foreground" />
+                  <span>veo_3</span>
+                  <ArrowRight className="w-3 h-3 mx-2 text-muted-foreground" />
+                  <span>output</span>
+                </div>
+              </div>
+
+              {/* Action Button */}
+              <Button
+                onClick={isRunning ? handleCancel : handleStartWorkflow}
+                disabled={!isRunning && (!canGenerate || creditsLoading)}
+                size="lg"
+                className={`w-full font-mono text-sm h-12 transition-all duration-200 ${
+                  isRunning 
+                    ? 'bg-red-500 hover:bg-red-600 text-white border-red-500' 
+                    : 'bg-white hover:bg-white/90 text-black border-white hover:scale-[1.02]'
+                }`}
+              >
+                {isRunning ? (
+                  <>
+                    <AlertCircle className="w-4 h-4 mr-2" />
+                    cancel_workflow
+                  </>
+                ) : (
+                  <>
+                    <Play className="w-4 h-4 mr-2" />
+                    start_generation
+                  </>
+                )}
+              </Button>
+
+              {/* Validation Messages */}
+              <div className="space-y-2">
+                {!hasEnoughCredits('IMAGE_TO_VIDEO') && (
+                  <div className="flex items-start gap-3 p-3 bg-red-500/10 border border-red-500/20 rounded">
+                    <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <div className="text-xs text-red-400 font-mono font-medium">insufficient_credits</div>
+                      <div className="text-xs text-red-400/80 font-mono">
+                        Need {WORKFLOW_COST}, have {balance}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {(!imagePrompt.trim() || !videoPrompt.trim()) && (
+                  <div className="flex items-start gap-3 p-3 bg-yellow-500/10 border border-yellow-500/20 rounded">
+                    <Info className="w-4 h-4 text-yellow-400 mt-0.5 flex-shrink-0" />
+                    <div>
+                      <div className="text-xs text-yellow-400 font-mono font-medium">prompts_required</div>
+                      <div className="text-xs text-yellow-400/80 font-mono">
+                        Both image and video prompts needed
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Visualization Area */}
+          {workflowId ? (
             <WorkflowVisualizer
               workflowId={workflowId}
               initialSteps={steps}
@@ -395,40 +497,60 @@ export function WorkflowInterface({ className, projectId }: WorkflowInterfacePro
                 toast.info('Workflow cancelled');
               }}
             />
+          ) : (
+            <div className="bg-card border border-border rounded-lg overflow-hidden">
+              <div className="border-b border-border bg-secondary/50">
+                <div className="flex items-center gap-3 px-6 py-4">
+                  <div className="flex items-center justify-center w-6 h-6 bg-white rounded">
+                    <Sparkles className="w-3 h-3 text-black" />
+                  </div>
+                  <div>
+                    <h3 className="font-mono text-sm text-white">workflow_preview</h3>
+                    <p className="text-xs text-muted-foreground font-mono">real-time generation progress</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-6 sm:p-8 lg:p-12">
+                <div className="text-center space-y-4 sm:space-y-6">
+                  <div className="mx-auto w-16 h-16 sm:w-20 sm:h-20 rounded-full border-2 border-dashed border-border flex items-center justify-center">
+                    <div className="w-6 h-6 sm:w-8 sm:h-8 rounded-full bg-muted flex items-center justify-center">
+                      <Zap className="w-3 h-3 sm:w-4 sm:h-4 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <h3 className="font-mono text-xs sm:text-sm text-white">awaiting_execution</h3>
+                    <p className="text-xs text-muted-foreground font-mono max-w-xs mx-auto leading-relaxed">
+                      Configure your image and video prompts above, then start generation to see real-time progress here.
+                    </p>
+                  </div>
+                  <div className="pt-4 border-t border-border">
+                    <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground font-mono">
+                      <Sparkles className="w-3 h-3" />
+                      <span className="text-center">powered by openai + veo3</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
           )}
 
-          {!workflowId && !isRunning && (
-            <Card className="bg-card border-border">
-              <CardContent className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center mb-4">
-                  <Zap className="w-8 h-8 text-muted-foreground" />
-                </div>
-                <h3 className="font-mono text-sm text-white mb-2">ready_to_generate</h3>
-                <p className="text-xs text-muted-foreground font-mono max-w-sm">
-                  Configure your prompts and settings, then click "start_generation" to begin the image-to-video workflow.
-                </p>
-                <div className="mt-4 flex items-center gap-2 text-xs text-muted-foreground">
-                  <Sparkles className="w-3 h-3" />
-                  <span className="font-mono">powered by openai + google veo3</span>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Statut de connexion */}
+          {/* Connection Status */}
           {workflowId && (
-            <div className="text-center">
-              <Badge className={`font-mono text-xs ${
-                isConnected ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
-              }`}>
-                {isConnected ? 'connected' : 'disconnected'}
-              </Badge>
+            <div className="flex items-center justify-center gap-3 p-3 bg-card border border-border rounded-lg">
+              <div className="flex items-center gap-2">
+                <div className={`w-2 h-2 rounded-full ${
+                  isConnected ? 'bg-green-500' : 'bg-red-500'
+                } ${isConnected ? 'animate-pulse' : ''}`} />
+                <span className="font-mono text-xs text-white">
+                  {isConnected ? 'connected' : 'disconnected'}
+                </span>
+              </div>
               {!isConnected && (
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={reconnect}
-                  className="ml-2 h-6 font-mono text-xs"
+                  className="h-6 px-2 font-mono text-xs border-border hover:border-white/40"
                 >
                   reconnect
                 </Button>

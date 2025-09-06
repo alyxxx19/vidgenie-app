@@ -17,6 +17,8 @@ import { VideoPromptBuilder } from '@/components/video-prompt-builder';
 import { WorkflowInterface } from '@/components/workflow-interface';
 import { WorkflowInterfaceV2 } from '@/components/workflow/workflow-interface-v2';
 import { WorkflowStepsVisualizer } from '@/components/workflow-steps-visualizer';
+import { WorkflowTypeSelector, WorkflowType } from '@/components/workflow/WorkflowTypeSelector';
+import { useWorkflowStore } from '@/components/workflow/store/workflow-store';
 import { promptUtils } from '@/lib/utils/prompt-utils';
 import { 
   Wand2, 
@@ -70,6 +72,8 @@ export default function CreatePage() {
   // General states
   const [selectedProject, setSelectedProject] = useState<string | undefined>();
   const [workflowMode, setWorkflowMode] = useState<'complete' | 'image-only' | 'video-from-image' | 'workflow'>('workflow');
+  const [selectedWorkflowType, setSelectedWorkflowType] = useState<WorkflowType | null>(null);
+  const [showWorkflowSelector, setShowWorkflowSelector] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [workflowCurrentStep, setWorkflowCurrentStep] = useState(0);
@@ -273,6 +277,25 @@ export default function CreatePage() {
     }
   };
 
+  const handleWorkflowTypeSelect = (type: WorkflowType) => {
+    setSelectedWorkflowType(type);
+  };
+
+  const { generateWorkflowFromTemplate } = useWorkflowStore();
+
+  const handleContinueToConfiguration = () => {
+    setShowWorkflowSelector(false);
+    if (selectedWorkflowType) {
+      generateWorkflowFromTemplate(selectedWorkflowType);
+      toast.success(`${selectedWorkflowType} workflow generated!`);
+    }
+  };
+
+  const handleBackToSelector = () => {
+    setShowWorkflowSelector(true);
+    setSelectedWorkflowType(null);
+  };
+
   return (
     <div className="min-h-screen bg-minimal-gradient relative">
       {/* Minimal grid */}
@@ -281,9 +304,33 @@ export default function CreatePage() {
       {/* Header */}
       <header className="bg-card border-b border-border relative z-10">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="animate-slide-in">
-            <h1 className="font-mono text-lg text-white mb-1">image_to_video_ai</h1>
-            <p className="text-muted-foreground text-xs font-mono">create images with dall-e 3, then generate videos with fal.ai veo 3</p>
+          <div className="animate-slide-in flex items-center justify-between">
+            <div>
+              <h1 className="font-mono text-lg text-white mb-1">
+                {showWorkflowSelector ? 'workflow_creator' : 
+                 selectedWorkflowType === 'text-to-video' ? 'text_to_video_ai' :
+                 selectedWorkflowType === 'text-to-image' ? 'text_to_image_ai' :
+                 selectedWorkflowType === 'image-to-video' ? 'image_to_video_ai' :
+                 'content_generator_ai'}
+              </h1>
+              <p className="text-muted-foreground text-xs font-mono">
+                {showWorkflowSelector ? 'select your content creation workflow type' :
+                 selectedWorkflowType === 'text-to-video' ? 'generate videos directly from text descriptions' :
+                 selectedWorkflowType === 'text-to-image' ? 'create images with dall-e 3' :
+                 selectedWorkflowType === 'image-to-video' ? 'animate images with veo3' :
+                 'create content with ai'}
+              </p>
+            </div>
+            {!showWorkflowSelector && (
+              <Button
+                variant="outline"
+                onClick={handleBackToSelector}
+                className="border-border hover:border-white/40 hover:bg-white/5 text-white font-mono text-xs h-8"
+              >
+                <ArrowRight className="w-3 h-3 mr-1 rotate-180" />
+                back_to_selection
+              </Button>
+            )}
           </div>
         </div>
       </header>
@@ -293,14 +340,23 @@ export default function CreatePage() {
         <div className="mb-6">
           <CreditsDisplay variant="compact" />
         </div>
+
+        {/* Workflow Type Selector */}
+        {showWorkflowSelector && (
+          <WorkflowTypeSelector
+            selectedType={selectedWorkflowType}
+            onSelect={handleWorkflowTypeSelect}
+            onContinue={selectedWorkflowType ? handleContinueToConfiguration : undefined}
+          />
+        )}
         
-        {/* Smart Workflow Interface */}
-        {workflowMode === 'workflow' && (
+        {/* Smart Workflow Interface - Only show after workflow type is selected */}
+        {!showWorkflowSelector && workflowMode === 'workflow' && selectedWorkflowType && (
           <WorkflowInterfaceV2 projectId={selectedProject} />
         )}
 
         {/* Workflow Steps Visualizer - New Design */}
-        {workflowMode !== 'workflow' && (
+        {!showWorkflowSelector && workflowMode !== 'workflow' && (
           <div className="mb-8">
             <WorkflowStepsVisualizer 
               workflowType={workflowMode as 'complete' | 'image-only' | 'video-from-image'}
@@ -314,7 +370,7 @@ export default function CreatePage() {
         )}
         
         {/* Legacy Interface */}
-        {workflowMode !== 'workflow' && (
+        {!showWorkflowSelector && workflowMode !== 'workflow' && (
           <div className="grid lg:grid-cols-3 gap-6">
           {/* Left Column - Input */}
           <div className="lg:col-span-1 space-y-4">

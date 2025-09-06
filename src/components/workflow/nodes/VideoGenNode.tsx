@@ -2,11 +2,11 @@
 
 import { Handle, Position } from 'reactflow';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
-import { Video, AlertCircle, CheckCircle, Download, ExternalLink, Play, Volume2, VolumeX } from 'lucide-react';
+import { CheckCircle, AlertCircle, Clock, Download, Play, Volume2, VolumeX } from 'lucide-react';
 import { WorkflowNodeData } from '../types/workflow';
+import { NODE_THEMES, STATUS_COLORS, NODE_SIZES, HANDLE_STYLES } from '../constants/node-themes';
 
 interface VideoGenNodeProps {
   id: string;
@@ -15,86 +15,104 @@ interface VideoGenNodeProps {
 }
 
 export function VideoGenNode({ id, data, selected }: VideoGenNodeProps) {
-  const getNodeStyle = () => {
-    const baseStyle = 'transition-all duration-300 ease-in-out';
+  const theme = NODE_THEMES.video;
+  const statusColors = STATUS_COLORS[data.status];
+  
+  const getNodeClasses = () => {
+    const baseClasses = `${NODE_SIZES.default} ${statusColors.bg} border-2 transition-all duration-300 rounded-xl shadow-lg backdrop-blur-sm`;
     
+    let borderClasses = statusColors.border;
+    let effectClasses = '';
+
+    // Styles spécifiques selon l'état
     switch (data.status) {
       case 'loading':
-        return `${baseStyle} border-purple-500 bg-purple-50/50 shadow-lg`;
+        borderClasses = `border-[${theme.accent}]`;
+        effectClasses = 'animate-pulse shadow-lg shadow-red-500/20';
+        break;
       case 'success':
-        return `${baseStyle} border-green-500 bg-green-50/50 shadow-lg`;
+        effectClasses = 'shadow-lg shadow-green-500/20';
+        break;
       case 'error':
-        return `${baseStyle} border-red-500 bg-red-50/50 shadow-lg animate-shake`;
+        effectClasses = 'animate-shake shadow-lg shadow-red-500/20';
+        break;
       default:
-        return `${baseStyle} border-gray-300 bg-white/80 backdrop-blur-sm ${
-          selected ? 'border-primary shadow-lg' : ''
-        }`;
+        if (selected) {
+          borderClasses = `border-[${theme.accent}]`;
+          effectClasses = `shadow-xl shadow-[${theme.accent}]/30`;
+        }
     }
+
+    return `${baseClasses} ${borderClasses} ${effectClasses}`;
   };
 
   const getStatusIcon = () => {
     switch (data.status) {
       case 'loading':
-        return <Video className="w-4 h-4 text-purple-500 animate-pulse" />;
+        return <div className="w-4 h-4 border-2 border-red-400 border-t-transparent rounded-full animate-spin" />;
       case 'success':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-green-400" />;
       case 'error':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
+        return <AlertCircle className="w-4 h-4 text-red-400" />;
       default:
-        return <Video className="w-4 h-4 text-gray-500" />;
+        return <Clock className="w-4 h-4 text-gray-400" />;
     }
   };
 
   const getStatusBadge = () => {
-    switch (data.status) {
-      case 'loading':
-        return <Badge className="bg-purple-500 text-white font-mono text-xs animate-pulse">animating</Badge>;
-      case 'success':
-        return <Badge className="bg-green-500 text-white font-mono text-xs">video_ready</Badge>;
-      case 'error':
-        return <Badge className="bg-red-500 text-white font-mono text-xs">failed</Badge>;
-      default:
-        return <Badge className="bg-gray-500 text-white font-mono text-xs">waiting</Badge>;
-    }
+    const badgeTexts = {
+      idle: 'awaiting_image',
+      loading: 'animating',
+      success: 'video_ready',
+      error: 'error'
+    };
+
+    return (
+      <Badge className={`${statusColors.badge} font-mono text-xs px-2 py-1`}>
+        {badgeTexts[data.status]}
+      </Badge>
+    );
   };
 
+  const IconComponent = theme.icon;
+  const progress = data.progress || 0;
   const videoConfig = data.config?.video;
   const videoData = data.videoData;
   const hasVideo = data.status === 'success' && videoData?.videoUrl;
 
   return (
-    <Card className={`w-80 min-h-[200px] ${getNodeStyle()}`}>
-      {/* Handle d'entrée */}
+    <div className={getNodeClasses()}>
+      {/* Handle pour la connexion entrante */}
       <Handle
         type="target"
         position={Position.Left}
         id="input"
-        className="w-3 h-3 border-2 border-gray-400 bg-white"
+        className={`${HANDLE_STYLES.base} ${HANDLE_STYLES.idle}`}
       />
 
-      {/* Header */}
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 font-mono text-sm text-gray-800">
+      {/* Header avec thème coloré rouge */}
+      <div className={`border-b border-[#333333] bg-gradient-to-r from-[${theme.accent}]/10 to-transparent p-4`}>
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <div className={`flex items-center justify-center w-8 h-8 rounded-lg bg-[${theme.accent}]/20 border border-[${theme.accent}]/30`}>
+              <IconComponent className={`w-4 h-4 text-[${theme.accent}] ${data.status === 'loading' ? 'animate-pulse' : ''}`} />
+            </div>
+            <div>
+              <h3 className="font-mono text-sm text-white font-medium">{theme.name}</h3>
+              <p className="text-xs text-gray-400 font-mono">veo3 video creation</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
             {getStatusIcon()}
-            {data.label}
-          </CardTitle>
-          {getStatusBadge()}
+            {getStatusBadge()}
+          </div>
         </div>
-        
-        {/* Coût et temps estimé */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="font-mono">cost: {data.config?.costCredits || 15} credits</span>
-          {data.config?.estimatedDuration && (
-            <span className="font-mono">• eta: {Math.round(data.config.estimatedDuration / 1000)}s</span>
-          )}
-        </div>
-      </CardHeader>
+      </div>
 
-      {/* Content */}
-      <CardContent className="space-y-3">
+      {/* Contenu principal */}
+      <div className="p-4 space-y-4">
         {/* Configuration */}
-        <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground font-mono">
+        <div className="grid grid-cols-2 gap-2 text-xs text-gray-400 font-mono">
           <span>provider: {videoConfig?.provider || 'veo3'}</span>
           <span>duration: {videoConfig?.duration || 8}s</span>
           <span>resolution: {videoConfig?.resolution || '1080p'}</span>
@@ -105,66 +123,59 @@ export function VideoGenNode({ id, data, selected }: VideoGenNodeProps) {
         </div>
 
         {/* État d'attente */}
-        {data.status === 'idle' && (
-          <div className="flex items-center justify-center py-6 text-center">
-            <div className="space-y-2">
-              <Video className="w-8 h-8 text-gray-400 mx-auto" />
-              <p className="text-xs text-muted-foreground font-mono">
-                waiting for image input
-              </p>
+        {data.status === 'idle' && !data.input && (
+          <div className="py-6 text-center">
+            <div className="w-12 h-12 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center mx-auto mb-3">
+              <IconComponent className="w-5 h-5 text-gray-500" />
+            </div>
+            <div className="text-xs text-gray-500 font-mono">
+              waiting_for_image_input
             </div>
           </div>
         )}
 
-        {/* État de chargement avec timer */}
+        {/* Barre de progression pendant le processing */}
         {data.status === 'loading' && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <Video className="w-4 h-4 text-purple-500 animate-pulse" />
-              <span className="text-sm font-mono text-purple-700">
-                animating with veo3...
-              </span>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-red-400">animating_video</span>
+              <span className="text-gray-400">{Math.round(progress)}%</span>
+            </div>
+            <div className="relative">
+              <Progress value={progress} className="h-2 bg-[#0A0A0A] border border-[#333333]" />
+              <div className="absolute inset-0 bg-gradient-to-r from-red-500/20 to-transparent opacity-50 animate-pulse" />
             </div>
             
-            {typeof data.progress === 'number' && (
-              <Progress value={data.progress} className="h-2" />
-            )}
-            
-            {/* Timer estimé */}
-            <div className="flex items-center justify-between text-xs text-muted-foreground font-mono">
-              <span>creating {videoConfig?.duration || 8}s video</span>
+            {/* Timer écoulé et estimation */}
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-red-400">
+                {progress < 20 && 'analyzing_image'}
+                {progress >= 20 && progress < 50 && 'generating_keyframes'}
+                {progress >= 50 && progress < 80 && 'interpolating_motion'}
+                {progress >= 80 && 'rendering_final_video'}
+              </span>
               {data.startTime && (
-                <span>
-                  {Math.round((Date.now() - data.startTime) / 1000)}s elapsed
+                <span className="text-gray-400">
+                  {Math.round((Date.now() - data.startTime) / 1000)}s_elapsed
                 </span>
               )}
             </div>
-
-            {/* Étapes de progression */}
-            {typeof data.progress === 'number' && (
-              <div className="text-xs text-muted-foreground font-mono">
-                {data.progress < 20 && 'analyzing image...'}
-                {data.progress >= 20 && data.progress < 50 && 'generating keyframes...'}
-                {data.progress >= 50 && data.progress < 80 && 'interpolating motion...'}
-                {data.progress >= 80 && 'rendering final video...'}
-              </div>
-            )}
           </div>
         )}
 
         {/* État de succès avec aperçu vidéo */}
         {data.status === 'success' && hasVideo && (
           <div className="space-y-3">
-            <div className="flex items-center gap-2 text-xs text-green-600">
+            <div className="flex items-center gap-2 text-xs text-green-400 font-mono">
               <CheckCircle className="w-3 h-3" />
-              <span className="font-mono">video generated successfully</span>
+              <span>video_generated_successfully</span>
             </div>
 
             {/* Aperçu vidéo */}
             <div className="relative">
               <video
                 src={videoData?.videoUrl}
-                className="w-full h-32 object-cover rounded border"
+                className="w-full h-32 object-cover rounded-lg border border-[#333333]"
                 controls
                 muted
                 poster={videoData?.thumbnailUrl}
@@ -174,21 +185,21 @@ export function VideoGenNode({ id, data, selected }: VideoGenNodeProps) {
               />
               
               {/* Overlay avec infos */}
-              <div className="absolute bottom-1 left-1 bg-black/70 text-white px-2 py-1 rounded text-xs font-mono">
+              <div className="absolute bottom-2 left-2 bg-black/80 text-white px-2 py-1 rounded text-xs font-mono backdrop-blur-sm">
                 {videoData?.duration}s • {videoConfig?.resolution}
                 {videoData?.hasAudio && <Volume2 className="w-3 h-3 inline ml-1" />}
               </div>
             </div>
 
             {/* Métadonnées de la vidéo */}
-            <div className="grid grid-cols-2 gap-2 text-xs text-muted-foreground font-mono">
+            <div className="grid grid-cols-2 gap-2 text-xs text-gray-400 font-mono">
               <span>duration: {videoData?.duration}s</span>
               <span>resolution: {videoData?.resolution}</span>
               {videoData?.fileSize && (
-                <span>size: {Math.round(videoData.fileSize / (1024 * 1024))}MB</span>
+                <span>file_size: {Math.round(videoData.fileSize / (1024 * 1024))}MB</span>
               )}
               {videoData?.generationTime && (
-                <span>time: {Math.round(videoData.generationTime / 1000)}s</span>
+                <span>gen_time: {Math.round(videoData.generationTime / 1000)}s</span>
               )}
             </div>
 
@@ -197,16 +208,16 @@ export function VideoGenNode({ id, data, selected }: VideoGenNodeProps) {
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 h-7 text-xs font-mono"
+                className="flex-1 h-7 text-xs font-mono bg-[#0A0A0A] border-[#333333] text-white hover:bg-red-500/10 hover:border-red-500/30"
                 onClick={() => window.open(videoData?.videoUrl, '_blank')}
               >
                 <Play className="w-3 h-3 mr-1" />
-                play
+                play_full
               </Button>
               <Button
                 variant="outline"
                 size="sm"
-                className="flex-1 h-7 text-xs font-mono"
+                className="flex-1 h-7 text-xs font-mono bg-[#0A0A0A] border-[#333333] text-white hover:bg-red-500/10 hover:border-red-500/30"
                 onClick={() => {
                   const link = document.createElement('a');
                   link.href = videoData?.videoUrl || '';
@@ -217,47 +228,60 @@ export function VideoGenNode({ id, data, selected }: VideoGenNodeProps) {
                 }}
               >
                 <Download className="w-3 h-3 mr-1" />
-                save
+                download
               </Button>
+            </div>
+
+            <div className="text-xs text-green-400 font-mono">
+              ✓ Ready for final output
             </div>
           </div>
         )}
 
-        {/* État d'erreur */}
-        {data.status === 'error' && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-red-600">
-              <AlertCircle className="w-4 h-4" />
-              <span className="text-sm font-mono">video generation failed</span>
+        {/* Message d'erreur */}
+        {data.status === 'error' && data.errorMessage && (
+          <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+              <span className="text-xs text-red-400 font-mono">{data.errorMessage}</span>
             </div>
-            
-            {data.errorMessage && (
-              <div className="p-2 bg-red-100 border border-red-300 rounded text-xs text-red-700 font-mono">
-                {data.errorMessage}
-              </div>
+          </div>
+        )}
+
+        {/* Informations de temps d'exécution */}
+        {data.startTime && (
+          <div className="text-xs text-gray-400 font-mono">
+            {data.status === 'loading' && 'animation_in_progress...'}
+            {data.endTime && data.startTime && (
+              `animated_in_${Math.round((data.endTime - data.startTime) / 1000)}s`
             )}
           </div>
         )}
+      </div>
 
-        {/* Temps d'exécution */}
-        {data.startTime && data.endTime && (
-          <div className="text-xs text-muted-foreground font-mono">
-            completed in {Math.round((data.endTime - data.startTime) / 1000)}s
+      {/* Footer avec informations techniques */}
+      <div className="border-t border-[#333333] p-3 bg-[#111111]/50">
+        <div className="flex items-center justify-between text-xs font-mono text-gray-400">
+          <div className="flex items-center gap-3">
+            <span>cost: {data.config?.costCredits || 15}_credits</span>
+            <span>model: {videoConfig?.provider || 'veo3'}</span>
           </div>
-        )}
-      </CardContent>
+          <span className="text-gray-500">video_generation</span>
+        </div>
+      </div>
 
-      {/* Handle de sortie */}
+      {/* Handle pour la connexion sortante */}
       <Handle
         type="source"
         position={Position.Right}
         id="output"
-        className="w-3 h-3 border-2 border-gray-400 bg-white"
-        style={{
-          backgroundColor: data.status === 'success' ? '#10b981' : '#9ca3af',
-          borderColor: data.status === 'success' ? '#10b981' : '#9ca3af'
-        }}
+        className={`${HANDLE_STYLES.base} ${
+          data.status === 'success' ? HANDLE_STYLES.success :
+          data.status === 'loading' ? HANDLE_STYLES.active :
+          data.status === 'error' ? HANDLE_STYLES.error :
+          HANDLE_STYLES.idle
+        }`}
       />
-    </Card>
+    </div>
   );
 }

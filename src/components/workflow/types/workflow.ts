@@ -3,8 +3,11 @@ import { Node, Edge } from 'reactflow';
 // États possibles pour chaque nœud du workflow
 export type WorkflowNodeStatus = 'idle' | 'loading' | 'success' | 'error';
 
+// Types de workflows supportés
+export type WorkflowType = 'text-to-video' | 'text-to-image' | 'image-to-video';
+
 // Types de nœuds dans le workflow
-export type WorkflowNodeType = 'prompt' | 'enhance' | 'image' | 'video' | 'output';
+export type WorkflowNodeType = 'prompt' | 'enhance' | 'image' | 'video' | 'output' | 'image-upload';
 
 // Configuration spécifique à chaque type de nœud
 export interface NodeConfig {
@@ -45,6 +48,13 @@ export interface NodeConfig {
     formats: string[];
     quality: string;
     downloadEnabled: boolean;
+  };
+
+  // Configuration spécifique au nœud image-upload
+  imageUpload?: {
+    acceptedFormats: string[];
+    maxFileSize: number; // en bytes
+    maxDimensions: { width: number; height: number };
   };
 }
 
@@ -112,6 +122,16 @@ export interface WorkflowNodeData {
       format: string;
     };
   };
+
+  imageUploadData?: {
+    originalFile?: File;
+    uploadedUrl?: string;
+    thumbnailUrl?: string;
+    width: number;
+    height: number;
+    fileSize: number;
+    format: string;
+  };
 }
 
 // Type de nœud React Flow étendu pour notre workflow
@@ -137,8 +157,22 @@ export interface WorkflowEdge extends Edge {
   };
 }
 
+// Templates de workflows disponibles
+export interface WorkflowTemplate {
+  id: WorkflowType;
+  name: string;
+  description: string;
+  nodes: WorkflowNodeType[];
+  edges: Array<{ from: WorkflowNodeType; to: WorkflowNodeType }>;
+  estimatedCost: number;
+  estimatedDuration: number; // en ms
+}
+
 // État global du workflow
 export interface WorkflowState {
+  // Type de workflow sélectionné
+  selectedWorkflowType: WorkflowType | null;
+  
   // Identifiants
   workflowId?: string;
   userId?: string;
@@ -220,6 +254,10 @@ export interface WorkflowExecution {
 
 // Actions pour le store Zustand
 export interface WorkflowActions {
+  // Gestion du type de workflow
+  selectWorkflowType: (type: WorkflowType) => void;
+  generateWorkflowFromTemplate: (type: WorkflowType) => void;
+  
   // Gestion des nœuds
   updateNodeData: (nodeId: string, data: Partial<WorkflowNodeData>) => void;
   updateNodeStatus: (nodeId: string, status: WorkflowNodeStatus) => void;
@@ -260,6 +298,7 @@ export const NODE_TYPES = {
   IMAGE: 'image' as const,
   VIDEO: 'video' as const,
   OUTPUT: 'output' as const,
+  IMAGE_UPLOAD: 'image-upload' as const,
 } as const;
 
 export const NODE_IDS = {
@@ -268,6 +307,7 @@ export const NODE_IDS = {
   IMAGE: 'image-node',
   VIDEO: 'video-node',
   OUTPUT: 'output-node',
+  IMAGE_UPLOAD: 'image-upload-node',
 } as const;
 
 // Positions par défaut des nœuds
@@ -277,6 +317,7 @@ export const DEFAULT_NODE_POSITIONS = {
   [NODE_IDS.IMAGE]: { x: 700, y: 100 },
   [NODE_IDS.VIDEO]: { x: 1000, y: 100 },
   [NODE_IDS.OUTPUT]: { x: 1300, y: 100 },
+  [NODE_IDS.IMAGE_UPLOAD]: { x: 100, y: 100 },
 } as const;
 
 // Coûts en crédits par type de nœud
@@ -286,6 +327,7 @@ export const NODE_CREDIT_COSTS = {
   [NODE_TYPES.IMAGE]: 5, // varie selon la qualité
   [NODE_TYPES.VIDEO]: 15, // varie selon la durée
   [NODE_TYPES.OUTPUT]: 0,
+  [NODE_TYPES.IMAGE_UPLOAD]: 0,
 } as const;
 
 // Durées estimées en millisecondes
@@ -295,4 +337,47 @@ export const NODE_ESTIMATED_DURATIONS = {
   [NODE_TYPES.IMAGE]: 30000, // 30s
   [NODE_TYPES.VIDEO]: 120000, // 2min
   [NODE_TYPES.OUTPUT]: 5000, // 5s
+  [NODE_TYPES.IMAGE_UPLOAD]: 1000, // 1s
+} as const;
+
+// Templates de workflows prédéfinis
+export const WORKFLOW_TEMPLATES: Record<WorkflowType, WorkflowTemplate> = {
+  'text-to-video': {
+    id: 'text-to-video',
+    name: 'Text-to-Video',
+    description: 'Generate videos directly from text descriptions',
+    nodes: [NODE_TYPES.PROMPT, NODE_TYPES.ENHANCE, NODE_TYPES.VIDEO, NODE_TYPES.OUTPUT],
+    edges: [
+      { from: NODE_TYPES.PROMPT, to: NODE_TYPES.ENHANCE },
+      { from: NODE_TYPES.ENHANCE, to: NODE_TYPES.VIDEO },
+      { from: NODE_TYPES.VIDEO, to: NODE_TYPES.OUTPUT }
+    ],
+    estimatedCost: NODE_CREDIT_COSTS[NODE_TYPES.ENHANCE] + NODE_CREDIT_COSTS[NODE_TYPES.VIDEO],
+    estimatedDuration: NODE_ESTIMATED_DURATIONS[NODE_TYPES.ENHANCE] + NODE_ESTIMATED_DURATIONS[NODE_TYPES.VIDEO] + NODE_ESTIMATED_DURATIONS[NODE_TYPES.OUTPUT]
+  },
+  'text-to-image': {
+    id: 'text-to-image',
+    name: 'Text-to-Image',
+    description: 'Create stunning images from text prompts',
+    nodes: [NODE_TYPES.PROMPT, NODE_TYPES.ENHANCE, NODE_TYPES.IMAGE, NODE_TYPES.OUTPUT],
+    edges: [
+      { from: NODE_TYPES.PROMPT, to: NODE_TYPES.ENHANCE },
+      { from: NODE_TYPES.ENHANCE, to: NODE_TYPES.IMAGE },
+      { from: NODE_TYPES.IMAGE, to: NODE_TYPES.OUTPUT }
+    ],
+    estimatedCost: NODE_CREDIT_COSTS[NODE_TYPES.ENHANCE] + NODE_CREDIT_COSTS[NODE_TYPES.IMAGE],
+    estimatedDuration: NODE_ESTIMATED_DURATIONS[NODE_TYPES.ENHANCE] + NODE_ESTIMATED_DURATIONS[NODE_TYPES.IMAGE] + NODE_ESTIMATED_DURATIONS[NODE_TYPES.OUTPUT]
+  },
+  'image-to-video': {
+    id: 'image-to-video',
+    name: 'Image-to-Video',
+    description: 'Animate existing images into videos',
+    nodes: [NODE_TYPES.IMAGE_UPLOAD, NODE_TYPES.VIDEO, NODE_TYPES.OUTPUT],
+    edges: [
+      { from: NODE_TYPES.IMAGE_UPLOAD, to: NODE_TYPES.VIDEO },
+      { from: NODE_TYPES.VIDEO, to: NODE_TYPES.OUTPUT }
+    ],
+    estimatedCost: NODE_CREDIT_COSTS[NODE_TYPES.VIDEO],
+    estimatedDuration: NODE_ESTIMATED_DURATIONS[NODE_TYPES.IMAGE_UPLOAD] + NODE_ESTIMATED_DURATIONS[NODE_TYPES.VIDEO] + NODE_ESTIMATED_DURATIONS[NODE_TYPES.OUTPUT]
+  }
 } as const;

@@ -2,21 +2,19 @@
 
 import { Handle, Position } from 'reactflow';
 import { Badge } from '@/components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Progress } from '@/components/ui/progress';
 import { 
   Download, 
   AlertCircle, 
   CheckCircle, 
   Share, 
   Copy, 
-  ExternalLink,
-  FileVideo,
+  Clock,
   Play,
   Volume2
 } from 'lucide-react';
 import { WorkflowNodeData } from '../types/workflow';
+import { NODE_THEMES, STATUS_COLORS, NODE_SIZES, HANDLE_STYLES } from '../constants/node-themes';
 import { toast } from 'sonner';
 
 interface OutputNodeProps {
@@ -26,49 +24,69 @@ interface OutputNodeProps {
 }
 
 export function OutputNode({ id, data, selected }: OutputNodeProps) {
-  const getNodeStyle = () => {
-    const baseStyle = 'transition-all duration-300 ease-in-out';
+  const theme = NODE_THEMES.output;
+  const statusColors = STATUS_COLORS[data.status];
+  
+  const getNodeClasses = () => {
+    const baseClasses = `${NODE_SIZES.default} ${statusColors.bg} border-2 transition-all duration-300 rounded-xl backdrop-blur-sm`;
     
+    let borderClasses = statusColors.border;
+    let effectClasses = '';
+
+    // Styles spécifiques selon l'état (couleurs statiques pour éviter les problèmes CSS)
     switch (data.status) {
       case 'loading':
-        return `${baseStyle} border-blue-500 bg-blue-50/50 shadow-lg`;
+        borderClasses = 'border-orange-500/60';
+        effectClasses = 'animate-pulse';
+        break;
       case 'success':
-        return `${baseStyle} border-green-500 bg-green-50/50 shadow-lg glow-white`;
+        borderClasses = 'border-green-500/60';
+        effectClasses = '';
+        break;
       case 'error':
-        return `${baseStyle} border-red-500 bg-red-50/50 shadow-lg animate-shake`;
+        borderClasses = 'border-red-500/60';
+        effectClasses = 'animate-shake';
+        break;
       default:
-        return `${baseStyle} border-gray-300 bg-white/80 backdrop-blur-sm ${
-          selected ? 'border-primary shadow-lg' : ''
-        }`;
+        if (selected) {
+          borderClasses = 'border-orange-500/60';
+          effectClasses = '';
+        }
     }
+
+    return `${baseClasses} ${borderClasses} ${effectClasses}`;
   };
 
   const getStatusIcon = () => {
     switch (data.status) {
       case 'loading':
-        return <FileVideo className="w-4 h-4 text-blue-500 animate-pulse" />;
+        return <div className="w-4 h-4 border-2 border-orange-400 border-t-transparent rounded-full animate-spin" />;
       case 'success':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
+        return <CheckCircle className="w-4 h-4 text-green-400" />;
       case 'error':
-        return <AlertCircle className="w-4 h-4 text-red-500" />;
+        return <AlertCircle className="w-4 h-4 text-red-400" />;
       default:
-        return <FileVideo className="w-4 h-4 text-gray-500" />;
+        return <Clock className="w-4 h-4 text-gray-400" />;
     }
   };
 
   const getStatusBadge = () => {
-    switch (data.status) {
-      case 'loading':
-        return <Badge className="bg-blue-500 text-white font-mono text-xs animate-pulse">finalizing</Badge>;
-      case 'success':
-        return <Badge className="bg-green-500 text-white font-mono text-xs">ready</Badge>;
-      case 'error':
-        return <Badge className="bg-red-500 text-white font-mono text-xs">failed</Badge>;
-      default:
-        return <Badge className="bg-gray-500 text-white font-mono text-xs">waiting</Badge>;
-    }
+    const badgeTexts = {
+      idle: 'awaiting_video',
+      loading: 'finalizing',
+      success: 'ready',
+      error: 'error'
+    };
+
+    return (
+      <Badge className={`${statusColors.badge} font-mono text-xs px-2 py-1`}>
+        {badgeTexts[data.status]}
+      </Badge>
+    );
   };
 
+  const IconComponent = theme.icon;
+  const progress = data.progress || 0;
   const outputData = data.outputData;
   const hasOutput = data.status === 'success' && outputData?.finalVideoUrl;
 
@@ -108,82 +126,80 @@ export function OutputNode({ id, data, selected }: OutputNodeProps) {
   };
 
   return (
-    <Card className={`w-80 min-h-[200px] ${getNodeStyle()}`}>
-      {/* Handle d'entrée */}
+    <div className={getNodeClasses()}>
+      {/* Handle pour la connexion entrante */}
       <Handle
         type="target"
         position={Position.Left}
         id="input"
-        className="w-3 h-3 border-2 border-gray-400 bg-white"
+        className={`${HANDLE_STYLES.base} ${HANDLE_STYLES.idle}`}
       />
 
-      {/* Header */}
-      <CardHeader className="pb-3">
-        <div className="flex items-center justify-between">
-          <CardTitle className="flex items-center gap-2 font-mono text-sm text-gray-800">
+      {/* Header avec thème coloré orange */}
+      <div className="border-b border-[#333333] bg-gradient-to-r from-orange-500/10 to-transparent p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-orange-500/20 border border-orange-500/30">
+              <IconComponent className={`w-4 h-4 text-orange-400 ${data.status === 'loading' ? 'animate-pulse' : ''}`} />
+            </div>
+            <div>
+              <h3 className="font-mono text-sm text-white font-medium">{theme.name}</h3>
+              <p className="text-xs text-gray-400 font-mono">project finalization</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
             {getStatusIcon()}
-            {data.label}
-          </CardTitle>
-          {getStatusBadge()}
+            {getStatusBadge()}
+          </div>
         </div>
-        
-        {/* Coût et temps estimé */}
-        <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <span className="font-mono">cost: {data.config?.costCredits || 0} credits</span>
-          {data.config?.estimatedDuration && (
-            <span className="font-mono">• eta: {Math.round(data.config.estimatedDuration / 1000)}s</span>
-          )}
-        </div>
-      </CardHeader>
+      </div>
 
-      {/* Content */}
-      <CardContent className="space-y-3">
+      {/* Contenu principal */}
+      <div className="p-4 space-y-4">
         {/* Configuration de sortie */}
-        <div className="flex flex-wrap gap-2 text-xs text-muted-foreground font-mono">
+        <div className="flex flex-wrap gap-2 text-xs text-gray-400 font-mono">
           {data.config?.output?.formats?.map((format, index) => (
-            <span key={index} className="px-2 py-1 bg-gray-100 rounded">{format}</span>
+            <span key={index} className="px-2 py-1 bg-[#0A0A0A] border border-[#333333] rounded">{format}</span>
           ))}
           {data.config?.output?.quality && (
-            <span className="px-2 py-1 bg-gray-100 rounded">
+            <span className="px-2 py-1 bg-[#0A0A0A] border border-[#333333] rounded">
               {data.config.output.quality}
             </span>
           )}
         </div>
 
         {/* État d'attente */}
-        {data.status === 'idle' && (
-          <div className="flex items-center justify-center py-6 text-center">
-            <div className="space-y-2">
-              <FileVideo className="w-8 h-8 text-gray-400 mx-auto" />
-              <p className="text-xs text-muted-foreground font-mono">
-                waiting for video generation
-              </p>
+        {data.status === 'idle' && !data.input && (
+          <div className="py-6 text-center">
+            <div className="w-12 h-12 rounded-full border-2 border-dashed border-gray-600 flex items-center justify-center mx-auto mb-3">
+              <IconComponent className="w-5 h-5 text-gray-500" />
+            </div>
+            <div className="text-xs text-gray-500 font-mono">
+              waiting_for_video_generation
             </div>
           </div>
         )}
 
-        {/* État de chargement */}
+        {/* Barre de progression pendant le processing */}
         {data.status === 'loading' && (
-          <div className="space-y-3">
-            <div className="flex items-center gap-2">
-              <FileVideo className="w-4 h-4 text-blue-500 animate-pulse" />
-              <span className="text-sm font-mono text-blue-700">
-                preparing final output...
-              </span>
+          <div className="space-y-2">
+            <div className="flex items-center justify-between text-xs font-mono">
+              <span className="text-orange-400">finalizing_output</span>
+              <span className="text-gray-400">{Math.round(progress)}%</span>
             </div>
-            
-            {typeof data.progress === 'number' && (
-              <Progress value={data.progress} className="h-2" />
-            )}
-            
-            <div className="text-xs text-muted-foreground font-mono">
-              {typeof data.progress === 'number' && (
-                <>
-                  {data.progress < 50 && 'processing video...'}
-                  {data.progress >= 50 && data.progress < 90 && 'optimizing for web...'}
-                  {data.progress >= 90 && 'uploading to cdn...'}
-                </>
-              )}
+            <div className="relative">
+              <div className="h-2 bg-[#0A0A0A] border border-[#333333] rounded overflow-hidden">
+                <div 
+                  className="h-full bg-gradient-to-r from-orange-500 to-orange-400 transition-all duration-300"
+                  style={{ width: `${progress}%` }}
+                />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-orange-500/20 to-transparent opacity-50 animate-pulse" />
+            </div>
+            <div className="text-xs text-orange-400 font-mono">
+              {progress < 50 && 'processing_video'}
+              {progress >= 50 && progress < 90 && 'optimizing_for_web'}
+              {progress >= 90 && 'uploading_to_cdn'}
             </div>
           </div>
         )}
@@ -192,19 +208,19 @@ export function OutputNode({ id, data, selected }: OutputNodeProps) {
         {data.status === 'success' && hasOutput && (
           <div className="space-y-4">
             {/* Message de succès */}
-            <div className="flex items-center gap-2 text-xs text-green-600">
+            <div className="flex items-center gap-2 text-xs text-green-400 font-mono">
               <CheckCircle className="w-3 h-3" />
-              <span className="font-mono">video ready for download!</span>
+              <span>video_ready_for_download</span>
             </div>
 
             {/* Aperçu final avec métadonnées */}
-            <div className="p-3 bg-green-50 border border-green-200 rounded">
-              <div className="flex items-center gap-3 mb-2">
-                <FileVideo className="w-5 h-5 text-green-600" />
+            <div className="p-3 bg-green-500/5 border border-green-500/30 rounded-lg">
+              <div className="flex items-center gap-3 mb-3">
+                <IconComponent className="w-5 h-5 text-orange-400" />
                 <div className="flex-1">
-                  <div className="font-mono text-sm text-green-800">final_video.mp4</div>
+                  <div className="font-mono text-sm text-white">final_video.mp4</div>
                   {outputData?.metadata && (
-                    <div className="text-xs text-green-600 font-mono">
+                    <div className="text-xs text-green-400 font-mono">
                       {outputData.metadata.duration}s • {outputData.metadata.resolution} • {Math.round(outputData.metadata.fileSize / (1024 * 1024))}MB
                     </div>
                   )}
@@ -215,7 +231,7 @@ export function OutputNode({ id, data, selected }: OutputNodeProps) {
               {outputData?.finalVideoUrl && (
                 <video
                   src={outputData.finalVideoUrl}
-                  className="w-full h-20 object-cover rounded border mb-2"
+                  className="w-full h-20 object-cover rounded-lg border border-[#333333] mb-2"
                   controls={false}
                   muted
                   onError={(e) => {
@@ -230,7 +246,7 @@ export function OutputNode({ id, data, selected }: OutputNodeProps) {
               <div className="grid grid-cols-2 gap-2">
                 <Button
                   size="sm"
-                  className="h-8 text-xs font-mono bg-green-600 hover:bg-green-700 text-white"
+                  className="h-8 text-xs font-mono bg-green-600 hover:bg-green-700 text-white shadow-lg"
                   onClick={() => outputData?.finalVideoUrl && handleDownload(outputData.finalVideoUrl, 'generated-video.mp4')}
                 >
                   <Download className="w-3 h-3 mr-1" />
@@ -239,7 +255,7 @@ export function OutputNode({ id, data, selected }: OutputNodeProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-8 text-xs font-mono"
+                  className="h-8 text-xs font-mono bg-[#0A0A0A] border-[#333333] text-white hover:bg-orange-500/10 hover:border-orange-500/30"
                   onClick={() => window.open(outputData?.finalVideoUrl, '_blank')}
                 >
                   <Play className="w-3 h-3 mr-1" />
@@ -252,7 +268,7 @@ export function OutputNode({ id, data, selected }: OutputNodeProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 text-xs font-mono"
+                  className="h-7 text-xs font-mono bg-[#0A0A0A] border-[#333333] text-white hover:bg-orange-500/10 hover:border-orange-500/30"
                   onClick={() => outputData?.finalVideoUrl && handleShare(outputData.finalVideoUrl)}
                 >
                   <Share className="w-3 h-3 mr-1" />
@@ -261,7 +277,7 @@ export function OutputNode({ id, data, selected }: OutputNodeProps) {
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 text-xs font-mono"
+                  className="h-7 text-xs font-mono bg-[#0A0A0A] border-[#333333] text-white hover:bg-orange-500/10 hover:border-orange-500/30"
                   onClick={() => outputData?.finalVideoUrl && handleCopyLink(outputData.finalVideoUrl)}
                 >
                   <Copy className="w-3 h-3 mr-1" />
@@ -273,14 +289,14 @@ export function OutputNode({ id, data, selected }: OutputNodeProps) {
             {/* Formats de téléchargement alternatifs */}
             {outputData?.downloadUrls && Object.keys(outputData.downloadUrls).length > 1 && (
               <div className="space-y-2">
-                <div className="text-xs font-mono text-gray-600">other_formats:</div>
+                <div className="text-xs font-mono text-gray-400">other_formats:</div>
                 <div className="flex gap-2">
                   {Object.entries(outputData.downloadUrls).map(([format, url]) => (
                     <Button
                       key={format}
                       variant="outline"
                       size="sm"
-                      className="h-6 text-xs font-mono"
+                      className="h-6 text-xs font-mono bg-[#0A0A0A] border-[#333333] text-white hover:bg-orange-500/10 hover:border-orange-500/30"
                       onClick={() => handleDownload(url, `generated-video.${format}`)}
                     >
                       {format}
@@ -289,32 +305,45 @@ export function OutputNode({ id, data, selected }: OutputNodeProps) {
                 </div>
               </div>
             )}
+            
+            <div className="text-xs text-orange-400 font-mono flex items-center gap-2">
+              <CheckCircle className="w-3 h-3" />
+              ✓ Project completed successfully
+            </div>
           </div>
         )}
 
-        {/* État d'erreur */}
-        {data.status === 'error' && (
-          <div className="space-y-2">
-            <div className="flex items-center gap-2 text-red-600">
-              <AlertCircle className="w-4 h-4" />
-              <span className="text-sm font-mono">output preparation failed</span>
+        {/* Message d'erreur */}
+        {data.status === 'error' && data.errorMessage && (
+          <div className="p-3 bg-red-500/10 border border-red-500/30 rounded-lg">
+            <div className="flex items-start gap-2">
+              <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 flex-shrink-0" />
+              <span className="text-xs text-red-400 font-mono">{data.errorMessage}</span>
             </div>
-            
-            {data.errorMessage && (
-              <div className="p-2 bg-red-100 border border-red-300 rounded text-xs text-red-700 font-mono">
-                {data.errorMessage}
-              </div>
+          </div>
+        )}
+
+        {/* Informations de temps d'exécution */}
+        {data.startTime && (
+          <div className="text-xs text-gray-400 font-mono">
+            {data.status === 'loading' && 'finalization_in_progress...'}
+            {data.endTime && data.startTime && (
+              `completed_in_${Math.round((data.endTime - data.startTime) / 1000)}s`
             )}
           </div>
         )}
+      </div>
 
-        {/* Temps d'exécution */}
-        {data.startTime && data.endTime && (
-          <div className="text-xs text-muted-foreground font-mono">
-            completed in {Math.round((data.endTime - data.startTime) / 1000)}s
+      {/* Footer avec informations techniques */}
+      <div className="border-t border-[#333333] p-3 bg-[#111111]/50">
+        <div className="flex items-center justify-between text-xs font-mono text-gray-400">
+          <div className="flex items-center gap-3">
+            <span>cost: {data.config?.costCredits || 0}_credits</span>
+            <span>output: final_video</span>
           </div>
-        )}
-      </CardContent>
-    </Card>
+          <span className="text-gray-500">project_output</span>
+        </div>
+      </div>
+    </div>
   );
 }

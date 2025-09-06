@@ -22,18 +22,38 @@ const startWorkflowSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
+    console.log('[API-WORKFLOW-START] Request received');
+    
     // Authentification
     const user = await getServerUser(request);
+    console.log('[API-WORKFLOW-START] Auth result:', { 
+      hasUser: !!user, 
+      userId: user?.id,
+      userEmail: user?.email 
+    });
+    
     if (!user?.id) {
+      console.log('[API-WORKFLOW-START] Authentication failed - no user or user ID');
       return NextResponse.json(
-        { error: 'Authentication required' },
+        { 
+          success: false,
+          error: 'Authentication required. Please sign in to start a workflow.' 
+        },
         { status: 401 }
       );
     }
 
     // Validation des paramètres
     const body = await request.json();
+    console.log('[API-WORKFLOW-START] Request body received:', {
+      hasImagePrompt: !!body.imagePrompt,
+      hasVideoPrompt: !!body.videoPrompt,
+      imagePromptLength: body.imagePrompt?.length,
+      videoPromptLength: body.videoPrompt?.length
+    });
+    
     const validatedData = startWorkflowSchema.parse(body);
+    console.log('[API-WORKFLOW-START] Data validated successfully');
 
     // Vérifier les crédits de l'utilisateur
     const userProfile = await db.user.findUnique({
@@ -41,10 +61,17 @@ export async function POST(request: NextRequest) {
       select: { creditsBalance: true },
     });
 
+    console.log('[API-WORKFLOW-START] User credits check:', {
+      userExists: !!userProfile,
+      creditsBalance: userProfile?.creditsBalance
+    });
+
     const TOTAL_COST = 20; // 5 pour l'image + 15 pour la vidéo
     if (!userProfile || userProfile.creditsBalance < TOTAL_COST) {
+      console.log('[API-WORKFLOW-START] Insufficient credits');
       return NextResponse.json(
         { 
+          success: false,
           error: 'Insufficient credits', 
           required: TOTAL_COST,
           available: userProfile?.creditsBalance || 0 
@@ -137,6 +164,11 @@ export async function POST(request: NextRequest) {
       });
     });
 
+    console.log('[API-WORKFLOW-START] Workflow started successfully:', {
+      jobId: generationJob.id,
+      userId: user.id
+    });
+
     return NextResponse.json({
       success: true,
       workflowId: generationJob.id,
@@ -146,17 +178,29 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Start workflow error:', error);
+    console.error('[API-WORKFLOW-START] Error occurred:', {
+      error: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined
+    });
     
     if (error instanceof z.ZodError) {
+      console.log('[API-WORKFLOW-START] Validation error:', error.errors);
       return NextResponse.json(
-        { error: 'Validation failed', details: error.errors },
+        { 
+          success: false,
+          error: 'Invalid request data', 
+          details: error.errors 
+        },
         { status: 400 }
       );
     }
 
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { 
+        success: false,
+        error: 'Internal server error occurred while starting workflow. Please try again.' 
+      },
       { status: 500 }
     );
   }
