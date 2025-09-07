@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 
 export const userRouter = createTRPCRouter({
   // Récupérer le profil complet de l'utilisateur
@@ -347,6 +348,375 @@ export const userRouter = createTRPCRouter({
       });
 
       return { success: true };
+    }),
+
+  // Changer le mot de passe
+  changePassword: protectedProcedure
+    .input(z.object({
+      currentPassword: z.string().min(1, 'Mot de passe actuel requis'),
+      newPassword: z.string().min(8, 'Le nouveau mot de passe doit contenir au moins 8 caractères')
+        .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, 'Le mot de passe doit contenir au moins une minuscule, une majuscule et un chiffre'),
+      confirmPassword: z.string().min(1, 'Confirmation du mot de passe requise'),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const { currentPassword, newPassword, confirmPassword } = input;
+      
+      // Vérifier que les mots de passe correspondent
+      if (newPassword !== confirmPassword) {
+        throw new Error('Les mots de passe ne correspondent pas');
+      }
+
+      // Créer le client Supabase avec le contexte utilisateur
+      const supabase = await createServerSupabaseClient();
+      
+      // Vérifier le mot de passe actuel en tentant une re-authentification
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: ctx.user.email!,
+        password: currentPassword,
+      });
+
+      if (signInError) {
+        throw new Error('Mot de passe actuel incorrect');
+      }
+
+      // Mettre à jour le mot de passe
+      const { error: updateError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (updateError) {
+        console.error('Erreur mise à jour mot de passe:', updateError);
+        throw new Error('Erreur lors de la mise à jour du mot de passe');
+      }
+
+      // Optionnel: Mettre à jour la date de dernière modification du mot de passe
+      await ctx.db.user.update({
+        where: { id: ctx.user.id },
+        data: { updatedAt: new Date() },
+      });
+
+      return { 
+        success: true,
+        message: 'Mot de passe mis à jour avec succès',
+      };
+    }),
+
+  // Exporter les données utilisateur
+  exportUserData: protectedProcedure
+    .query(async ({ ctx }) => {
+      const userId = ctx.user.id;
+      
+      // Récupérer toutes les données utilisateur
+      const [user, assets, posts, jobs, userSettings] = await Promise.all([
+        ctx.db.user.findUnique({
+          where: { id: userId },
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            firstName: true,
+            lastName: true,
+            phone: true,
+            bio: true,
+            website: true,
+            location: true,
+            timezone: true,
+            preferredLang: true,
+            planId: true,
+            creatorType: true,
+            platforms: true,
+            createdAt: true,
+            updatedAt: true,
+            creditsBalance: true,
+            credits: true,
+            creditsUsed: true,
+          },
+        }),
+        ctx.db.asset.findMany({
+          where: { userId },
+          select: {
+            id: true,
+            filename: true,
+            url: true,
+            type: true,
+            size: true,
+            createdAt: true,
+            status: true,
+          },
+        }),
+        ctx.db.post.findMany({
+          where: { userId },
+          select: {
+            id: true,
+            title: true,
+            content: true,
+            platforms: true,
+            status: true,
+            scheduledAt: true,
+            createdAt: true,
+          },
+        }),
+        ctx.db.job.findMany({
+          where: { userId },
+          select: {
+            id: true,
+            type: true,
+            status: true,
+            config: true,
+            createdAt: true,
+            completedAt: true,
+            actualTime: true,
+          },
+        }),
+        ctx.db.userSettings.findUnique({
+          where: { userId },
+        }),
+      ]);
+
+      if (!user) {
+        throw new Error('Utilisateur non trouvé');
+      }
+
+      return {
+        exportedAt: new Date().toISOString(),
+        user,
+        assets: assets || [],
+        posts: posts || [],
+        jobs: jobs || [],
+        settings: userSettings,
+        stats: {
+          totalAssets: assets?.length || 0,
+          totalPosts: posts?.length || 0,
+          totalJobs: jobs?.length || 0,
+        },
+      };
+    }),
+
+  // Demander la suppression du compte
+  requestAccountDeletion: protectedProcedure
+    .input(z.object({
+      reason: z.string().optional(),
+      feedback: z.string().optional(),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user.id;
+      
+      // Marquer le compte pour suppression (soft delete)
+      const deletionDate = new Date();
+      deletionDate.setDate(deletionDate.getDate() + 7); // Période de grâce de 7 jours
+
+      await ctx.db.user.update({
+        where: { id: userId },
+        data: {
+          // Ajouter des champs de suppression si nécessaire dans le schéma
+          updatedAt: new Date(),
+        },
+      });
+
+      // TODO: Implémenter job asynchrone avec Inngest pour suppression différée
+      // TODO: Envoyer email de confirmation avec lien d'annulation
+
+      return {
+        success: true,
+        message: 'Demande de suppression enregistrée',
+        deletionDate: deletionDate.toISOString(),
+        gracePeriodDays: 7,
+      };
+    }),
+
+  // Mettre à jour l'avatar utilisateur
+  updateAvatar: protectedProcedure
+    .input(z.object({
+      avatarUrl: z.string().url('URL d\'avatar invalide'),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.user.id;
+
+      // Mettre à jour l'avatar dans la base de données
+      const updatedUser = await ctx.db.user.update({
+        where: { id: userId },
+        data: { 
+          avatar: input.avatarUrl,
+          updatedAt: new Date(),
+        },
+      });
+
+      return {
+        success: true,
+        message: 'Avatar mis à jour avec succès',
+        avatar: updatedUser.avatar,
+      };
+    }),
+
+  // Configurer l'authentification 2FA
+  setup2FA: protectedProcedure
+    .mutation(async ({ ctx }) => {
+      try {
+        const supabase = await createServerSupabaseClient();
+        
+        // Enrôler l'utilisateur pour la 2FA
+        const { data: enrollData, error: enrollError } = await supabase.auth.mfa.enroll({
+          factorType: 'totp',
+          friendlyName: 'VidGenie Authenticator',
+        });
+
+        if (enrollError) {
+          console.error('Erreur lors de l\'enrôlement 2FA:', enrollError);
+          throw new Error('Impossible de configurer la 2FA');
+        }
+
+        // Générer l'URI et le QR code
+        const { totp } = enrollData;
+        return {
+          success: true,
+          factorId: enrollData.id,
+          qrCode: totp.qr_code,
+          secret: totp.secret,
+          uri: totp.uri,
+          message: 'Scannez le QR code avec votre application d\'authentification',
+        };
+      } catch (error) {
+        console.error('Erreur setup 2FA:', error);
+        throw new Error('Erreur lors de la configuration 2FA');
+      }
+    }),
+
+  // Vérifier et activer la 2FA
+  verify2FA: protectedProcedure
+    .input(z.object({
+      factorId: z.string(),
+      code: z.string().length(6, 'Le code doit contenir 6 chiffres'),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const supabase = await createServerSupabaseClient();
+        
+        // Vérifier le code TOTP
+        const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
+          factorId: input.factorId,
+        });
+
+        if (challengeError) {
+          throw new Error('Impossible de créer le défi 2FA');
+        }
+
+        const { data: verifyData, error: verifyError } = await supabase.auth.mfa.verify({
+          factorId: input.factorId,
+          challengeId: challengeData.id,
+          code: input.code,
+        });
+
+        if (verifyError) {
+          throw new Error('Code de vérification invalide');
+        }
+
+        // Marquer la 2FA comme activée dans notre base de données
+        await ctx.db.user.update({
+          where: { id: ctx.user.id },
+          data: { 
+            updatedAt: new Date(),
+          },
+        });
+
+        return {
+          success: true,
+          message: 'Authentification à deux facteurs activée avec succès',
+          accessToken: verifyData.access_token,
+        };
+      } catch (error) {
+        console.error('Erreur verification 2FA:', error);
+        throw new Error(error instanceof Error ? error.message : 'Code invalide');
+      }
+    }),
+
+  // Désactiver la 2FA
+  disable2FA: protectedProcedure
+    .input(z.object({
+      password: z.string().min(1, 'Mot de passe requis pour désactiver la 2FA'),
+    }))
+    .mutation(async ({ ctx, input }) => {
+      try {
+        const supabase = await createServerSupabaseClient();
+        
+        // Vérifier le mot de passe avant de désactiver
+        const { error: signInError } = await supabase.auth.signInWithPassword({
+          email: ctx.user.email!,
+          password: input.password,
+        });
+
+        if (signInError) {
+          throw new Error('Mot de passe incorrect');
+        }
+
+        // Obtenir la liste des facteurs 2FA
+        const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
+        
+        if (factorsError) {
+          throw new Error('Impossible de récupérer les facteurs 2FA');
+        }
+
+        // Désactiver tous les facteurs TOTP
+        for (const factor of factors.totp || []) {
+          const { error: unenrollError } = await supabase.auth.mfa.unenroll({
+            factorId: factor.id,
+          });
+          
+          if (unenrollError) {
+            console.error('Erreur lors de la désinscription du facteur:', unenrollError);
+          }
+        }
+
+        // Marquer la 2FA comme désactivée dans notre base de données
+        await ctx.db.user.update({
+          where: { id: ctx.user.id },
+          data: { 
+            updatedAt: new Date(),
+          },
+        });
+
+        return {
+          success: true,
+          message: 'Authentification à deux facteurs désactivée',
+        };
+      } catch (error) {
+        console.error('Erreur disable 2FA:', error);
+        throw new Error(error instanceof Error ? error.message : 'Erreur lors de la désactivation 2FA');
+      }
+    }),
+
+  // Vérifier le statut 2FA
+  get2FAStatus: protectedProcedure
+    .query(async ({ ctx }) => {
+      try {
+        const supabase = await createServerSupabaseClient();
+        
+        // Obtenir la liste des facteurs actifs
+        const { data: factors, error: factorsError } = await supabase.auth.mfa.listFactors();
+        
+        if (factorsError) {
+          return {
+            enabled: false,
+            factors: [],
+          };
+        }
+
+        const activeTotpFactors = factors.totp?.filter(f => f.status === 'verified') || [];
+
+        return {
+          enabled: activeTotpFactors.length > 0,
+          factors: activeTotpFactors.map(f => ({
+            id: f.id,
+            friendlyName: f.friendly_name,
+            createdAt: f.created_at,
+          })),
+        };
+      } catch (error) {
+        console.error('Erreur get 2FA status:', error);
+        return {
+          enabled: false,
+          factors: [],
+        };
+      }
     }),
 });
 

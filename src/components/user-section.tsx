@@ -100,6 +100,39 @@ export default function UserSection({ user }: UserSectionProps) {
     },
   });
 
+  const { refetch: exportUserData, isFetching: isExporting } = api.user.exportUserData.useQuery(
+    undefined,
+    {
+      enabled: false, // Ne pas exécuter automatiquement
+      onSuccess: (data) => {
+        // Créer un fichier JSON et le télécharger
+        const dataStr = JSON.stringify(data, null, 2);
+        const dataBlob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(dataBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `vidgenie-export-${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+        toast.success('Données exportées avec succès');
+      },
+      onError: (error) => {
+        toast.error(`Erreur lors de l'export: ${error.message}`);
+      },
+    }
+  );
+
+  const requestAccountDeletionMutation = api.user.requestAccountDeletion.useMutation({
+    onSuccess: (result) => {
+      toast.success(`${result.message}. Période de grâce: ${result.gracePeriodDays} jours`);
+    },
+    onError: (error) => {
+      toast.error(`Erreur lors de la demande: ${error.message}`);
+    },
+  });
+
   const updateSettingsMutation = api.user.updateUserSettings.useMutation({
     onSuccess: () => {
       toast.success('Paramètres sauvegardés');
@@ -281,24 +314,27 @@ export default function UserSection({ user }: UserSectionProps) {
 
   const handleExportData = async () => {
     try {
-      toast.success('export des données en cours...');
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      toast.success('données exportées');
-    } catch (_error) {
-      toast.error('erreur lors de l\'export');
+      toast.info('Préparation de l\'export des données...');
+      exportUserData();
+    } catch (error) {
+      toast.error('Erreur lors de l\'export');
     }
   };
 
   const handleDeleteAccount = async () => {
-    if (!confirm('êtes-vous sûr de vouloir supprimer votre compte?')) {
+    if (!confirm('⚠️ ATTENTION: Cette action planifiera la suppression définitive de votre compte dans 7 jours.\n\nToutes vos données (contenus, paramètres, historique) seront définitivement perdues.\n\nÊtes-vous absolument sûr de vouloir continuer ?')) {
       return;
     }
 
+    const reason = prompt('Optionnel: Pouvez-vous nous dire pourquoi vous supprimez votre compte ? (cela nous aide à améliorer nos services)');
+    
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      toast.success('demande de suppression envoyée');
-    } catch (_error) {
-      toast.error('erreur lors de la suppression');
+      requestAccountDeletionMutation.mutate({
+        reason: reason || undefined,
+        feedback: undefined,
+      });
+    } catch (error) {
+      toast.error('Erreur lors de la demande de suppression');
     }
   };
 

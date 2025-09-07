@@ -34,6 +34,9 @@ import Link from 'next/link';
 import { toast } from 'sonner';
 import UserSection from '@/components/user-section';
 import { ApiKeysSection } from '@/components/settings/ApiKeysSection';
+import { ChangePasswordModal } from '@/components/ui/change-password-modal';
+import { AvatarUpload } from '@/components/ui/avatar-upload';
+import { TwoFactorModal } from '@/components/ui/two-factor-modal';
 import { api } from '@/app/providers';
 
 const achievementLabels = {
@@ -46,6 +49,9 @@ const achievementLabels = {
 export default function ProfilePage() {
   const { user, isLoading } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [is2FAModalOpen, setIs2FAModalOpen] = useState(false);
+  const [twoFAMode, setTwoFAMode] = useState<'setup' | 'disable'>('setup');
 
   // Récupération des données réelles via TRPC
   const { data: profile, isLoading: profileLoading, refetch: refetchProfile, error: profileError } = api.user.getProfile.useQuery(
@@ -60,6 +66,11 @@ export default function ProfilePage() {
   
   const { data: userActivity, isLoading: activityLoading, error: activityError } = api.user.getUserActivity.useQuery(
     { limit: 5 },
+    { enabled: !!user, retry: false }
+  );
+
+  const { data: twoFAStatus, refetch: refetch2FA } = api.user.get2FAStatus.useQuery(
+    undefined,
     { enabled: !!user, retry: false }
   );
 
@@ -120,8 +131,24 @@ export default function ProfilePage() {
     );
   }
 
-  const handleAvatarUpload = () => {
-    toast.info('Fonctionnalité à venir : upload d\'avatar');
+  const handleAvatarUpdate = (newAvatarUrl: string) => {
+    // Refetch profile to get updated avatar
+    refetchProfile();
+  };
+
+  const handle2FASetup = () => {
+    setTwoFAMode('setup');
+    setIs2FAModalOpen(true);
+  };
+
+  const handle2FADisable = () => {
+    setTwoFAMode('disable');
+    setIs2FAModalOpen(true);
+  };
+
+  const handle2FAModalClose = () => {
+    setIs2FAModalOpen(false);
+    refetch2FA(); // Refresh 2FA status after changes
   };
 
   const formatNumber = (num: number) => {
@@ -199,13 +226,11 @@ export default function ProfilePage() {
                     {profile.lastName?.[0] || ''}
                   </AvatarFallback>
                 </Avatar>
-                <Button
-                  size="icon"
-                  className="absolute -bottom-4 -right-4 w-12 h-12 bg-foreground text-background hover:bg-foreground/90 rounded-full"
-                  onClick={handleAvatarUpload}
-                >
-                  <Camera className="w-5 h-5" />
-                </Button>
+                <AvatarUpload
+                  currentAvatar={profile.avatar}
+                  userName={displayName}
+                  onAvatarUpdate={handleAvatarUpdate}
+                />
                 <div className={`absolute top-2 right-2 w-6 h-6 rounded-full border-2 border-card ${profile.isOnline ? 'bg-green-500' : 'bg-secondary'}`} />
               </div>
 
@@ -505,7 +530,11 @@ export default function ProfilePage() {
                       <h4 className="font-mono text-foreground">Mot de passe</h4>
                       <p className="text-xs font-mono text-muted-foreground">Dernière modification: il y a 30 jours</p>
                     </div>
-                    <Button variant="outline" className="border-border text-foreground hover:bg-secondary font-mono text-xs">
+                    <Button 
+                      variant="outline" 
+                      className="border-border text-foreground hover:bg-secondary font-mono text-xs"
+                      onClick={() => setIsChangePasswordOpen(true)}
+                    >
                       Modifier
                     </Button>
                   </div>
@@ -513,10 +542,16 @@ export default function ProfilePage() {
                   <div className="flex items-center justify-between p-4 border border-border">
                     <div>
                       <h4 className="font-mono text-foreground">Authentification à deux facteurs</h4>
-                      <p className="text-xs font-mono text-muted-foreground">Sécurisez votre compte avec 2FA</p>
+                      <p className="text-xs font-mono text-muted-foreground">
+                        {twoFAStatus?.enabled ? 'Activé - Votre compte est protégé' : 'Sécurisez votre compte avec 2FA'}
+                      </p>
                     </div>
-                    <Button variant="outline" className="border-border text-foreground hover:bg-secondary font-mono text-xs">
-                      Activer
+                    <Button 
+                      variant="outline" 
+                      className="border-border text-foreground hover:bg-secondary font-mono text-xs"
+                      onClick={twoFAStatus?.enabled ? handle2FADisable : handle2FASetup}
+                    >
+                      {twoFAStatus?.enabled ? 'Désactiver' : 'Activer'}
                     </Button>
                   </div>
                   
@@ -539,6 +574,18 @@ export default function ProfilePage() {
             <ApiKeysSection />
           </TabsContent>
         </Tabs>
+
+        {/* Modals */}
+        <ChangePasswordModal 
+          open={isChangePasswordOpen}
+          onOpenChange={setIsChangePasswordOpen}
+        />
+        <TwoFactorModal
+          open={is2FAModalOpen}
+          onOpenChange={handle2FAModalClose}
+          mode={twoFAMode}
+          isEnabled={twoFAStatus?.enabled || false}
+        />
       </div>
     </div>
   );
