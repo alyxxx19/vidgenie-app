@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
+import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 
 export async function GET(request: Request) {
@@ -8,7 +8,7 @@ export async function GET(request: Request) {
   const organizationId = searchParams.get('organizationId');
 
   try {
-    const supabase = createClient();
+    const supabase = await createServerSupabaseClient();
 
     // Build redirect URL with custom parameters
     const redirectUrl = `${origin}/auth/callback`;
