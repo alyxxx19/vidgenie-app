@@ -1,0 +1,229 @@
+name: Security Audit
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run security audit weekly on Mondays at 8 AM UTC
+    - cron: '0 8 * * 1'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  security-events: write
+
+jobs:
+  dependency-audit:
+    name: Dependency Security Audit
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run npm audit
+        run: |
+          npm audit --audit-level=moderate
+          echo "Exit code: $?"
+        continue-on-error: true
+
+      - name: Run npm audit fix (dry run)
+        run: npm audit fix --dry-run
+        continue-on-error: true
+
+      - name: Generate audit report
+        run: |
+          npm audit --json > security-audit.json || true
+          npm audit --parseable > security-audit.txt || true
+        continue-on-error: true
+
+      - name: Upload audit results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: security-audit-results
+          path: |
+            security-audit.json
+            security-audit.txt
+          retention-days: 30
+
+  code-quality:
+    name: Code Quality & Security
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run ESLint security rules
+        run: |
+          npx eslint . --ext .ts,.tsx,.js,.jsx --format json -o eslint-security.json || true
+          npx eslint . --ext .ts,.tsx,.js,.jsx || true
+        continue-on-error: true
+
+      - name: Run TypeScript compilation
+        run: npx tsc --noEmit
+        continue-on-error: true
+
+      - name: Check for hardcoded secrets
+        run: |
+          echo "Checking for potential hardcoded secrets..."
+          grep -r -E "(password|secret|key|token)\s*[:=]\s*['\"][^'\"]{10,}" src/ || echo "No obvious hardcoded secrets found"
+          grep -r -E "sk-[a-zA-Z0-9]{20,}" src/ || echo "No OpenAI API keys found in source"
+          grep -r -E "(AKIA[0-9A-Z]{16})" src/ || echo "No AWS access keys found in source"
+        continue-on-error: true
+
+      - name: Upload code quality results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: code-quality-results
+          path: |
+            eslint-security.json
+          retention-days: 30
+
+  license-compliance:
+    name: License Compliance Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install license checker
+        run: npm install -g license-checker
+
+      - name: Check licenses
+        run: |
+          license-checker --json --out licenses.json || true
+          license-checker --summary || true
+          
+          echo "Checking for problematic licenses..."
+          license-checker --failOn 'GPL;AGPL;LGPL;CPAL;OSL' || echo "Potentially problematic licenses found"
+
+      - name: Upload license results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: license-compliance-results
+          path: licenses.json
+          retention-days: 30
+
+  docker-security:
+    name: Docker Security Scan
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request' # Skip on PRs to avoid rate limits
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Check if Dockerfile exists
+        id: dockerfile-check
+        run: |
+          if [ -f Dockerfile ]; then
+            echo "dockerfile-exists=true" >> $GITHUB_OUTPUT
+          else
+            echo "dockerfile-exists=false" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Build Docker image
+        if: steps.dockerfile-check.outputs.dockerfile-exists == 'true'
+        run: docker build -t vidgenie-security-scan .
+
+      - name: Run Trivy vulnerability scanner
+        if: steps.dockerfile-check.outputs.dockerfile-exists == 'true'
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'vidgenie-security-scan'
+          format: 'sarif'
+          output: 'trivy-results.sarif'
+
+      - name: Upload Trivy scan results to GitHub Security tab
+        if: steps.dockerfile-check.outputs.dockerfile-exists == 'true'
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: 'trivy-results.sarif'
+
+  security-summary:
+    name: Security Summary
+    runs-on: ubuntu-latest
+    needs: [dependency-audit, code-quality, license-compliance, docker-security]
+    if: always()
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+
+      - name: Generate security summary
+        run: |
+          echo "# Security Audit Summary" > security-summary.md
+          echo "Generated on: $(date)" >> security-summary.md
+          echo "" >> security-summary.md
+          
+          echo "## Job Results" >> security-summary.md
+          echo "- Dependency Audit: ${{ needs.dependency-audit.result }}" >> security-summary.md
+          echo "- Code Quality: ${{ needs.code-quality.result }}" >> security-summary.md
+          echo "- License Compliance: ${{ needs.license-compliance.result }}" >> security-summary.md
+          echo "- Docker Security: ${{ needs.docker-security.result }}" >> security-summary.md
+          echo "" >> security-summary.md
+          
+          if [ -f security-audit-results/security-audit.json ]; then
+            echo "## Vulnerability Summary" >> security-summary.md
+            echo '```json' >> security-summary.md
+            head -20 security-audit-results/security-audit.json >> security-summary.md
+            echo '```' >> security-summary.md
+          fi
+
+      - name: Upload security summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-summary
+          path: security-summary.md
+          retention-days: 90
+
+      - name: Comment PR with summary
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            try {
+              const summary = fs.readFileSync('security-summary.md', 'utf8');
+              github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `## 🔒 Security Audit Results\n\n${summary}`
+              });
+            } catch (error) {
+              console.log('Could not read security summary file');
+            }

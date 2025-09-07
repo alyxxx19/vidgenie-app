@@ -36,6 +36,9 @@ export async function middleware(request: NextRequest) {
     },
   });
 
+  // Apply security headers to all responses
+  applySecurityHeaders(response, request);
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
@@ -102,6 +105,71 @@ export async function middleware(request: NextRequest) {
   }
 
   return response;
+}
+
+/**
+ * Applique les headers de sécurité HTTP à toutes les réponses
+ */
+function applySecurityHeaders(response: NextResponse, request: NextRequest) {
+  const headers = response.headers;
+  const pathname = request.nextUrl.pathname;
+  const isApiRoute = pathname.startsWith('/api');
+
+  // Content Security Policy (CSP) stricte
+  const cspDirectives = [
+    "default-src 'self'",
+    "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://challenges.cloudflare.com", // unsafe-inline/eval pour Next.js dev
+    "style-src 'self' 'unsafe-inline'", // unsafe-inline nécessaire pour Tailwind
+    "img-src 'self' data: https: blob:",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    "connect-src 'self' https://*.supabase.co https://*.googleapis.com https://upstash.com https://*.upstash.io",
+    "frame-src 'none'",
+    "object-src 'none'",
+    "base-uri 'self'",
+    "form-action 'self' https://accounts.google.com",
+    "frame-ancestors 'none'",
+    "upgrade-insecure-requests"
+  ];
+  
+  // CSP moins restrictive en développement
+  if (process.env.NODE_ENV === 'development') {
+    cspDirectives[1] = "script-src 'self' 'unsafe-eval' 'unsafe-inline'"; // Plus permissif en dev
+    cspDirectives.push("connect-src 'self' ws: http: https:"); // WebSocket pour HMR
+  }
+
+  headers.set('Content-Security-Policy', cspDirectives.join('; '));
+
+  // Headers de sécurité essentiels
+  headers.set('X-Frame-Options', 'DENY');
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  headers.set('X-XSS-Protection', '1; mode=block');
+
+  // Strict Transport Security (HTTPS uniquement)
+  if (request.nextUrl.protocol === 'https:') {
+    headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+  }
+
+  // Headers spécifiques aux API
+  if (isApiRoute) {
+    headers.set('X-Robots-Tag', 'noindex, nofollow');
+    headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    headers.set('Pragma', 'no-cache');
+  }
+
+  // Permissions Policy pour contrôler l'accès aux API du navigateur
+  const permissionsPolicy = [
+    'camera=(), microphone=(), geolocation=(), payment=(),',
+    'usb=(), bluetooth=(), magnetometer=(), gyroscope=(),',
+    'accelerometer=(), ambient-light-sensor=(), autoplay=(),',
+    'encrypted-media=(), fullscreen=(self), picture-in-picture=()'
+  ].join(' ');
+  headers.set('Permissions-Policy', permissionsPolicy);
+
+  // Cross-Origin headers sécurisés
+  headers.set('Cross-Origin-Opener-Policy', 'same-origin');
+  headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
+  headers.set('Cross-Origin-Resource-Policy', 'same-origin');
 }
 
 // Helpers pour déterminer le type de route

@@ -1,0 +1,88 @@
+# Configuration GitHub Dependabot pour l'audit automatique des dépendances
+version: 2
+updates:
+  # Audit des dépendances npm
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "Europe/Paris"
+    # Grouper les mises à jour mineures par écosystème
+    groups:
+      minor-updates:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+    # Limiter le nombre de PRs ouvertes simultanément
+    open-pull-requests-limit: 10
+    # Reviewer automatiquement les PRs
+    reviewers:
+      - "vidgenie-security-team"
+    # Assignees pour les PRs de sécurité
+    assignees:
+      - "tech-lead"
+    # Labels pour catégoriser les PRs
+    labels:
+      - "dependencies"
+      - "security"
+    # Commit message personnalisé
+    commit-message:
+      prefix: "security"
+      include: "scope"
+    # Allow both direct and indirect updates
+    allow:
+      - dependency-type: "direct"
+      - dependency-type: "indirect"
+    # Rejeter les mises à jour de dépendances de développement de certains packages
+    ignore:
+      # Ignorer les mises à jour majeures pour les packages critiques
+      # (nécessitent une validation manuelle)
+      - dependency-name: "next"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "react-dom"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@supabase/supabase-js"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "prisma"
+        update-types: ["version-update:semver-major"]
+      # Ignorer certains packages de développement non critiques
+      - dependency-name: "eslint"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "@types/*"
+        update-types: ["version-update:semver-major"]
+
+  # Audit des GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/.github/workflows"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "10:00"
+      timezone: "Europe/Paris"
+    labels:
+      - "ci/cd"
+      - "security"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+
+  # Audit du Dockerfile (si présent)
+  - package-ecosystem: "docker"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "11:00"
+      timezone: "Europe/Paris"
+    labels:
+      - "docker"
+      - "security"
+    commit-message:
+      prefix: "docker"
+      include: "scope"

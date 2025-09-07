@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { encryptionService } from '@/services/encryption';
 import { apiValidationService, type ValidationResult } from '@/services/api-validation';
 import prisma from '@/lib/prisma';
+import { apiKeyRateLimit, generalRateLimit, getRateLimitIdentifier, applyRateLimit } from '@/lib/rate-limit';
 
 /**
  * GET /api/user/api-keys
@@ -12,6 +13,10 @@ export async function GET(request: NextRequest) {
   console.log('[API-KEYS GET] Starting request');
   
   try {
+    // Apply rate limiting
+    const identifier = getRateLimitIdentifier(request);
+    await applyRateLimit(generalRateLimit, identifier);
+
     // Authentification via Supabase
     const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -79,8 +84,17 @@ export async function GET(request: NextRequest) {
       data: formattedKeys
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('[API-KEYS GET] Error:', error);
+    
+    // Handle rate limit errors
+    if (error.message && error.message.includes('Trop de requêtes')) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 429 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Erreur serveur lors de la récupération', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -94,6 +108,14 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   try {
+    // Apply rate limiting for API key operations
+    const identifier = getRateLimitIdentifier(request);
+    await applyRateLimit(
+      apiKeyRateLimit, 
+      identifier,
+      'Trop de tentatives de validation de clés API. Veuillez réessayer dans 1 heure.'
+    );
+
     // Authentification
     const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -205,8 +227,17 @@ export async function POST(request: NextRequest) {
       validationResult
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('[API-KEYS POST] Error:', error);
+    
+    // Handle rate limit errors
+    if (error.message && error.message.includes('Trop de tentatives')) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 429 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Erreur serveur lors de la sauvegarde', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
@@ -220,6 +251,10 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE(request: NextRequest) {
   try {
+    // Apply rate limiting
+    const identifier = getRateLimitIdentifier(request);
+    await applyRateLimit(generalRateLimit, identifier);
+
     // Authentification
     const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -264,8 +299,17 @@ export async function DELETE(request: NextRequest) {
       message: `Clé ${provider} supprimée avec succès`
     });
 
-  } catch (error) {
+  } catch (error: any) {
     console.error('Erreur lors de la suppression:', error);
+    
+    // Handle rate limit errors
+    if (error.message && error.message.includes('Trop de requêtes')) {
+      return NextResponse.json(
+        { error: error.message },
+        { status: 429 }
+      );
+    }
+    
     return NextResponse.json(
       { error: 'Erreur serveur lors de la suppression' },
       { status: 500 }
