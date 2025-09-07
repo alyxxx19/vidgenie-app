@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerUser } from '@/lib/auth/server-auth';
 import { db } from '@/server/api/db';
 import { getWorkflowOrchestrator } from '@/lib/services/workflow-orchestrator';
+import { secureLog } from '@/lib/secure-logger';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Authentication
@@ -17,7 +18,7 @@ export async function POST(
       );
     }
 
-    const workflowId = params.id;
+    const workflowId = (await params).id;
     
     // Verify that the job belongs to the user
     const job = await db.generationJob.findFirst({
@@ -46,7 +47,8 @@ export async function POST(
     }
 
     // Restore original status from metadata
-    const originalStatus = job.providerData?.pausedFromStatus || 'GENERATING_VIDEO';
+    const providerData = job.providerData as Record<string, any> | null;
+    const originalStatus = providerData?.pausedFromStatus || 'GENERATING_VIDEO';
     
     // Update job status back to original
     await db.generationJob.update({
@@ -54,10 +56,12 @@ export async function POST(
       data: { 
         status: originalStatus,
         // Clean up pause metadata
-        providerData: {
-          ...job.providerData,
-          pausedFromStatus: undefined
-        }
+        providerData: job.providerData ? 
+          Object.fromEntries(
+            Object.entries(job.providerData as Record<string, any>)
+              .filter(([key]) => key !== 'pausedFromStatus')
+          ) : 
+          undefined
       },
     });
 
@@ -72,7 +76,7 @@ export async function POST(
     });
 
   } catch (error) {
-    console.error('Resume workflow error:', error);
+    secureLog.error('Resume workflow error:', error);
     
     return NextResponse.json(
       { error: 'Failed to resume workflow' },

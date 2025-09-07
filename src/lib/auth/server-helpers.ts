@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { cache } from 'react';
+import { secureLog } from '@/lib/secure-logger';
 
 export const requireAuth = cache(async (redirectTo?: string) => {
   const supabase = await createServerSupabaseClient();
@@ -37,7 +38,7 @@ export const getAuthUserWithProfile = cache(async () => {
     .single();
   
   if (error) {
-    console.error('Error getting user profile:', error);
+    secureLog.error('Error getting user profile:', error);
     return { ...user, profile: null };
   }
   

@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerUser } from '@/lib/auth/server-auth';
 import { db } from '@/server/api/db';
 import { getWorkflowOrchestrator } from '@/lib/services/workflow-orchestrator';
+import { secureLog } from '@/lib/secure-logger';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Authentification
@@ -17,7 +18,7 @@ export async function POST(
       );
     }
 
-    const workflowId = params.id;
+    const { id: workflowId } = await params;
     
     // Vérifier que le job appartient à l'utilisateur
     const job = await db.generationJob.findFirst({
@@ -86,7 +87,7 @@ export async function POST(
     });
 
   } catch (error) {
-    console.error('Cancel workflow error:', error);
+    secureLog.error('Cancel workflow error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

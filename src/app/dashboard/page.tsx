@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -21,8 +21,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { api } from '@/app/providers';
-import ContentCalendar from '@/components/content-calendar';
-import ContentHistory from '@/components/content-history';
+import { LazyWrapper } from '@/components/lazy/LazyWrapper';
+import { LazyContentCalendar, LazyContentHistory, preloadComponentsByRoute } from '@/components/lazy';
 import TimeDisplay from '@/components/time-display';
 import DashboardSkeleton from '@/components/dashboard-skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -75,6 +75,14 @@ export default function DashboardPage() {
   if (!isLoading && isInitialLoad) {
     setIsInitialLoad(false);
   }
+
+  // Préchargement intelligent des composants
+  useEffect(() => {
+    if (user && !isLoading) {
+      // Précharger les composants de dashboard après le chargement initial
+      preloadComponentsByRoute('/dashboard');
+    }
+  }, [user, isLoading]);
 
   if (!user) {
     return null;
@@ -476,10 +484,12 @@ export default function DashboardPage() {
           <TabsContent value="calendar">
             <Card className="bg-card border border-border">
               <CardContent className="p-6">
-                <ContentCalendar
-                  events={calendarEvents}
-                  onDateSelect={_setSelectedDate}
-                />
+                <LazyWrapper name="calendrier éditorial" retryable={true}>
+                  <LazyContentCalendar
+                    events={calendarEvents}
+                    onDateSelect={_setSelectedDate}
+                  />
+                </LazyWrapper>
               </CardContent>
             </Card>
           </TabsContent>
@@ -487,10 +497,12 @@ export default function DashboardPage() {
           <TabsContent value="history">
             <Card className="bg-card border border-border">
               <CardContent className="p-6">
-                <ContentHistory
-                  content={contentHistory}
-                  isLoading={!userAssets}
-                />
+                <LazyWrapper name="historique contenu" retryable={true}>
+                  <LazyContentHistory
+                    content={contentHistory}
+                    isLoading={!userAssets}
+                  />
+                </LazyWrapper>
               </CardContent>
             </Card>
           </TabsContent>

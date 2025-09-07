@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { secureLog } from '@/lib/secure-logger';
 
 interface GenerateImageRequest {
   prompt: string;
@@ -48,7 +49,7 @@ export function useDevImageGeneration() {
       setError(null);
       setGenerationResult(null);
 
-      console.log('[DEV-HOOK] Starting image generation:', request.prompt.slice(0, 50));
+      secureLog.info('[DEV-HOOK] Starting image generation:', request.prompt.slice(0, 50));
 
       const response = await fetch('/api/generate-image-real', {
         method: 'POST',
@@ -61,13 +62,13 @@ export function useDevImageGeneration() {
       const data = await response.json();
 
       if (!response.ok) {
-        console.error('[DEV-HOOK] API Error:', data);
+        secureLog.error('[DEV-HOOK] API Error:', data);
         throw new Error(data.error || 'Generation failed');
       }
 
-      console.log('[DEV-HOOK] Image generated successfully:', data.imageUrl);
+      secureLog.info('[DEV-HOOK] Image generated successfully:', data.imageUrl);
       if (data.enhancedPrompt && data.enhancedPrompt !== data.originalPrompt) {
-        console.log('[DEV-HOOK] Prompt was enhanced by GPT');
+        secureLog.info('[DEV-HOOK] Prompt was enhanced by GPT');
       }
 
       setGenerationResult(data);
@@ -79,7 +80,7 @@ export function useDevImageGeneration() {
       return data;
 
     } catch (err: any) {
-      console.error('[DEV-HOOK] Generation failed:', err);
+      secureLog.error('[DEV-HOOK] Generation failed:', err);
       const errorMessage = err.message || 'Image generation failed';
       setError(errorMessage);
       toast.error(errorMessage);

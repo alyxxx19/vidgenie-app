@@ -8,6 +8,7 @@ import { WorkflowNodeData } from '../types/workflow';
 import { NODE_THEMES, STATUS_COLORS, NODE_SIZES, HANDLE_STYLES } from '../constants/node-themes';
 import { useState, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
+import NextImage from 'next/image';
 
 interface ImageUploadNodeProps {
   id: string;
@@ -310,10 +311,13 @@ export function ImageUploadNode({ id, data, selected }: ImageUploadNodeProps) {
 
             {/* Aperçu de l'image */}
             <div className="relative">
-              <img
+              <NextImage
                 src={imageData?.uploadedUrl}
                 alt="Uploaded image"
+                width={200}
+                height={128}
                 className="w-full h-32 object-cover rounded-lg border border-[#333333]"
+                unoptimized
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                 }}

@@ -1,5 +1,6 @@
 import { supabase } from './supabase';
 import { db } from '@/server/api/db';
+import { secureLog } from '@/lib/secure-logger';
 
 export interface AuthUser {
   id: string;
@@ -32,7 +33,7 @@ export async function signUp(email: string, password: string, name?: string) {
 
     return { user: dbUser, session: data.session };
   } catch (error) {
-    console.error('Signup error:', error);
+    secureLog.security('Signup error:', error);
     throw error;
   }
 }
@@ -66,7 +67,7 @@ export async function signIn(email: string, password: string) {
 
     return { user: dbUser, session: data.session };
   } catch (error) {
-    console.error('Signin error:', error);
+    secureLog.security('Signin error:', error);
     throw error;
   }
 }

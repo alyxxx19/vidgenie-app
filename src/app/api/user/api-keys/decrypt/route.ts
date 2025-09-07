@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { encryptionService } from '@/services/encryption';
 import { PrismaClient } from '@prisma/client';
+import { secureLog } from '@/lib/secure-logger';
 
 const prisma = new PrismaClient();
 
@@ -97,7 +98,7 @@ export async function POST(request: NextRequest) {
         apiCredential.encryptionIV
       );
     } catch (decryptionError) {
-      console.error('Erreur de déchiffrement:', decryptionError);
+      secureLog.error('Erreur de déchiffrement:', decryptionError);
       return NextResponse.json(
         { error: 'Erreur lors du déchiffrement de la clé' },
         { status: 500 }
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Log sécurisé (clé masquée)
-    console.log(`Clé API ${provider} décryptée pour workflow ${workflowId || 'unknown'} - utilisateur ${user.id}`);
+    secureLog.info(`Clé API ${provider} décryptée pour workflow ${workflowId || 'unknown'} - utilisateur ${user.id}`);
 
     return NextResponse.json({
       success: true,
@@ -120,7 +121,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Erreur lors du décryptage de la clé API:', error);
+    secureLog.error('Erreur lors du décryptage de la clé API:', error);
     return NextResponse.json(
       { error: 'Erreur serveur lors du décryptage' },
       { status: 500 }
@@ -196,7 +197,7 @@ export async function GET(request: NextRequest) {
         decryptedKeys[credential.provider] = decryptedKey;
       } catch (decryptionError) {
         errors.push(`Erreur de déchiffrement pour ${credential.provider}`);
-        console.error(`Erreur de déchiffrement pour ${credential.provider}:`, decryptionError);
+        secureLog.error(`Erreur de déchiffrement pour ${credential.provider}:`, decryptionError);
       }
     }
 
@@ -210,7 +211,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Log sécurisé
-    console.log(`Clés API décryptées pour workflow ${workflowId || 'unknown'} - utilisateur ${user.id}: ${Object.keys(decryptedKeys).join(', ')}`);
+    secureLog.info(`Clés API décryptées pour workflow ${workflowId || 'unknown'} - utilisateur ${user.id}: ${Object.keys(decryptedKeys).join(', ')}`);
 
     return NextResponse.json({
       success: true,
@@ -224,7 +225,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Erreur lors du décryptage des clés API:', error);
+    secureLog.error('Erreur lors du décryptage des clés API:', error);
     return NextResponse.json(
       { error: 'Erreur serveur lors du décryptage' },
       { status: 500 }

@@ -618,7 +618,7 @@ class GradualRolloutStrategy {
         id: 'RISK004',
         description: 'Security vulnerability discovered post-deployment',
         likelihood: 'low',
-        impact: 'critical',
+        impact: 'high',
         mitigation: 'Security audit completed, monitoring for anomalies',
         owner: 'Security Team'
       },

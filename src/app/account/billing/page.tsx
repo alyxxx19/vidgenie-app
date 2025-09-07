@@ -17,6 +17,7 @@ import {
 import Link from 'next/link';
 import { redirect } from 'next/navigation';
 import { toast } from 'sonner';
+import { secureLog } from '@/lib/secure-logger';
 
 export default function BillingPage() {
   const { user, isLoading } = useAuth();
@@ -43,7 +44,7 @@ export default function BillingPage() {
       const { url } = await createPortal.mutateAsync();
       window.location.href = url;
     } catch (error) {
-      console.error('Portal access error:', error);
+      secureLog.error('Portal access error:', error);
       toast.error('Erreur lors de l&apos;accès au portail client');
     }
   };

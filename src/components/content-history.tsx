@@ -18,6 +18,7 @@ import {
   ExternalLink
 } from 'lucide-react';
 import Link from 'next/link';
+import NextImage from 'next/image';
 import { useState } from 'react';
 
 interface ContentItem {
@@ -164,9 +165,16 @@ export default function ContentHistory({ content = [], isLoading }: ContentHisto
           <div className="space-y-4">
             {filteredContent.map((item) => (
               <div key={item.id} className="flex items-center gap-3 p-3 border-border border-b hover:bg-secondary/50 transition-colors animate-slide-in">
-                <div className="w-12 h-12 bg-secondary border border-border flex items-center justify-center overflow-hidden">
+                <div className="w-12 h-12 bg-secondary border border-border flex items-center justify-center overflow-hidden relative">
                   {item.thumbnail ? (
-                    <img src={item.thumbnail} alt="" className="w-full h-full object-cover" />
+                    <NextImage 
+                      src={item.thumbnail} 
+                      alt="Content thumbnail" 
+                      width={48}
+                      height={48}
+                      className="object-cover"
+                      unoptimized
+                    />
                   ) : (
                     <Video className="w-4 h-4 text-muted-foreground" />
                   )}

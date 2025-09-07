@@ -4,6 +4,7 @@ import { PromptEnhancerService } from '@/services/prompt-enhancer';
 import { ImageGeneratorService } from '@/services/image-generator';
 import { VideoGeneratorService } from '@/services/video-generator';
 import { EncryptionService } from '@/services/encryption';
+import { secureLog } from '@/lib/secure-logger';
 
 export interface WorkflowExecuteEvent {
   workflowId: string;
@@ -60,7 +61,7 @@ export const executeWorkflow = inngest.createFunction(
   async ({ event, step }) => {
     const { workflowId, userId, projectId, config, userApiKeys } = event.data as WorkflowExecuteEvent;
     
-    console.log(`Starting workflow ${workflowId} for user ${userId}`);
+    secureLog.info(`Starting workflow ${workflowId} for user ${userId}`);
 
     // Décrypter les clés API
     const encryption = new EncryptionService();
@@ -401,7 +402,7 @@ export const executeWorkflow = inngest.createFunction(
           }
         });
 
-        console.log(`Workflow ${workflowId} completed successfully for user ${userId}`);
+        secureLog.info(`Workflow ${workflowId} completed successfully for user ${userId}`);
       });
 
       return {
@@ -418,7 +419,7 @@ export const executeWorkflow = inngest.createFunction(
       };
 
     } catch (error) {
-      console.error(`Workflow ${workflowId} failed:`, error);
+      secureLog.error(`Workflow ${workflowId} failed:`, error);
       
       // Enregistrer l'erreur
       await db.usageEvent.create({
@@ -444,10 +445,10 @@ export const executeWorkflow = inngest.createFunction(
 async function updateWorkflowStep(update: WorkflowStepUpdate): Promise<void> {
   // TODO: Implémenter la mise à jour en temps réel via WebSocket/SSE
   // Pour l'instant, logger
-  console.log(`Workflow ${update.workflowId} - Step ${update.stepId}: ${update.status} (${update.progress}%)`);
+  secureLog.info(`Workflow ${update.workflowId} - Step ${update.stepId}: ${update.status} (${update.progress}%)`);
   
   if (update.error) {
-    console.error(`Workflow ${update.workflowId} - Step ${update.stepId} error:`, update.error);
+    secureLog.error(`Workflow ${update.workflowId} - Step ${update.stepId} error:`, update.error);
   }
 }
 
@@ -492,9 +493,9 @@ async function deductUserCredits(
       });
     });
 
-    console.log(`Deducted ${amount} credits from user ${userId} for ${metadata.step}`);
+    secureLog.info(`Deducted ${amount} credits from user ${userId} for ${metadata.step}`);
   } catch (error) {
-    console.error(`Failed to deduct credits for user ${userId}:`, error);
+    secureLog.error(`Failed to deduct credits for user ${userId}:`, error);
     throw error;
   }
 }

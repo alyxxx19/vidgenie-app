@@ -9,32 +9,32 @@ datasource db {
 
 model User {
   id                     String          @id @default(cuid())
-  email                  String          @unique
-  name                   String?
-  firstName              String?
-  lastName               String?
-  phone                  String?
-  avatar                 String?
-  bio                    String?
-  website                String?
-  location               String?
+  email                  String          @unique @db.VarChar(320) // RFC 5321 limit
+  name                   String?         @db.VarChar(100)
+  firstName              String?         @db.VarChar(50)
+  lastName               String?         @db.VarChar(50)
+  phone                  String?         @db.VarChar(20)
+  avatar                 String?         @db.VarChar(500)
+  bio                    String?         @db.VarChar(500)
+  website                String?         @db.VarChar(200)
+  location               String?         @db.VarChar(100)
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt
   lastLoginAt            DateTime?
-  creatorType            String          @default("solo")
+  creatorType            String          @default("solo") @db.VarChar(20)
   platforms              String[]
-  preferredLang          String          @default("fr")
-  timezone               String          @default("Europe/Paris")
-  planId                 String          @default("free")
+  preferredLang          String          @default("fr") @db.VarChar(5)
+  timezone               String          @default("Europe/Paris") @db.VarChar(50)
+  planId                 String          @default("free") @db.VarChar(50)
   creditsBalance         Int             @default(100)
   credits                Int             @default(100)
   creditsUsed            Int             @default(0)
   subscriptionId         String?
-  stripeCustomerId       String?         @unique
-  stripeSubscriptionId   String?         @unique
+  stripeCustomerId       String?         @unique @db.VarChar(100)
+  stripeSubscriptionId   String?         @unique @db.VarChar(100)
   stripeCurrentPeriodEnd DateTime?
-  stripePriceId          String?
-  stripePaymentMethodId  String?
+  stripePriceId          String?         @db.VarChar(100)
+  stripePaymentMethodId  String?         @db.VarChar(100)
   apiCredentials         ApiCredential[]
   assets                 Asset[]
   creditLedger           CreditLedger[]
@@ -55,6 +55,10 @@ model User {
   contents               Content[]
   userSettings           UserSettings?
 
+  @@index([email, planId])
+  @@index([createdAt])
+  @@index([creditsBalance]) // Pour les requêtes de billing
+  @@index([stripeCustomerId]) // Optimisation Stripe
   @@map("users")
 }
 
@@ -126,22 +130,22 @@ model Job {
   id                     String       @id @default(cuid())
   userId                 String
   projectId              String?
-  type                   String
-  status                 String       @default("pending")
-  prompt                 String?
+  type                   String       @db.VarChar(50)
+  status                 String       @default("pending") @db.VarChar(20)
+  prompt                 String?      @db.Text
   config                 Json?
-  estimatedTime          Int?
-  actualTime             Int?
-  progress               Int          @default(0)
-  estimatedTimeRemaining Int?
+  estimatedTime          Int?         // En secondes
+  actualTime             Int?         // En secondes
+  progress               Int          @default(0) @db.SmallInt // 0-100
+  estimatedTimeRemaining Int?         // En secondes
   metadata               Json?
   resultAssetId          String?      @unique
   resultPostId           String?      @unique
-  errorMessage           String?
-  inngestId              String?
-  priority               Int          @default(0)
-  retryCount             Int          @default(0)
-  maxRetries             Int          @default(3)
+  errorMessage           String?      @db.Text
+  inngestId              String?      @db.VarChar(100)
+  priority               Int          @default(0) @db.SmallInt
+  retryCount             Int          @default(0) @db.SmallInt
+  maxRetries             Int          @default(3) @db.SmallInt
   createdAt              DateTime     @default(now())
   startedAt              DateTime?
   completedAt            DateTime?
@@ -152,8 +156,11 @@ model Job {
   resultPost             Post?        @relation("JobResultPost")
   usageEvents            UsageEvent[]
 
-  @@index([userId, status])
-  @@index([inngestId])
+  @@index([userId, status, createdAt]) // Job queue par utilisateur
+  @@index([status, priority, createdAt]) // Queue globale avec priorité
+  @@index([inngestId]) // Webhook callbacks
+  @@index([type, status]) // Jobs par type
+  @@index([projectId, status]) // Jobs par projet
   @@map("jobs")
 }
 
@@ -162,28 +169,28 @@ model Asset {
   userId          String
   projectId       String?
   jobId           String?  @unique
-  filename        String
-  originalName    String?
-  mimeType        String
-  fileSize        Int
-  duration        Int?
+  filename        String   @db.VarChar(255)
+  originalName    String?  @db.VarChar(255)
+  mimeType        String   @db.VarChar(50)
+  fileSize        Int      // En bytes
+  duration        Int?     // En secondes pour vidéos
   width           Int?
   height          Int?
-  s3Key           String   @unique
-  s3Bucket        String
-  s3Region        String
-  publicUrl       String?
-  thumbnail       String?
-  thumbnailUrl    String?
-  thumbnailS3Key  String?
+  s3Key           String   @unique @db.VarChar(500)
+  s3Bucket        String   @db.VarChar(100)
+  s3Region        String   @db.VarChar(20)
+  publicUrl       String?  @db.VarChar(1000)
+  thumbnail       String?  @db.VarChar(500)
+  thumbnailUrl    String?  @db.VarChar(1000)
+  thumbnailS3Key  String?  @db.VarChar(500)
   frameRate       Int?
-  previewGifPath  String?
-  generatedBy     String?
-  prompt          String?
+  previewGifPath  String?  @db.VarChar(500)
+  generatedBy     String?  @db.VarChar(50)
+  prompt          String?  @db.Text
   aiConfig        Json?
-  status          String   @default("processing")
+  status          String   @default("processing") @db.VarChar(20)
   tags            String[] @default([])
-  description     String?
+  description     String?  @db.Text
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
   creatorJob      Job?     @relation("JobResult", fields: [jobId], references: [resultAssetId])
@@ -193,8 +200,12 @@ model Asset {
   imageJobs       GenerationJob[] @relation("ImageAsset")
   videoJobs       GenerationJob[] @relation("VideoAsset")
 
-  @@index([userId, status])
-  @@index([s3Key])
+  @@index([userId, status, createdAt]) // Dashboard et filtering
+  @@index([s3Key]) // Lookups par S3
+  @@index([userId, createdAt]) // Timeline assets
+  @@index([projectId, createdAt]) // Assets par projet
+  @@index([status, createdAt]) // Processing queue
+  @@index([mimeType]) // Filtrage par type
   @@map("assets")
 }
 
@@ -204,13 +215,13 @@ model Post {
   projectId       String?
   assetId         String?
   jobId           String?   @unique
-  title           String?
-  description     String?
+  title           String?   @db.VarChar(255)
+  description     String?   @db.Text
   hashtags        String[]
   platforms       String[]
   scheduledAt     DateTime?
   publishedAt     DateTime?
-  status          String    @default("draft")
+  status          String    @default("draft") @db.VarChar(20)
   platformData    Json?
   seoOptimized    Boolean   @default(false)
   performanceData Json?
@@ -221,8 +232,11 @@ model Post {
   project         Project?  @relation(fields: [projectId], references: [id])
   user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId, status])
-  @@index([scheduledAt])
+  @@index([userId, status, createdAt]) // Dashboard posts
+  @@index([scheduledAt]) // Scheduling queue
+  @@index([platforms, scheduledAt]) // Planning par plateforme
+  @@index([status, scheduledAt]) // Publishing queue
+  @@index([projectId, status]) // Posts par projet
   @@map("posts")
 }
 
@@ -278,14 +292,16 @@ model CreditLedger {
   id          String   @id @default(cuid())
   userId      String
   amount      Int
-  type        String
-  description String?
+  type        String   @db.VarChar(50)
+  description String?  @db.VarChar(255)
   costEur     Decimal? @db.Decimal(10, 4)
   jobId       String?
   createdAt   DateTime @default(now())
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([userId, createdAt])
+  @@index([userId, createdAt]) // Timeline utilisateur
+  @@index([userId, type, createdAt]) // Par type de transaction
+  @@index([jobId]) // Lien vers jobs
   @@map("credit_ledger")
 }
 
@@ -293,18 +309,20 @@ model UsageEvent {
   id        String   @id @default(cuid())
   userId    String?
   jobId     String?
-  event     String
-  platform  String?
-  provider  String?
+  event     String   @db.VarChar(50)
+  platform  String?  @db.VarChar(20)
+  provider  String?  @db.VarChar(20)
   metadata  Json?
   costEur   Decimal? @db.Decimal(10, 4)
-  duration  Int?
+  duration  Int?     // En millisecondes
   createdAt DateTime @default(now())
   job       Job?     @relation(fields: [jobId], references: [id])
   user      User?    @relation(fields: [userId], references: [id])
 
-  @@index([event, createdAt])
-  @@index([userId, createdAt])
+  @@index([event, createdAt]) // Analytics par event
+  @@index([userId, createdAt]) // Timeline utilisateur
+  @@index([provider, createdAt]) // Analytics provider
+  @@index([platform, createdAt]) // Analytics plateforme
   @@map("usage_events")
 }
 
@@ -363,8 +381,8 @@ model GenerationJob {
   projectId         String?
   
   // Type de génération
-  kind              String   // 'IMAGE' | 'VIDEO' | 'IMAGE_TO_VIDEO'
-  status            String   // Machine à états
+  kind              String   @db.VarChar(20) // 'IMAGE' | 'VIDEO' | 'IMAGE_TO_VIDEO'
+  status            String   @db.VarChar(20) // Machine à états
   
   // Prompts
   inputPrompt       String   @db.Text
@@ -376,17 +394,17 @@ model GenerationJob {
   videoAssetId      String?
   
   // Provider data
-  providerJobId     String?  @unique
-  provider          String?  // 'openai' | 'veo3'
+  providerJobId     String?  @unique @db.VarChar(100)
+  provider          String?  @db.VarChar(20) // 'openai' | 'veo3'
   providerData      Json?
   
   // Coûts et métriques
   costCents         Int      @default(0)
   processingTime    Int?     // millisecondes
-  retryCount        Int      @default(0)
+  retryCount        Int      @default(0) @db.SmallInt
   
   // Erreurs
-  errorCode         String?
+  errorCode         String?  @db.VarChar(50)
   errorMessage      String?  @db.Text
   
   // Timestamps
@@ -402,9 +420,12 @@ model GenerationJob {
   videoAsset        Asset?   @relation("VideoAsset", fields: [videoAssetId], references: [id])
   webhooks          Webhook[]
   
-  @@index([userId, createdAt])
-  @@index([status])
-  @@index([providerJobId])
+  @@index([userId, status, createdAt]) // Dashboard utilisateur
+  @@index([status, kind, createdAt]) // Queue par type
+  @@index([providerJobId]) // Webhook callbacks
+  @@index([provider, status]) // Monitoring par provider
+  @@index([userId, kind, createdAt]) // Historique par type
+  @@index([projectId, createdAt]) // Analytics projet
   @@map("generation_jobs")
 }
 
@@ -485,9 +506,9 @@ model CreditTransaction {
   userId      String
   
   // Transaction details
-  type        String   // 'DEBIT' | 'CREDIT'
-  amount      Int      // Montant en crédits
-  reason      String   // 'workflow_prompt_enhancement' | 'workflow_image_generation' | etc.
+  type        String   @db.VarChar(10) // 'DEBIT' | 'CREDIT'
+  amount      Int      // Montant en crédits (positif ou négatif)
+  reason      String   @db.VarChar(100) // 'workflow_prompt_enhancement' | etc.
   metadata    Json?    // Détails additionnels
   
   // Timestamps
@@ -496,8 +517,10 @@ model CreditTransaction {
   // Relations
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  @@index([userId])
-  @@index([createdAt])
+  @@index([userId, createdAt]) // Historique utilisateur
+  @@index([userId, type, createdAt]) // Filtrage par type
+  @@index([reason, createdAt]) // Analytics par raison
+  @@index([createdAt]) // Reports globaux
   @@map("credit_transactions")
 }
 
@@ -506,18 +529,18 @@ model Content {
   userId          String
   
   // Content type et métadonnées
-  type            String   // 'image' | 'video'
-  title           String
+  type            String   @db.VarChar(10) // 'image' | 'video'
+  title           String   @db.VarChar(255)
   originalPrompt  String   @db.Text
   enhancedPrompt  String?  @db.Text
   
   // URLs des assets
-  imageUrl        String?
-  videoUrl        String?
-  thumbnailUrl    String?
+  imageUrl        String?  @db.VarChar(1000)
+  videoUrl        String?  @db.VarChar(1000)
+  thumbnailUrl    String?  @db.VarChar(1000)
   
   // Status et métadonnées
-  status          String   @default("PROCESSING") // 'PROCESSING' | 'COMPLETED' | 'FAILED'
+  status          String   @default("PROCESSING") @db.VarChar(20) // 'PROCESSING' | 'COMPLETED' | 'FAILED'
   metadata        Json?    // Données additionnelles du workflow
   
   // Timestamps
@@ -527,8 +550,10 @@ model Content {
   // Relations
   user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  @@index([userId])
-  @@index([status])
+  @@index([userId, status, createdAt]) // Dashboard et filtering
+  @@index([userId, type, createdAt]) // Tri par type
+  @@index([status, createdAt]) // Queue de processing
+  @@index([createdAt]) // Timeline globale
   @@map("content")
 }
 

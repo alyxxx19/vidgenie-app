@@ -1,5 +1,6 @@
 import Stripe from 'stripe';
 import { loadStripe } from '@stripe/stripe-js';
+import { secureLog } from '@/lib/secure-logger';
 
 // Configuration serveur Stripe - only initialize if valid key exists
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -20,7 +21,7 @@ const stripePublicKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 
 export const getStripe = () => {
   if (!stripePublicKey || stripePublicKey === 'pk_test_your-stripe-public-key') {
-    console.warn('Stripe public key not configured');
+    secureLog.warn('Stripe public key not configured');
     return null;
   }
   return loadStripe(stripePublicKey);

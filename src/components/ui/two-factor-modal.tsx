@@ -25,6 +25,7 @@ import {
   Eye,
   EyeOff,
 } from 'lucide-react';
+import NextImage from 'next/image';
 import { toast } from 'sonner';
 import { api } from '@/app/providers';
 
@@ -176,10 +177,13 @@ export function TwoFactorModal({ open, onOpenChange, mode, isEnabled }: TwoFacto
             {/* QR Code */}
             <div className="text-center space-y-3">
               <div className="bg-white p-4 rounded-lg inline-block">
-                <img 
+                <NextImage 
                   src={qrData.qrCode} 
                   alt="QR Code pour 2FA" 
+                  width={192}
+                  height={192}
                   className="w-48 h-48"
+                  unoptimized
                 />
               </div>
               <p className="text-xs font-mono text-muted-foreground">

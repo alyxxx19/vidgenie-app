@@ -3,6 +3,7 @@ import { db } from '@/server/api/db';
 import { simpleImageService } from '@/lib/services/simple-image-generation';
 import { simpleStorage } from '@/lib/services/simple-storage';
 import { promptEnhancer } from '@/lib/services/prompt-enhancer';
+import { secureLog } from '@/lib/secure-logger';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Cette API est uniquement pour le développement
@@ -15,8 +16,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    console.log('[DEV-API] Development image generation request');
-    console.log('[DEV-API] Request body:', JSON.stringify(req.body, null, 2));
+    secureLog.info('[DEV-API] Development image generation request');
+    secureLog.info('[DEV-API] Request body:', JSON.stringify(req.body, null, 2));
 
     const { 
       prompt, 
@@ -35,7 +36,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Validation des paramètres
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length < 10) {
-      console.log('[DEV-API] Invalid prompt:', prompt);
+      secureLog.info('[DEV-API] Invalid prompt:', prompt);
       return res.status(400).json({ 
         error: 'Prompt is required and must be at least 10 characters long' 
       });
@@ -47,7 +48,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    console.log('[DEV-API] Prompt validated:', prompt.slice(0, 50) + '...');
+    secureLog.info('[DEV-API] Prompt validated:', prompt.slice(0, 50) + '...');
 
     // En mode développement, utiliser un utilisateur de test
     const DEV_USER_ID = 'dev-user-123';
@@ -64,9 +65,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           creditsBalance: 10000, // Beaucoup de crédits pour les tests
         },
       });
-      console.log('[DEV-API] Development user ensured');
+      secureLog.info('[DEV-API] Development user ensured');
     } catch (userError) {
-      console.error('[DEV-API] Error creating dev user:', userError);
+      secureLog.error('[DEV-API] Error creating dev user:', userError);
     }
     
     // Créer le job de génération
@@ -85,9 +86,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           startedAt: new Date(),
         },
       });
-      console.log('[DEV-API] Generation job created:', generationJob.id);
+      secureLog.info('[DEV-API] Generation job created:', generationJob.id);
     } catch (dbError) {
-      console.error('[DEV-API] Database error creating job:', dbError);
+      secureLog.error('[DEV-API] Database error creating job:', dbError);
       return res.status(500).json({ 
         error: 'Database error. Make sure your database is connected and migrations are run.' 
       });
@@ -99,7 +100,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       let enhancedPromptResult: any = { success: false, originalPrompt: prompt.trim() };
       
       if (enhanceEnabled) {
-        console.log('[DEV-API] Enhancing prompt with GPT...');
+        secureLog.info('[DEV-API] Enhancing prompt with GPT...');
         enhancedPromptResult = await promptEnhancer.enhanceImagePrompt(prompt.trim(), {
           temperature,
           style: mood,
@@ -110,16 +111,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         finalPrompt = enhancedPromptResult.enhancedPrompt || prompt.trim();
         
         if (enhancedPromptResult.success) {
-          console.log('[DEV-API] Prompt enhanced successfully');
+          secureLog.info('[DEV-API] Prompt enhanced successfully');
         } else {
-          console.log('[DEV-API] Using original prompt (enhancement failed)');
+          secureLog.info('[DEV-API] Using original prompt (enhancement failed)');
         }
       } else {
-        console.log('[DEV-API] GPT enhancement disabled, using original prompt');
+        secureLog.info('[DEV-API] GPT enhancement disabled, using original prompt');
       }
 
       // Générer l'image avec OpenAI
-      console.log('[DEV-API] Starting image generation with enhanced prompt...');
+      secureLog.info('[DEV-API] Starting image generation with enhanced prompt...');
       const imageResult = await simpleImageService.generateImage({
         prompt: finalPrompt,
         style: style || 'vivid',
@@ -131,14 +132,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         throw new Error(imageResult.error || 'Image generation failed');
       }
 
-      console.log('[DEV-API] Image generated successfully');
+      secureLog.info('[DEV-API] Image generated successfully');
 
       // Télécharger l'image
-      console.log('[DEV-API] Downloading image...');
+      secureLog.info('[DEV-API] Downloading image...');
       const imageBuffer = await simpleImageService.downloadImageAsBuffer(imageResult.imageUrl);
 
       // Sauvegarder l'image
-      console.log('[DEV-API] Storing image...');
+      secureLog.info('[DEV-API] Storing image...');
       const filename = simpleStorage.generateFilename(generationJob.id, 'png');
       const storageResult = await simpleStorage.uploadImage(imageBuffer, filename, 'image/png');
 
@@ -146,7 +147,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         throw new Error(storageResult.error || 'Image storage failed');
       }
 
-      console.log('[DEV-API] Image stored successfully:', storageResult.publicUrl);
+      secureLog.info('[DEV-API] Image stored successfully:', storageResult.publicUrl);
 
       // Créer l'asset dans la base de données
       const imageAsset = await db.asset.create({
@@ -198,7 +199,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       });
 
-      console.log('[DEV-API] Generation completed successfully');
+      secureLog.info('[DEV-API] Generation completed successfully');
 
       // Retourner le résultat
       return res.status(200).json({
@@ -219,7 +220,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
     } catch (generationError: any) {
-      console.error('[DEV-API] Generation failed:', generationError);
+      secureLog.error('[DEV-API] Generation failed:', generationError);
 
       // Marquer le job comme échoué
       await db.generationJob.update({
@@ -239,7 +240,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
   } catch (error: any) {
-    console.error('[DEV-API] Request failed:', error);
+    secureLog.error('[DEV-API] Request failed:', error);
     return res.status(500).json({
       error: error.message || 'Internal server error',
       details: error.stack || 'No stack trace available',

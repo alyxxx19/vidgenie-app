@@ -5,7 +5,7 @@
  * Usage: npx tsx scripts/test-auth-workflow.ts
  */
 
-import { fetch } from 'node-fetch';
+// Using built-in fetch in Node 18+
 
 const API_BASE = 'http://localhost:3000';
 

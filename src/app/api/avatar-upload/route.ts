@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { S3Client, PutObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { z } from 'zod';
+import { secureLog } from '@/lib/secure-logger';
 
 // Configuration S3
 const s3Client = new S3Client({
@@ -81,13 +82,13 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Erreur génération presigned URL:', error);
+    secureLog.error('Erreur génération presigned URL:', error);
 
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { 
           error: 'Données de fichier invalides',
-          details: error.errors 
+          details: error.issues 
         },
         { status: 400 }
       );
@@ -131,7 +132,7 @@ export async function PUT(request: NextRequest) {
     // TODO: Optionnel - redimensionner l'image avec Sharp
 
     // Mettre à jour l'avatar dans la base de données
-    const { db } = await import('@/server/db');
+    const { db } = await import('@/server/api/db');
     
     await db.user.update({
       where: { id: user.id },
@@ -148,7 +149,7 @@ export async function PUT(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Erreur mise à jour avatar:', error);
+    secureLog.error('Erreur mise à jour avatar:', error);
     
     return NextResponse.json(
       { error: 'Erreur lors de la mise à jour de l\'avatar' },

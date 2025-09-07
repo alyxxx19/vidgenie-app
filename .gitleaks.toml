@@ -1,0 +1,114 @@
+# ==================================================
+# Configuration GitLeaks pour détection des secrets
+# PHASE 5.3 - Sécurité automatisée
+# ==================================================
+
+title = "VidGenie GitLeaks Configuration"
+
+[extend]
+# Utilise les règles par défaut et les étend
+useDefault = true
+
+[[rules]]
+# Clés API OpenAI
+id = "openai-api-key"
+description = "OpenAI API Key"
+regex = '''sk-[a-zA-Z0-9]{48}'''
+keywords = [
+    "openai",
+    "sk-",
+]
+
+[[rules]]
+# Clés API Anthropic
+id = "anthropic-api-key"
+description = "Anthropic API Key"
+regex = '''sk-ant-[a-zA-Z0-9\-_]{95}'''
+keywords = [
+    "anthropic",
+    "sk-ant-",
+]
+
+[[rules]]
+# Google API Keys
+id = "google-api-key"
+description = "Google API Key"
+regex = '''AIza[0-9A-Za-z\-_]{35}'''
+keywords = [
+    "google",
+    "AIza",
+]
+
+[[rules]]
+# Database URLs
+id = "database-url"
+description = "Database URL with credentials"
+regex = '''(postgres|postgresql|mysql)://[a-zA-Z0-9]+:[a-zA-Z0-9]+@[a-zA-Z0-9\.\-]+:[0-9]+/[a-zA-Z0-9]+'''
+keywords = [
+    "DATABASE_URL",
+    "postgres://",
+    "postgresql://",
+    "mysql://",
+]
+
+[[rules]]
+# NextAuth Secret
+id = "nextauth-secret"
+description = "NextAuth Secret"
+regex = '''NEXTAUTH_SECRET\s*=\s*["\']?[a-zA-Z0-9\-_+/=]{32,}["\']?'''
+keywords = [
+    "NEXTAUTH_SECRET",
+]
+
+[[rules]]
+# Encryption Keys
+id = "encryption-key"
+description = "Encryption Key"
+regex = '''ENCRYPTION_KEY\s*=\s*["\']?[a-zA-Z0-9\-_+/=]{32,}["\']?'''
+keywords = [
+    "ENCRYPTION_KEY",
+]
+
+[[rules]]
+# JWT Secrets
+id = "jwt-secret"
+description = "JWT Secret"
+regex = '''JWT_SECRET\s*=\s*["\']?[a-zA-Z0-9\-_+/=]{32,}["\']?'''
+keywords = [
+    "JWT_SECRET",
+]
+
+# Whitelist pour éviter les faux positifs
+[allowlist]
+description = "Fichiers et patterns à ignorer"
+files = [
+    ".gitleaks.toml",
+    ".env.example",
+    ".env.docker",
+    "README.md",
+    "*.md",
+    "test/**/*",
+    "**/*test*",
+    "**/*mock*",
+]
+
+paths = [
+    '''node_modules/''',
+    '''.git/''',
+    '''.next/''',
+    '''dist/''',
+    '''build/''',
+]
+
+# Regex patterns à ignorer (faux positifs courants)
+regexes = [
+    '''sk-test''',
+    '''sk-example''',
+    '''sk-fake''',
+    '''your-api-key''',
+    '''your-secret-key''',
+    '''change-me''',
+    '''placeholder''',
+    '''example''',
+    '''AIzaXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX''',
+]

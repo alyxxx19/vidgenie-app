@@ -1,4 +1,5 @@
 import { stripe, getPlanByPriceId, PRICING_CONFIG } from './config';
+import { secureLog } from '@/lib/secure-logger';
 import type { PricingPlan } from './config';
 
 export interface CreateCheckoutSessionParams {
@@ -93,7 +94,7 @@ export class StripeSubscriptionService {
         cancelAtPeriodEnd: subscription.cancel_at_period_end,
       };
     } catch (error) {
-      console.error('Error retrieving subscription:', error);
+      secureLog.error('Error retrieving subscription:', error);
       return null;
     }
   }

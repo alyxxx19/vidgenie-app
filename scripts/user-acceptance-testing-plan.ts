@@ -992,13 +992,13 @@ Your feedback directly shapes the final product. Don't hesitate to be critical -
             {
               id: 'biggest_strength',
               type: 'textarea',
-              question: 'What is VidGenie\\'s biggest strength?',
+              question: 'What is VidGenie\'s biggest strength?',
               required: true
             },
             {
               id: 'biggest_weakness',
               type: 'textarea',
-              question: 'What is VidGenie\\'s biggest weakness that needs improvement?',
+              question: 'What is VidGenie\'s biggest weakness that needs improvement?',
               required: true
             },
             {

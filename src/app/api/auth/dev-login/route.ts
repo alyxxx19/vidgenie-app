@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/server/api/db';
+import { secureLog } from '@/lib/secure-logger';
 
 export async function POST(request: NextRequest) {
+  // ✅ CORRECTION CRITIQUE - Bloquer en production
+  if (process.env.NODE_ENV !== 'development') {
+    return NextResponse.json({ error: 'Endpoint not available' }, { status: 404 });
+  }
+
   try {
     const body = await request.json();
     const { email, name } = body;
@@ -52,7 +58,8 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('Dev login error:', error);
+    // ✅ Logger sécurisé implémenté
+    secureLog.error('Dev login error:', error);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { secureLog } from '@/lib/secure-logger';
 
 export type ImageProvider = 'gpt-image-1' | 'dalle3' | 'dalle2';
 export type ImageSize = '1024x1024' | '1792x1024' | '1024x1792';
@@ -132,7 +133,7 @@ export class ImageGeneratorService {
       };
 
     } catch (error) {
-      console.error('Image generation failed:', error);
+      secureLog.error('Image generation failed:', error);
       
       return {
         success: false,

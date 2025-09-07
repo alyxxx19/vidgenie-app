@@ -1,4 +1,5 @@
 import { supabase } from './client';
+import { secureLog } from '@/lib/secure-logger';
 import type { Database } from './types';
 
 export type AuthUser = Database['public']['Tables']['users']['Row'];
@@ -178,7 +179,7 @@ export const authService = {
         .single();
 
       if (profileError) {
-        console.error('Profile fetch error:', profileError);
+        secureLog.error('Profile fetch error:', profileError);
         return null;
       }
 

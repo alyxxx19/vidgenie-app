@@ -3,6 +3,7 @@ import { stripe, STRIPE_CONFIG, SUBSCRIPTION_PLANS } from '@/lib/stripe';
 import { db } from '@/server/api/db';
 import { getCreditsManager } from '@/lib/services/credits-manager';
 import Stripe from 'stripe';
+import { secureLog } from '@/lib/secure-logger';
 
 export async function POST(req: NextRequest) {
   const body = await req.text();
@@ -17,7 +18,7 @@ export async function POST(req: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(body, signature, STRIPE_CONFIG.webhookSecret);
   } catch (err) {
-    console.error('Webhook signature verification failed:', err);
+    secureLog.error('Webhook signature verification failed:', err);
     return NextResponse.json({ error: 'Invalid signature' }, { status: 400 });
   }
 
@@ -67,7 +68,7 @@ export async function POST(req: NextRequest) {
         break;
 
       default:
-        console.log(`Unhandled event type: ${event.type}`);
+        secureLog.info(`Unhandled event type: ${event.type}`);
     }
 
     // Mark as processed
@@ -81,7 +82,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ received: true });
   } catch (error) {
-    console.error('Webhook processing failed:', error);
+    secureLog.error('Webhook processing failed:', error);
     
     // Log error
     await db.stripeWebhook.update({
@@ -144,7 +145,7 @@ async function handleSubscriptionChange(subscription: Stripe.Subscription) {
           }
         );
         
-        console.log(`[STRIPE-WEBHOOK] Added ${plan.creditsPerMonth} credits for user ${user.email} (${plan.name} plan)`);
+        secureLog.info(`[STRIPE-WEBHOOK] Added ${plan.creditsPerMonth} credits for user ${user.email} (${plan.name} plan)`);
       }
     }
   }
@@ -221,5 +222,5 @@ async function handlePaymentFailed(invoice: Stripe.Invoice) {
 async function handleCustomerCreated(customer: Stripe.Customer) {
   // This is handled in the checkout session creation
   // but we can log it for audit purposes
-  console.log(`Stripe customer created: ${customer.id}`);
+  secureLog.info(`Stripe customer created: ${customer.id}`);
 }

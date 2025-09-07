@@ -163,27 +163,32 @@ async function setupEncryptedApiKeys(config: TestConfig): Promise<void> {
   console.log('🔐 Setting up encrypted API keys...');
 
   try {
-    const iv = EncryptionService.generateIV();
+    const encryptionService = new EncryptionService();
     const encryptionKey = config.encryptionKey;
 
     if (encryptionKey.length !== 32) {
       throw new Error('Encryption key must be exactly 32 characters');
     }
 
+    // Get IV from first encryption
+    const firstEncryption = config.apiKeys.openai ? 
+      encryptionService.encrypt(config.apiKeys.openai) : 
+      encryptionService.encrypt('dummy');
+    
     const encryptedKeys = {
       openaiKey: config.apiKeys.openai ? 
-        EncryptionService.encrypt(config.apiKeys.openai, encryptionKey, iv) : null,
+        firstEncryption.encrypted : null,
       imageGenKey: config.apiKeys.openai ? 
-        EncryptionService.encrypt(config.apiKeys.openai, encryptionKey, iv) : null,
+        encryptionService.encrypt(config.apiKeys.openai).encrypted : null,
       vo3Key: config.apiKeys.veo3 ? 
-        EncryptionService.encrypt(config.apiKeys.veo3, encryptionKey, iv) : null
+        encryptionService.encrypt(config.apiKeys.veo3).encrypted : null
     };
 
     await prisma.userApiKeys.create({
       data: {
         userId: config.user.id,
         ...encryptedKeys,
-        encryptionIV: iv,
+        encryptionIV: firstEncryption.iv,
         validationStatus: {},
         lastUpdated: new Date(),
         createdAt: new Date()

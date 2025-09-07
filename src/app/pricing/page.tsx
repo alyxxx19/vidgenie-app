@@ -27,6 +27,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { toast } from '@/components/ui/use-toast';
 import { PRICING_CONFIG } from '@/lib/stripe/config';
+import { secureLog } from '@/lib/secure-logger';
 
 const PLAN_ICONS = {
   FREE: Sparkles,
@@ -334,7 +335,7 @@ export default function PricingPage() {
         description: 'Impossible de créer la session de paiement',
         variant: 'destructive',
       });
-      console.error('Checkout error:', error);
+      secureLog.error('Checkout error:', error);
     } finally {
       setLoading(null);
     }

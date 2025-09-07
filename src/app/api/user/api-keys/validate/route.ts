@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiValidationService, type ValidationResult } from '@/services/api-validation';
 import { apiKeyRateLimit, getRateLimitIdentifier } from '@/lib/rate-limit';
+import { secureLog } from '@/lib/secure-logger';
 
 /**
  * POST /api/user/api-keys/validate
@@ -47,7 +48,7 @@ export async function POST(request: NextRequest) {
       const rateLimitResult = await apiKeyRateLimit.limit(identifier);
       
       if (!rateLimitResult.success) {
-        console.log(`Rate limit exceeded for API key validation: ${identifier}`);
+        secureLog.warn(`Rate limit exceeded for API key validation: ${identifier}`);
         return NextResponse.json({
           success: false,
           error: `Trop de validations. Limite: ${rateLimitResult.limit}/h. Réessayez dans ${Math.ceil((rateLimitResult.reset - Date.now()) / 1000)} secondes.`,
@@ -63,11 +64,11 @@ export async function POST(request: NextRequest) {
         }, { status: 429 });
       }
     } catch (rateLimitError) {
-      console.error('Rate limit error during validation:', rateLimitError);
+      secureLog.error('Rate limit error during validation:', rateLimitError);
       // Continue sans rate limiting en cas d'erreur Redis
     }
 
-    console.log(`Validation de clé ${provider} pour utilisateur ${user.id}`);
+    secureLog.info(`Validation de clé ${provider} pour utilisateur ${user.id}`);
 
     // Validation de la clé
     let validationResult: ValidationResult;
@@ -75,7 +76,7 @@ export async function POST(request: NextRequest) {
     try {
       validationResult = await apiValidationService.validateKey(provider, apiKey);
     } catch (validationError) {
-      console.error('Erreur lors de la validation:', validationError);
+      secureLog.error('Erreur lors de la validation:', validationError);
       return NextResponse.json({
         success: false,
         error: 'Erreur lors de la validation de la clé',
@@ -93,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     // Log du résultat (sans exposer la clé)
     const maskedKey = apiValidationService.maskApiKey(apiKey);
-    console.log(`Validation ${provider} pour ${user.id}: ${maskedKey} -> ${validationResult.isValid ? 'VALID' : 'INVALID'}`);
+    secureLog.info(`Validation ${provider} pour ${user.id}: ${maskedKey} -> ${validationResult.isValid ? 'VALID' : 'INVALID'}`);
 
     // Retour du résultat
     return NextResponse.json({
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Erreur serveur lors de la validation:', error);
+    secureLog.error('Erreur serveur lors de la validation:', error);
     return NextResponse.json({
       success: false,
       error: 'Erreur serveur lors de la validation',
@@ -153,7 +154,7 @@ export async function GET(request: NextRequest) {
     }, { status: 501 });
 
   } catch (error) {
-    console.error('Erreur lors de la validation globale:', error);
+    secureLog.error('Erreur lors de la validation globale:', error);
     return NextResponse.json(
       { error: 'Erreur serveur' },
       { status: 500 }

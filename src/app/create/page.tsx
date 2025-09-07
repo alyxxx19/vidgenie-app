@@ -12,12 +12,17 @@ import { Slider } from '@/components/ui/slider';
 import { Progress } from '@/components/ui/progress';
 import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { PromptBuilder } from '@/components/prompt-builder';
-import { VideoPromptBuilder } from '@/components/video-prompt-builder';
-import { WorkflowInterface } from '@/components/workflow-interface';
-import { WorkflowInterfaceV2 } from '@/components/workflow/workflow-interface-v2';
-import { WorkflowStepsVisualizer } from '@/components/workflow-steps-visualizer';
-import { WorkflowTypeSelector, WorkflowType } from '@/components/workflow/WorkflowTypeSelector';
+import { LazyWrapper } from '@/components/lazy/LazyWrapper';
+import { 
+  LazyPromptBuilder,
+  LazyVideoPromptBuilder,
+  LazyWorkflowInterface,
+  LazyWorkflowInterfaceV2,
+  LazyWorkflowStepsVisualizer,
+  LazyWorkflowTypeSelector,
+  preloadComponentsByRoute
+} from '@/components/lazy';
+import { WorkflowType } from '@/components/workflow/WorkflowTypeSelector';
 import { useWorkflowStore } from '@/components/workflow/store/workflow-store';
 import { promptUtils } from '@/lib/utils/prompt-utils';
 import { 
@@ -34,6 +39,7 @@ import {
 import { api } from '@/app/providers';
 import { toast } from 'sonner';
 import Link from 'next/link';
+import NextImage from 'next/image';
 // import { useMockImageGeneration } from '@/hooks/useMockImageGeneration';
 import { useDevImageGeneration } from '@/hooks/useDevImageGeneration';
 import { useTestPromptEnhancement } from '@/hooks/useTestPromptEnhancement';
@@ -42,6 +48,7 @@ import { CreditsDisplay, CostEstimator } from '@/components/credits-display';
 import { ApiKeysStatus } from '@/components/ApiKeysStatus';
 import { ProviderSelector, ImageProvider, VideoProvider } from '@/components/ProviderSelector';
 import { useUserApiKeys } from '@/hooks/useUserApiKeys';
+import { secureLog } from '@/lib/secure-logger';
 
 export default function CreatePage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -102,6 +109,14 @@ export default function CreatePage() {
       setVideoPrompt(decodeURIComponent(urlPrompt));
     }
   }, [searchParams]);
+
+  // Préchargement intelligent des composants
+  useEffect(() => {
+    if (user && !authLoading) {
+      // Précharger les composants de création après le chargement initial
+      preloadComponentsByRoute('/create');
+    }
+  }, [user, authLoading]);
 
   if (authLoading) {
     return <div className="min-h-screen bg-minimal-gradient flex items-center justify-center">
@@ -398,29 +413,35 @@ export default function CreatePage() {
 
         {/* Workflow Type Selector */}
         {showWorkflowSelector && (
-          <WorkflowTypeSelector
-            selectedType={selectedWorkflowType}
-            onSelect={handleWorkflowTypeSelect}
-            onContinue={selectedWorkflowType ? handleContinueToConfiguration : undefined}
-          />
-        )}
+          <LazyWrapper name="sélecteur de workflow" retryable={true}>
+            <LazyWorkflowTypeSelector
+              selectedType={selectedWorkflowType}
+              onSelect={handleWorkflowTypeSelect}
+              onContinue={selectedWorkflowType ? handleContinueToConfiguration : undefined}
+            />
+          </LazyWrapper>
+        )}        
         
         {/* Smart Workflow Interface - Only show after workflow type is selected */}
         {!showWorkflowSelector && workflowMode === 'workflow' && selectedWorkflowType && (
-          <WorkflowInterfaceV2 projectId={selectedProject} />
+          <LazyWrapper name="interface workflow avancé" retryable={true}>
+            <LazyWorkflowInterfaceV2 projectId={selectedProject} />
+          </LazyWrapper>
         )}
 
         {/* Workflow Steps Visualizer - New Design */}
         {!showWorkflowSelector && workflowMode !== 'workflow' && (
           <div className="mb-8">
-            <WorkflowStepsVisualizer 
-              workflowType={workflowMode as 'complete' | 'image-only' | 'video-from-image'}
-              currentStep={workflowCurrentStep}
-              onStepClick={(stepId) => {
-                console.log('Step clicked:', stepId);
-                // Ici on pourrait ajouter une logique pour expliquer chaque étape
-              }}
-            />
+            <LazyWrapper name="visualiseur d'étapes" retryable={true}>
+              <LazyWorkflowStepsVisualizer 
+                workflowType={workflowMode as 'complete' | 'image-only' | 'video-from-image'}
+                currentStep={workflowCurrentStep}
+                onStepClick={(stepId) => {
+                  secureLog.info('Step clicked:', stepId);
+                  // Ici on pourrait ajouter une logique pour expliquer chaque étape
+                }}
+              />
+            </LazyWrapper>
           </div>
         )}
         
@@ -468,12 +489,14 @@ export default function CreatePage() {
 
             {/* Image Prompt - Use advanced PromptBuilder for image-only mode */}
             {workflowMode === 'image-only' ? (
-              <PromptBuilder
-                value={imagePrompt}
-                onChange={setImagePrompt}
-                onEnhanceToggle={setEnhanceEnabled}
-                enhanceEnabled={enhanceEnabled}
-              />
+              <LazyWrapper name="constructeur de prompts avancé" retryable={true}>
+                <LazyPromptBuilder
+                  value={imagePrompt}
+                  onChange={setImagePrompt}
+                  onEnhanceToggle={setEnhanceEnabled}
+                  enhanceEnabled={enhanceEnabled}
+                />
+              </LazyWrapper>
             ) : (workflowMode === 'complete' || workflowMode === 'video-from-image') && (
               <Card className="bg-card border-border">
                 <CardHeader>
@@ -507,13 +530,15 @@ export default function CreatePage() {
 
             {/* Video Prompt (for complete and video-from-image modes) */}
             {(workflowMode === 'complete' || workflowMode === 'video-from-image') && (
-              <VideoPromptBuilder
-                value={videoPrompt}
-                onChange={setVideoPrompt}
-                onSettingsChange={setVideoSettings}
-                onEnhanceToggle={setEnhanceEnabled}
-                enhanceEnabled={enhanceEnabled}
-              />
+              <LazyWrapper name="constructeur de prompts vidéo" retryable={true}>
+                <LazyVideoPromptBuilder
+                  value={videoPrompt}
+                  onChange={setVideoPrompt}
+                  onSettingsChange={setVideoSettings}
+                  onEnhanceToggle={setEnhanceEnabled}
+                  enhanceEnabled={enhanceEnabled}
+                />
+              </LazyWrapper>
             )}
 
             {/* Video Template Showcase for video modes */}
@@ -758,12 +783,16 @@ export default function CreatePage() {
                       <Badge className="bg-white text-black font-mono text-xs">image_ready</Badge>
                     </div>
                     
-                    <div className="border border-border overflow-hidden">
-                      <img 
+                    <div className="border border-border overflow-hidden relative" style={{ maxHeight: '200px' }}>
+                      <NextImage 
                         src={(realResult?.imageUrl || testResult?.mockImageUrl) || ''} 
                         alt="Generated image" 
-                        className="w-full h-auto"
-                        style={{ maxHeight: '200px', objectFit: 'contain' }}
+                        width={400}
+                        height={200}
+                        className="w-full h-auto object-contain"
+                        style={{ maxHeight: '200px' }}
+                        priority
+                        unoptimized
                       />
                     </div>
 

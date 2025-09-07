@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
+import { secureLog } from '@/lib/secure-logger';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (process.env.NODE_ENV !== 'development') {
@@ -11,25 +12,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    console.log('[TEST-API] Starting test...');
+    secureLog.info('[TEST-API] Starting test...');
 
     // Test 1: Vérifier les variables d'environnement
     if (!process.env.OPENAI_API_KEY) {
       return res.status(500).json({ error: 'OpenAI API key not configured' });
     }
-    console.log('[TEST-API] OpenAI API key is configured');
+    secureLog.info('[TEST-API] OpenAI API key is configured');
 
     // Test 2: Créer le client OpenAI
     const openai = new OpenAI({
       apiKey: process.env.OPENAI_API_KEY,
     });
-    console.log('[TEST-API] OpenAI client created');
+    secureLog.info('[TEST-API] OpenAI client created');
 
     // Test 3: Faire un appel simple à OpenAI
     const { prompt } = req.body;
     const testPrompt = prompt || "a simple red circle on white background";
     
-    console.log('[TEST-API] Testing with prompt:', testPrompt);
+    secureLog.info('[TEST-API] Testing with prompt:', testPrompt);
 
     const response = await openai.images.generate({
       model: 'dall-e-3',
@@ -41,7 +42,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       response_format: 'url',
     });
 
-    console.log('[TEST-API] OpenAI response received');
+    secureLog.info('[TEST-API] OpenAI response received');
 
     const image = response.data[0];
     if (!image?.url) {
@@ -56,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
   } catch (error: any) {
-    console.error('[TEST-API] Error:', error);
+    secureLog.error('[TEST-API] Error:', error);
     
     return res.status(500).json({
       error: error.message || 'Test failed',

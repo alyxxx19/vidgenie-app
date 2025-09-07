@@ -22,6 +22,7 @@ import { WorkflowNode, WorkflowEdge, NODE_TYPES } from './types/workflow';
 
 // Import des composants de nœuds depuis l'index
 import { nodeTypes } from './nodes';
+import { secureLog } from '@/lib/secure-logger';
 
 interface WorkflowCanvasProps {
   className?: string;
@@ -61,7 +62,7 @@ function WorkflowCanvasInner({ className }: WorkflowCanvasProps) {
 
   // Gestionnaire de sélection de nœud
   const onNodeClick = useCallback((event: React.MouseEvent, node: Node) => {
-    console.log('Node clicked:', node.id);
+    secureLog.info('Node clicked:', node.id);
     
     // Ajouter effet visuel de sélection
     const nodeElement = event.currentTarget as HTMLElement;
@@ -81,7 +82,7 @@ function WorkflowCanvasInner({ className }: WorkflowCanvasProps) {
   // Gestionnaire de drag des nœuds
   const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node) => {
     // Mettre à jour la position dans le store si nécessaire
-    console.log('Node dragged:', node.id, node.position);
+    secureLog.info('Node dragged:', node.id, node.position);
   }, []);
 
   // Fit view au chargement initial

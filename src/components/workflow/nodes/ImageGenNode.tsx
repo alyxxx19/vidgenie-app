@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { CheckCircle, AlertCircle, Clock, Download, ExternalLink } from 'lucide-react';
 import { WorkflowNodeData } from '../types/workflow';
 import { NODE_THEMES, STATUS_COLORS, NODE_SIZES, HANDLE_STYLES } from '../constants/node-themes';
+import NextImage from 'next/image';
 
 interface ImageGenNodeProps {
   id: string;
@@ -160,19 +161,25 @@ export function ImageGenNode({ id, data, selected }: ImageGenNodeProps) {
 
             {/* Aperçu de l'image */}
             <div className="relative">
-              <img
+              <NextImage
                 src={imageData?.imageUrl}
                 alt="Generated image"
+                width={200}
+                height={128}
                 className="w-full h-32 object-cover rounded-lg border border-[#333333]"
+                unoptimized
                 onError={(e) => {
                   e.currentTarget.style.display = 'none';
                 }}
               />
               {imageData?.thumbnailUrl && (
-                <img
+                <NextImage
                   src={imageData.thumbnailUrl}
                   alt="Thumbnail"
+                  width={32}
+                  height={32}
                   className="absolute top-2 right-2 w-8 h-8 object-cover rounded border-2 border-white shadow-lg"
+                  unoptimized
                 />
               )}
             </div>

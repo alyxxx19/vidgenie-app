@@ -1,5 +1,6 @@
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
+import { secureLog } from '@/lib/secure-logger';
 
 // Configuration Redis avec initialisation lazy
 let _redis: Redis | null = null;
@@ -14,7 +15,7 @@ function getRedisClient(): Redis {
     throw new Error('Redis credentials not found. Set UPSTASH_REDIS_REST_URL and UPSTASH_REDIS_REST_TOKEN.');
   }
 
-  console.log('✅ Redis client initialized');
+  secureLog.info('✅ Redis client initialized');
   _redis = new Redis({ url, token });
   return _redis;
 }

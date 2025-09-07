@@ -1,5 +1,6 @@
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
 import { join } from 'path';
+import { secureLog } from '@/lib/secure-logger';
 
 export interface StorageResult {
   success: boolean;
@@ -16,7 +17,7 @@ export class SimpleStorageService {
     this.uploadDir = join(process.cwd(), 'public', 'uploads');
     if (!existsSync(this.uploadDir)) {
       mkdirSync(this.uploadDir, { recursive: true });
-      console.log('[STORAGE] Created uploads directory:', this.uploadDir);
+      secureLog.info('[STORAGE] Created uploads directory:', this.uploadDir);
     }
   }
 
@@ -34,7 +35,7 @@ export class SimpleStorageService {
       // En production, utiliser S3 (à implémenter plus tard si besoin)
       return this.uploadToS3(buffer, filename, mimeType);
     } catch (error: any) {
-      console.error('[STORAGE] Upload failed:', error);
+      secureLog.error('[STORAGE] Upload failed:', error);
       return {
         success: false,
         error: error.message || 'Upload failed',
@@ -49,7 +50,7 @@ export class SimpleStorageService {
       
       const publicUrl = `/uploads/${filename}`;
       
-      console.log('[STORAGE] File saved locally:', filePath);
+      secureLog.info('[STORAGE] File saved locally:', filePath);
       
       return {
         success: true,
@@ -57,7 +58,7 @@ export class SimpleStorageService {
         localPath: filePath,
       };
     } catch (error: any) {
-      console.error('[STORAGE] Local upload failed:', error);
+      secureLog.error('[STORAGE] Local upload failed:', error);
       return {
         success: false,
         error: error.message || 'Local upload failed',

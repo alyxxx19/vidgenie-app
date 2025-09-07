@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getCreditsManager } from '@/lib/services/credits-manager';
 import { db } from '@/server/api/db';
+import { secureLog } from '@/lib/secure-logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -38,7 +39,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('[CREDITS-BALANCE-API] Error:', error);
+    secureLog.error('[CREDITS-BALANCE-API] Error:', error);
     
     return NextResponse.json(
       { 

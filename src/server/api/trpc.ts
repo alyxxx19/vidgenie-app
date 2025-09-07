@@ -5,6 +5,7 @@ import superjson from 'superjson';
 import { ZodError } from 'zod';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { secureLog } from '@/lib/secure-logger';
 import type { Database } from '@/lib/supabase/types';
 
 interface CreateContextOptions {
@@ -95,7 +96,7 @@ export const createTRPCContext = async (_opts: CreateNextContextOptions) => {
       };
     }
   } catch (error) {
-    console.error('tRPC context auth error:', error);
+    secureLog.security('tRPC context auth error:', error);
   }
 
   return createInnerTRPCContext({

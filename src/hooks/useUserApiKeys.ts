@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '@/lib/auth/auth-context';
 import { toast } from 'sonner';
+import { secureLog } from '@/lib/secure-logger';
 
 interface ApiKey {
   id: string;
@@ -106,7 +107,7 @@ export function useUserApiKeys() {
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
       setError(errorMessage);
-      console.error('Erreur lors du chargement des clés API:', errorMessage);
+      secureLog.error('Erreur lors du chargement des clés API:', errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -187,10 +188,10 @@ export function useUserApiKeys() {
       // Cette fonctionnalité devrait être implémentée côté serveur
       // pour des raisons de sécurité. Pour l'instant, on retourne null.
       // TODO: Implémenter un endpoint sécurisé pour récupérer les clés décryptées
-      console.warn('getDecryptedKey: Fonction non implémentée pour des raisons de sécurité');
+      secureLog.warn('getDecryptedKey: Fonction non implémentée pour des raisons de sécurité');
       return null;
     } catch (error) {
-      console.error('Erreur lors du décryptage de la clé:', error);
+      secureLog.error('Erreur lors du décryptage de la clé:', error);
       return null;
     }
   }, [hasValidKey]);

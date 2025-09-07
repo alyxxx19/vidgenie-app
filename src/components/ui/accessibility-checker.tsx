@@ -1,9 +1,10 @@
 'use client';
 
 import { useEffect } from 'react';
+import { secureLog } from '@/lib/secure-logger';
 
 // Vérifications d'accessibilité automatiques
-export function AccessibilityChecker() {
+function AccessibilityChecker() {
   useEffect(() => {
     // Vérifier les contrastes
     const checkContrasts = () => {
@@ -16,7 +17,7 @@ export function AccessibilityChecker() {
         // Alerter si le contraste semble faible (implémentation basique)
         if (bgColor && textColor && bgColor !== 'rgba(0, 0, 0, 0)' && textColor !== 'rgba(0, 0, 0, 0)') {
           // Logique de vérification de contraste simplifiée
-          console.log('Checking contrast for:', el, { bgColor, textColor });
+          secureLog.info('Checking contrast for:', el, { bgColor, textColor });
         }
       });
     };
@@ -32,7 +33,7 @@ export function AccessibilityChecker() {
         if (id) {
           const label = document.querySelector(`label[for="${id}"]`);
           if (!label && !ariaLabel && !ariaLabelledBy) {
-            console.warn('Input sans label accessible:', input);
+            secureLog.warn('Input sans label accessible:', input);
           }
         }
       });
@@ -43,7 +44,7 @@ export function AccessibilityChecker() {
       const buttons = document.querySelectorAll('button');
       buttons.forEach((button) => {
         if (!button.textContent?.trim() && !button.getAttribute('aria-label')) {
-          console.warn('Bouton sans texte accessible:', button);
+          secureLog.warn('Bouton sans texte accessible:', button);
         }
       });
     };
@@ -60,3 +61,5 @@ export function AccessibilityChecker() {
 
   return null;
 }
+
+export default AccessibilityChecker;

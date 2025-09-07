@@ -22,6 +22,7 @@ import {
   Filter
 } from 'lucide-react';
 import Link from 'next/link';
+import NextImage from 'next/image';
 import { api } from '@/app/providers';
 import { toast } from 'sonner';
 
@@ -279,10 +280,13 @@ export default function LibraryPage() {
                   <>
                     <div className="relative aspect-video bg-black overflow-hidden">
                       {asset.thumbnailUrl ? (
-                        <img 
+                        <NextImage 
                           src={asset.thumbnailUrl} 
-                          alt={asset.filename}
-                          className="w-full h-full object-cover"
+                          alt={asset.filename || 'Video thumbnail'}
+                          width={320}
+                          height={180}
+                          className="object-cover"
+                          unoptimized
                         />
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center">
@@ -369,10 +373,13 @@ export default function LibraryPage() {
                   <div className="flex p-3 gap-3">
                     <div className="relative w-24 h-14 bg-black overflow-hidden flex-shrink-0">
                       {asset.thumbnailUrl ? (
-                        <img 
+                        <NextImage 
                           src={asset.thumbnailUrl} 
-                          alt={asset.filename}
-                          className="w-full h-full object-cover"
+                          alt={asset.filename || 'Video thumbnail'}
+                          width={96}
+                          height={56}
+                          className="object-cover"
+                          unoptimized
                         />
                       ) : (
                         <div className="absolute inset-0 flex items-center justify-center">

@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { secureLog } from '@/lib/secure-logger';
 
 export class PromptEnhancerService {
   private openai: OpenAI;
@@ -26,7 +27,7 @@ export class PromptEnhancerService {
     error?: string;
   }> {
     try {
-      console.log('[PROMPT-ENHANCER] Enhancing prompt with GPT...');
+      secureLog.info('[PROMPT-ENHANCER] Enhancing prompt with GPT...');
       
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o', // Modèle le plus avancé disponible
@@ -50,8 +51,8 @@ export class PromptEnhancerService {
         throw new Error('No response from GPT');
       }
 
-      console.log('[PROMPT-ENHANCER] Original:', userPrompt);
-      console.log('[PROMPT-ENHANCER] Enhanced:', enhancedPrompt);
+      secureLog.info('[PROMPT-ENHANCER] Original:', userPrompt);
+      secureLog.info('[PROMPT-ENHANCER] Enhanced:', enhancedPrompt);
 
       return {
         success: true,
@@ -60,7 +61,7 @@ export class PromptEnhancerService {
       };
 
     } catch (error: any) {
-      console.error('[PROMPT-ENHANCER] Error:', error);
+      secureLog.error('[PROMPT-ENHANCER] Error:', error);
       
       // En cas d'erreur, retourner le prompt original
       return {
@@ -129,7 +130,7 @@ Your task is to enhance user prompts by:
     error?: string;
   }> {
     try {
-      console.log('[PROMPT-ENHANCER] Generating prompt variations...');
+      secureLog.info('[PROMPT-ENHANCER] Generating prompt variations...');
       
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o',
@@ -165,7 +166,7 @@ Return only the variations, one per line, no numbering or explanations.`
       };
 
     } catch (error: any) {
-      console.error('[PROMPT-ENHANCER] Variations error:', error);
+      secureLog.error('[PROMPT-ENHANCER] Variations error:', error);
       
       return {
         success: false,
@@ -181,7 +182,7 @@ Return only the variations, one per line, no numbering or explanations.`
     error?: string;
   }> {
     try {
-      console.log('[PROMPT-ENHANCER] Enhancing video prompt with GPT...');
+      secureLog.info('[PROMPT-ENHANCER] Enhancing video prompt with GPT...');
       
       const response = await this.openai.chat.completions.create({
         model: 'gpt-4o',
@@ -221,7 +222,7 @@ Important: Return ONLY the enhanced animation prompt, no explanations.`
       };
 
     } catch (error: any) {
-      console.error('[PROMPT-ENHANCER] Video error:', error);
+      secureLog.error('[PROMPT-ENHANCER] Video error:', error);
       
       return {
         success: false,

@@ -7,6 +7,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import { authService } from '@/lib/supabase/auth';
 import { cn } from '@/lib/utils';
+import { secureLog } from '@/lib/secure-logger';
 
 interface GoogleSignInButtonProps {
   variant?: 'default' | 'outline' | 'secondary' | 'ghost';
@@ -55,7 +56,7 @@ export function GoogleSignInButton({
       const errorMessage = err.message || 'Échec de l\'authentification Google';
       setError(errorMessage);
       onError?.(errorMessage);
-      console.error('Google Sign-In error:', err);
+      secureLog.error('Google Sign-In error:', err);
     } finally {
       setIsLoading(false);
     }

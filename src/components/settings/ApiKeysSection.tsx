@@ -17,6 +17,7 @@ import {
   Info
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { secureLog } from '@/lib/secure-logger';
 
 interface ApiKey {
   id: string;
@@ -74,7 +75,7 @@ export function ApiKeysSection() {
     setError(null);
 
     try {
-      console.log('[ApiKeysSection] Loading API keys...');
+      secureLog.info('[ApiKeysSection] Loading API keys...');
       
       const response = await fetch('/api/user/api-keys', {
         method: 'GET',
@@ -85,15 +86,15 @@ export function ApiKeysSection() {
       });
 
       const responseText = await response.text();
-      console.log('[ApiKeysSection] Response status:', response.status);
+      secureLog.info('[ApiKeysSection] Response status:', response.status);
       
       if (!response.ok) {
-        console.error('[ApiKeysSection] Error response:', responseText);
+        secureLog.error('[ApiKeysSection] Error response:', responseText);
         throw new Error(`Erreur HTTP: ${response.status}`);
       }
 
       const result: ApiKeysData = JSON.parse(responseText);
-      console.log('[ApiKeysSection] Loaded keys:', result.data?.length || 0);
+      secureLog.info('[ApiKeysSection] Loaded keys:', result.data?.length || 0);
       
       if (result.success) {
         // Convertir le tableau en objet indexé par provider
@@ -103,13 +104,13 @@ export function ApiKeysSection() {
         }, {} as Record<string, ApiKey>);
         
         setApiKeys(keysMap);
-        console.log('[ApiKeysSection] Keys set in state:', Object.keys(keysMap));
+        secureLog.info('[ApiKeysSection] Keys set in state:', Object.keys(keysMap));
       } else {
         throw new Error('Réponse non valide du serveur');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
-      console.error('[ApiKeysSection] Load error:', err);
+      secureLog.error('[ApiKeysSection] Load error:', err);
       setError(errorMessage);
       toast.error(`Erreur lors du chargement: ${errorMessage}`);
     } finally {
@@ -128,7 +129,7 @@ export function ApiKeysSection() {
   // Sauvegarde d'une clé API
   const handleSaveKey = useCallback(async (provider: string, apiKey: string): Promise<boolean> => {
     try {
-      console.log('[ApiKeysSection] Saving key for provider:', provider);
+      secureLog.info('[ApiKeysSection] Saving key for provider:', provider);
       
       const response = await fetch('/api/user/api-keys', {
         method: 'POST',
@@ -144,7 +145,7 @@ export function ApiKeysSection() {
       });
 
       const responseData = await response.json();
-      console.log('[ApiKeysSection] Save response:', responseData);
+      secureLog.info('[ApiKeysSection] Save response:', responseData);
 
       if (!response.ok) {
         throw new Error(responseData.error || `Erreur HTTP: ${response.status}`);
@@ -152,7 +153,7 @@ export function ApiKeysSection() {
       
       if (responseData.success) {
         // Recharger les données pour avoir les informations à jour
-        console.log('[ApiKeysSection] Key saved successfully, reloading...');
+        secureLog.info('[ApiKeysSection] Key saved successfully, reloading...');
         await loadApiKeys(false);
         toast.success(`Clé ${provider} sauvegardée avec succès`);
         return true;
@@ -161,7 +162,7 @@ export function ApiKeysSection() {
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
-      console.error('[ApiKeysSection] Save error:', error);
+      secureLog.error('[ApiKeysSection] Save error:', error);
       toast.error(`Erreur lors de la sauvegarde: ${errorMessage}`);
       return false;
     }
@@ -209,7 +210,7 @@ export function ApiKeysSection() {
 
   // Chargement initial
   useEffect(() => {
-    console.log('[ApiKeysSection] Component mounted, loading keys...');
+    secureLog.info('[ApiKeysSection] Component mounted, loading keys...');
     loadApiKeys();
   }, [loadApiKeys]);
 

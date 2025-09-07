@@ -48,24 +48,15 @@ describe('PromptEnhancerService', () => {
       id: 'test-completion',
       choices: [{
         message: {
-          content: JSON.stringify({
-            enhancedPrompt: "A beautiful sunset landscape with vibrant colors, dramatic clouds, and golden hour lighting, highly detailed, cinematic composition",
-            improvements: [
-              "Added specific details about lighting and atmosphere",
-              "Enhanced visual descriptors for better AI generation",
-              "Added composition guidance"
-            ],
-            confidence: 0.9,
-            estimatedQuality: "high",
-            tags: ["landscape", "sunset", "cinematic", "dramatic"]
-          })
+          content: "A beautiful sunset landscape with vibrant colors, dramatic clouds, and golden hour lighting, highly detailed, cinematic composition"
         }
       }],
       usage: {
         prompt_tokens: 50,
         completion_tokens: 100,
         total_tokens: 150
-      }
+      },
+      model: 'gpt-4-turbo-preview'
     };
 
     beforeEach(() => {
@@ -77,56 +68,57 @@ describe('PromptEnhancerService', () => {
       
       const result = await service.enhance(originalPrompt);
       
-      expect(result.success).toBe(true);
-      expect(result.enhancedPrompt).toBe("A beautiful sunset landscape with vibrant colors, dramatic clouds, and golden hour lighting, highly detailed, cinematic composition");
-      expect(result.originalPrompt).toBe(originalPrompt);
-      expect(result.improvements).toHaveLength(3);
-      expect(result.confidence).toBe(0.9);
-      expect(result.estimatedQuality).toBe("high");
-      expect(result.tags).toContain("sunset");
-      expect(result.totalCost).toBe(2); // Based on calculateCost method
-      expect(result.metadata.tokensUsed).toBe(150);
+      expect(result.original).toBe(originalPrompt);
+      expect(result.enhanced).toBe("A beautiful sunset landscape with vibrant colors, dramatic clouds, and golden hour lighting, highly detailed, cinematic composition");
+      expect(result.tokensUsed).toBe(150);
+      expect(result.model).toBe('gpt-4-turbo-preview');
+      expect(result.confidence).toBeGreaterThanOrEqual(0);
+      expect(result.confidence).toBeLessThanOrEqual(100);
+      expect(result.enhancementReason).toBeDefined();
+      expect(typeof result.enhancementReason).toBe('string');
     });
 
     it('should handle enhancement options correctly', async () => {
       const options = {
-        targetAudience: 'professional' as const,
-        contentType: 'commercial' as const,
-        language: 'en' as const,
-        creativity: 0.8
+        context: 'video' as const,
+        temperature: 0.8,
+        model: 'gpt-4o-mini',
+        maxTokens: 500
       };
       
-      await service.enhance("Test prompt", options);
+      const result = await service.enhance("Test prompt", options);
       
       expect(mockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           model: "gpt-4o-mini",
-          messages: expect.arrayContaining([
-            expect.objectContaining({
-              content: expect.stringContaining('Target audience: professional')
-            })
-          ]),
-          temperature: 0.8
+          temperature: 0.8,
+          max_tokens: 500
         })
       );
+      
+      expect(result.model).toBe('gpt-4o-mini');
+      expect(result.original).toBe("Test prompt");
     });
 
     it('should handle video-specific enhancements', async () => {
       const options = {
-        contentType: 'video' as const
+        context: 'video' as const
       };
       
-      await service.enhance("A person walking", options);
+      const result = await service.enhance("A person walking", options);
       
       expect(mockCreate).toHaveBeenCalledWith(
         expect.objectContaining({
           messages: expect.arrayContaining([
             expect.objectContaining({
-              content: expect.stringContaining('video generation')
+              content: expect.stringMatching(/movement|action|dynamic/i)
             })
           ])
         })
       );
+      
+      expect(result.original).toBe("A person walking");
+      expect(result.enhanced).toBeDefined();
     });
 
     it('should handle API errors gracefully', async () => {

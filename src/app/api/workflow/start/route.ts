@@ -3,6 +3,7 @@ import { getServerUser } from '@/lib/auth/server-auth';
 import { db } from '@/server/api/db';
 import { getWorkflowOrchestrator } from '@/lib/services/workflow-orchestrator';
 import { z } from 'zod';
+import { secureLog } from '@/lib/secure-logger';
 
 const startWorkflowSchema = z.object({
   imagePrompt: z.string().min(10).max(2000),
@@ -22,18 +23,18 @@ const startWorkflowSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('[API-WORKFLOW-START] Request received');
+    secureLog.info('[API-WORKFLOW-START] Request received');
     
     // Authentification
     const user = await getServerUser(request);
-    console.log('[API-WORKFLOW-START] Auth result:', { 
+    secureLog.info('[API-WORKFLOW-START] Auth result:', { 
       hasUser: !!user, 
       userId: user?.id,
       userEmail: user?.email 
     });
     
     if (!user?.id) {
-      console.log('[API-WORKFLOW-START] Authentication failed - no user or user ID');
+      secureLog.info('[API-WORKFLOW-START] Authentication failed - no user or user ID');
       return NextResponse.json(
         { 
           success: false,
@@ -45,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     // Validation des paramètres
     const body = await request.json();
-    console.log('[API-WORKFLOW-START] Request body received:', {
+    secureLog.info('[API-WORKFLOW-START] Request body received:', {
       hasImagePrompt: !!body.imagePrompt,
       hasVideoPrompt: !!body.videoPrompt,
       imagePromptLength: body.imagePrompt?.length,
@@ -53,7 +54,7 @@ export async function POST(request: NextRequest) {
     });
     
     const validatedData = startWorkflowSchema.parse(body);
-    console.log('[API-WORKFLOW-START] Data validated successfully');
+    secureLog.info('[API-WORKFLOW-START] Data validated successfully');
 
     // Vérifier les crédits de l'utilisateur
     const userProfile = await db.user.findUnique({
@@ -61,14 +62,14 @@ export async function POST(request: NextRequest) {
       select: { creditsBalance: true },
     });
 
-    console.log('[API-WORKFLOW-START] User credits check:', {
+    secureLog.info('[API-WORKFLOW-START] User credits check:', {
       userExists: !!userProfile,
       creditsBalance: userProfile?.creditsBalance
     });
 
     const TOTAL_COST = 20; // 5 pour l'image + 15 pour la vidéo
     if (!userProfile || userProfile.creditsBalance < TOTAL_COST) {
-      console.log('[API-WORKFLOW-START] Insufficient credits');
+      secureLog.info('[API-WORKFLOW-START] Insufficient credits');
       return NextResponse.json(
         { 
           success: false,
@@ -146,7 +147,7 @@ export async function POST(request: NextRequest) {
     
     // Exécuter le workflow en arrière-plan
     orchestrator.executeWorkflow(workflowParams).catch(async (error) => {
-      console.error('Workflow execution failed:', error);
+      secureLog.error('Workflow execution failed:', error);
       
       // En cas d'erreur critique, rembourser les crédits
       await db.user.update({
@@ -164,7 +165,7 @@ export async function POST(request: NextRequest) {
       });
     });
 
-    console.log('[API-WORKFLOW-START] Workflow started successfully:', {
+    secureLog.info('[API-WORKFLOW-START] Workflow started successfully:', {
       jobId: generationJob.id,
       userId: user.id
     });
@@ -178,19 +179,19 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('[API-WORKFLOW-START] Error occurred:', {
+    secureLog.error('[API-WORKFLOW-START] Error occurred:', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       name: error instanceof Error ? error.name : undefined
     });
     
     if (error instanceof z.ZodError) {
-      console.log('[API-WORKFLOW-START] Validation error:', error.errors);
+      secureLog.info('[API-WORKFLOW-START] Validation error:', error.issues);
       return NextResponse.json(
         { 
           success: false,
           error: 'Invalid request data', 
-          details: error.errors 
+          details: error.issues 
         },
         { status: 400 }
       );

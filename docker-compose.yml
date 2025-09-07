@@ -1,0 +1,134 @@
+version: '3.8'
+
+# ==================================================
+# PHASE 5.2 - Docker Compose pour développement
+# ==================================================
+
+services:
+  # Application Next.js en mode développement
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: vidgenie-app-dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"  # App
+      - "3001:3001"  # Dev server hot reload
+    volumes:
+      # Mount source code pour hot reload
+      - .:/app
+      - /app/node_modules
+      - /app/.next
+    environment:
+      - NODE_ENV=development
+      - DATABASE_URL=${DATABASE_URL}
+      - NEXTAUTH_URL=http://localhost:3000
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      # API Keys de développement
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - GOOGLE_API_KEY=${GOOGLE_API_KEY}
+      - ENCRYPTION_KEY=${ENCRYPTION_KEY}
+      # Storage
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - AWS_REGION=${AWS_REGION}
+      - AWS_S3_BUCKET_NAME=${AWS_S3_BUCKET_NAME}
+      # Auth providers
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      # Debug
+      - DEBUG=1
+      - NEXT_TELEMETRY_DISABLED=1
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - vidgenie-dev
+    healthcheck:
+      test: ["CMD", "node", "scripts/healthcheck.js"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Base de données PostgreSQL
+  postgres:
+    image: postgres:15-alpine
+    container_name: vidgenie-postgres-dev
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_DB=vidgenie_dev
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=devpassword123
+    volumes:
+      - postgres_dev_data:/var/lib/postgresql/data
+      - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql
+    networks:
+      - vidgenie-dev
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis pour cache et sessions
+  redis:
+    image: redis:7-alpine
+    container_name: vidgenie-redis-dev
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_dev_data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf
+    command: redis-server /usr/local/etc/redis/redis.conf
+    networks:
+      - vidgenie-dev
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # Adminer pour gestion de DB
+  adminer:
+    image: adminer:4
+    container_name: vidgenie-adminer-dev
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+    networks:
+      - vidgenie-dev
+    environment:
+      - ADMINER_DEFAULT_SERVER=postgres
+
+  # Redis Commander pour gestion Redis
+  redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: vidgenie-redis-commander-dev
+    restart: unless-stopped
+    ports:
+      - "8081:8081"
+    depends_on:
+      - redis
+    environment:
+      - REDIS_HOSTS=local:redis:6379
+    networks:
+      - vidgenie-dev
+
+volumes:
+  postgres_dev_data:
+    driver: local
+  redis_dev_data:
+    driver: local
+
+networks:
+  vidgenie-dev:
+    driver: bridge

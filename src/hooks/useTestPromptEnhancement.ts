@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { secureLog } from '@/lib/secure-logger';
 
 interface TestEnhancementRequest {
   prompt: string;
@@ -42,7 +43,7 @@ export function useTestPromptEnhancement() {
       setError(null);
       setTestResult(null);
 
-      console.log('[TEST-HOOK] Testing prompt enhancement:', request.prompt.slice(0, 50));
+      secureLog.info('[TEST-HOOK] Testing prompt enhancement:', request.prompt.slice(0, 50));
 
       const response = await fetch('/api/test-prompt-enhancement', {
         method: 'POST',
@@ -55,16 +56,16 @@ export function useTestPromptEnhancement() {
       const data = await response.json();
 
       if (!response.ok) {
-        console.error('[TEST-HOOK] API Error:', data);
+        secureLog.error('[TEST-HOOK] API Error:', data);
         throw new Error(data.error || 'Test failed');
       }
 
-      console.log('[TEST-HOOK] Test successful:', data.finalPrompt);
+      secureLog.info('[TEST-HOOK] Test successful:', data.finalPrompt);
       
       if (data.enhancementWorked) {
-        console.log('[TEST-HOOK] GPT enhancement worked!');
-        console.log('[TEST-HOOK] Original:', data.originalPrompt);
-        console.log('[TEST-HOOK] Enhanced:', data.enhancedPrompt);
+        secureLog.info('[TEST-HOOK] GPT enhancement worked!');
+        secureLog.info('[TEST-HOOK] Original:', data.originalPrompt);
+        secureLog.info('[TEST-HOOK] Enhanced:', data.enhancedPrompt);
       }
 
       setTestResult(data);
@@ -78,7 +79,7 @@ export function useTestPromptEnhancement() {
       return data;
 
     } catch (err: any) {
-      console.error('[TEST-HOOK] Test failed:', err);
+      secureLog.error('[TEST-HOOK] Test failed:', err);
       const errorMessage = err.message || 'Prompt enhancement test failed';
       setError(errorMessage);
       toast.error(errorMessage);

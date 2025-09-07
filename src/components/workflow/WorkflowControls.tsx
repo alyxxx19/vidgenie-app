@@ -28,6 +28,7 @@ import { useState } from 'react';
 import { useCredits } from '@/hooks/useCredits';
 import { useAuth } from '@/lib/auth/auth-context';
 import { toast } from 'sonner';
+import { secureLog } from '@/lib/secure-logger';
 
 interface WorkflowControlsProps {
   className?: string;
@@ -68,7 +69,7 @@ export function WorkflowControls({ className, projectId }: WorkflowControlsProps
 
   const handleStart = async () => {
     // Vérification de l'authentification
-    console.log('[WORKFLOW-CONTROLS] Starting workflow - Auth check:', { 
+    secureLog.info('[WORKFLOW-CONTROLS] Starting workflow - Auth check:', { 
       user: !!user, 
       userId: user?.id, 
       authLoading 
@@ -114,10 +115,10 @@ export function WorkflowControls({ className, projectId }: WorkflowControlsProps
     };
 
     try {
-      console.log('[WORKFLOW-CONTROLS] Starting workflow with config:', config);
+      secureLog.info('[WORKFLOW-CONTROLS] Starting workflow with config:', config);
       await startWorkflow(config);
     } catch (error) {
-      console.error('[WORKFLOW-CONTROLS] Failed to start workflow:', error);
+      secureLog.error('[WORKFLOW-CONTROLS] Failed to start workflow:', error);
       
       // Gestion des erreurs spécifiques
       if (error instanceof Error) {

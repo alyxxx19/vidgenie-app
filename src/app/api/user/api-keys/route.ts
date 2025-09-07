@@ -4,13 +4,14 @@ import { encryptionService } from '@/services/encryption';
 import { apiValidationService, type ValidationResult } from '@/services/api-validation';
 import prisma from '@/lib/prisma';
 import { apiKeyRateLimit, generalRateLimit, getRateLimitIdentifier, applyRateLimit } from '@/lib/rate-limit';
+import { secureLog } from '@/lib/secure-logger';
 
 /**
  * GET /api/user/api-keys
  * Récupère les clés API de l'utilisateur (chiffrées, pour affichage masqué)
  */
 export async function GET(request: NextRequest) {
-  console.log('[API-KEYS GET] Starting request');
+  secureLog.debug('[API-KEYS GET] Starting request');
   
   try {
     // Apply rate limiting
@@ -21,10 +22,10 @@ export async function GET(request: NextRequest) {
     const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
-    console.log('[API-KEYS GET] Auth check:', { userId: user?.id, error: authError });
+    secureLog.debug('[API-KEYS GET] Auth check:', { userId: user?.id, error: authError });
 
     if (authError || !user) {
-      console.error('[API-KEYS GET] Auth failed:', authError);
+      secureLog.security('[API-KEYS GET] Auth failed:', authError);
       return NextResponse.json(
         { error: 'Non authentifié' },
         { status: 401 }
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Récupération des clés API depuis la base de données
-    console.log('[API-KEYS GET] Fetching credentials for user:', user.id);
+    secureLog.debug('[API-KEYS GET] Fetching credentials for user:', user.id);
     
     const apiCredentials = await prisma.apiCredential.findMany({
       where: {
@@ -77,7 +78,7 @@ export async function GET(request: NextRequest) {
       };
     });
 
-    console.log('[API-KEYS GET] Returning', formattedKeys.length, 'keys');
+    secureLog.debug(`[API-KEYS GET] Returning ${formattedKeys.length} keys`);
     
     return NextResponse.json({
       success: true,
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('[API-KEYS GET] Error:', error);
+    secureLog.error('[API-KEYS GET] Error:', error);
     
     // Handle rate limit errors
     if (error.message && error.message.includes('Trop de requêtes')) {
@@ -162,7 +163,7 @@ export async function POST(request: NextRequest) {
           }, { status: 400 });
         }
       } catch (validationError) {
-        console.error('Erreur lors de la validation:', validationError);
+        secureLog.error('Erreur lors de la validation:', validationError);
         return NextResponse.json({
           success: false,
           error: 'Erreur lors de la validation de la clé'
@@ -175,7 +176,7 @@ export async function POST(request: NextRequest) {
     try {
       encryptedData = encryptionService.encrypt(apiKey);
     } catch (encryptionError) {
-      console.error('Erreur de chiffrement:', encryptionError);
+      secureLog.error('Erreur de chiffrement:', encryptionError);
       return NextResponse.json(
         { error: 'Erreur lors du chiffrement de la clé' },
         { status: 500 }
@@ -212,7 +213,7 @@ export async function POST(request: NextRequest) {
     });
 
     // Log sécurisé (clé masquée)
-    console.log(`Clé API ${provider} sauvegardée pour l'utilisateur ${user.id}: ${apiValidationService.maskApiKey(apiKey)}`);
+    secureLog.info(`Clé API ${provider} sauvegardée pour l'utilisateur ${user.id}: ${apiValidationService.maskApiKey(apiKey)}`);
 
     return NextResponse.json({
       success: true,
@@ -228,7 +229,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('[API-KEYS POST] Error:', error);
+    secureLog.error('[API-KEYS POST] Error:', error);
     
     // Handle rate limit errors
     if (error.message && error.message.includes('Trop de tentatives')) {
@@ -292,7 +293,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    console.log(`Clé API ${provider} supprimée pour l'utilisateur ${user.id}`);
+    secureLog.info(`Clé API ${provider} supprimée pour l'utilisateur ${user.id}`);
 
     return NextResponse.json({
       success: true,
@@ -300,7 +301,7 @@ export async function DELETE(request: NextRequest) {
     });
 
   } catch (error: any) {
-    console.error('Erreur lors de la suppression:', error);
+    secureLog.error('Erreur lors de la suppression:', error);
     
     // Handle rate limit errors
     if (error.message && error.message.includes('Trop de requêtes')) {

@@ -1,4 +1,5 @@
 import { fal } from '@fal-ai/client';
+import { secureLog } from '@/lib/secure-logger';
 
 export interface Veo3Request {
   imageUrl: string;
@@ -51,7 +52,7 @@ export class Veo3Client {
         status: 'IN_QUEUE',
       };
     } catch (error) {
-      console.error('Fal.ai Veo3 generation error:', error);
+      secureLog.error('Fal.ai Veo3 generation error:', error);
       throw new Error(
         error instanceof Error 
           ? `Fal.ai Veo3 generation failed: ${error.message}`
@@ -81,7 +82,7 @@ export class Veo3Client {
         error: status.status === 'FAILED' ? 'Video generation failed' : undefined,
       };
     } catch (error) {
-      console.error('Fal.ai Veo3 status check error:', error);
+      secureLog.error('Fal.ai Veo3 status check error:', error);
       throw new Error(
         error instanceof Error 
           ? `Failed to check Fal.ai Veo3 job status: ${error.message}`

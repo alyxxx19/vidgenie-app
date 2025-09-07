@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { db } from '@/server/api/db';
 import { simpleImageService } from '@/lib/services/simple-image-generation';
 import { simpleStorage } from '@/lib/services/simple-storage';
+import { secureLog } from '@/lib/secure-logger';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -29,8 +30,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(401).json({ error: 'Invalid token' });
     }
 
-    console.log('[API] Simple image generation requested by user:', user.email);
-    console.log('[API] Request body:', JSON.stringify(req.body, null, 2));
+    secureLog.info('[API] Simple image generation requested by user:', user.email);
+    secureLog.info('[API] Request body:', JSON.stringify(req.body, null, 2));
 
     const { prompt, style, quality, size, projectId } = req.body;
 
@@ -60,7 +61,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    console.log('[API] User has sufficient credits:', userRecord.creditsBalance);
+    secureLog.info('[API] User has sufficient credits:', userRecord.creditsBalance);
 
     // Créer le job de génération
     const generationJob = await db.generationJob.create({
@@ -77,7 +78,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
-    console.log('[API] Generation job created:', generationJob.id);
+    secureLog.info('[API] Generation job created:', generationJob.id);
 
     try {
       // Générer l'image avec OpenAI
@@ -92,7 +93,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         throw new Error(imageResult.error || 'Image generation failed');
       }
 
-      console.log('[API] Image generated successfully');
+      secureLog.info('[API] Image generated successfully');
 
       // Télécharger l'image
       const imageBuffer = await simpleImageService.downloadImageAsBuffer(imageResult.imageUrl);
@@ -105,7 +106,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         throw new Error(storageResult.error || 'Image storage failed');
       }
 
-      console.log('[API] Image stored successfully:', storageResult.publicUrl);
+      secureLog.info('[API] Image stored successfully:', storageResult.publicUrl);
 
       // Créer l'asset dans la base de données
       const imageAsset = await db.asset.create({
@@ -159,7 +160,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         },
       });
 
-      console.log('[API] Generation completed successfully');
+      secureLog.info('[API] Generation completed successfully');
 
       // Retourner le résultat
       return res.status(200).json({
@@ -173,7 +174,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
 
     } catch (generationError: any) {
-      console.error('[API] Generation failed:', generationError);
+      secureLog.error('[API] Generation failed:', generationError);
 
       // Marquer le job comme échoué
       await db.generationJob.update({
@@ -192,7 +193,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
   } catch (error: any) {
-    console.error('[API] Request failed:', error);
+    secureLog.error('[API] Request failed:', error);
     return res.status(500).json({
       error: error.message || 'Internal server error',
     });

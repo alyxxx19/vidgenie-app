@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from './supabase';
+import { secureLog } from '@/lib/secure-logger';
 import { type User as SupabaseUser } from '@supabase/supabase-js';
 
 interface User {
@@ -82,7 +83,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // Store in localStorage for persistence
       localStorage.setItem('supabase_user', JSON.stringify(userData));
     } catch (error) {
-      console.error('Error loading user profile:', error);
+      secureLog.error('Error loading user profile:', error);
     } finally {
       setIsLoading(false);
     }

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { secureLog } from '@/lib/secure-logger';
 
 /**
  * Health Check Endpoint
@@ -35,7 +36,7 @@ interface HealthCheck {
   lastCheck: string;
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   const startTime = Date.now();
   
   try {
@@ -79,7 +80,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Health check failed:', error);
+    secureLog.error('Health check failed:', error);
     
     return NextResponse.json({
       status: 'unhealthy',
@@ -151,7 +152,7 @@ async function checkExternalApis(): Promise<HealthCheck> {
         } else {
           checks.push(`OpenAI: degraded (${response.status})`);
         }
-      } catch (error) {
+      } catch (_error) {
         checks.push('OpenAI: unhealthy');
       }
     }
@@ -172,7 +173,7 @@ async function checkExternalApis(): Promise<HealthCheck> {
         } else {
           checks.push(`Supabase: degraded (${response.status})`);
         }
-      } catch (error) {
+      } catch (_error) {
         checks.push('Supabase: unhealthy');
       }
     }

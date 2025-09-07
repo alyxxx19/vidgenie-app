@@ -22,6 +22,8 @@ import {
   ExternalLink,
   RefreshCw
 } from 'lucide-react';
+import NextImage from 'next/image';
+import { secureLog } from '@/lib/secure-logger';
 
 export interface WorkflowStep {
   id: string;
@@ -128,7 +130,7 @@ export function WorkflowVisualizer({
       setOverallStatus('cancelled');
       onCancel?.();
     } catch (error) {
-      console.error('Cancel error:', error);
+      secureLog.error('Cancel error:', error);
       setError(error instanceof Error ? error.message : 'Failed to cancel');
     }
   }, [workflowId, onCancel]);
@@ -326,10 +328,13 @@ export function WorkflowVisualizer({
                     <Badge className="bg-green-500/20 text-green-400 font-mono text-xs">ready</Badge>
                   </div>
                   <div className="relative group">
-                    <img 
+                    <NextImage 
                       src={result.imageAsset.publicUrl} 
                       alt="Generated image"
+                      width={384}
+                      height={256}
                       className="w-full max-w-sm mx-auto rounded-lg border border-border shadow-lg transition-transform duration-200 group-hover:scale-105"
+                      unoptimized
                     />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors duration-200 rounded-lg" />
                   </div>

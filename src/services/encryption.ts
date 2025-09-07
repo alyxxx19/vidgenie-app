@@ -1,4 +1,5 @@
 import * as crypto from 'crypto';
+import { secureLog } from '@/lib/secure-logger';
 
 /**
  * Service de chiffrement AES-256 pour les clés API utilisateur
@@ -21,7 +22,7 @@ export class EncryptionService {
    * Génère une clé par défaut pour le développement (ne pas utiliser en production)
    */
   private generateDefaultKey(): string {
-    console.warn('⚠️  Using default encryption key. Set ENCRYPTION_KEY in production!');
+    secureLog.warn('⚠️  Using default encryption key. Set ENCRYPTION_KEY in production!');
     return 'dev_key_32_chars_long_for_aes256';
   }
 

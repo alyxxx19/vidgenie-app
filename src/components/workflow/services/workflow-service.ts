@@ -1,6 +1,7 @@
 'use client';
 
 import { WorkflowConfig, WorkflowNodeStatus, WorkflowResult } from '../types/workflow';
+import { secureLog } from '@/lib/secure-logger';
 
 export interface WorkflowServiceEvents {
   'workflow:start': (config: WorkflowConfig) => void;
@@ -57,14 +58,14 @@ export class WorkflowService {
       try {
         (listener as any)(...args);
       } catch (error) {
-        console.error(`Error in workflow event listener for ${event}:`, error);
+        secureLog.error(`Error in workflow event listener for ${event}:`, error);
       }
     });
   }
 
   async startWorkflow(config: WorkflowConfig): Promise<{ jobId: string; success: boolean; error?: string }> {
     try {
-      console.log('[WORKFLOW-SERVICE] Starting workflow with config:', config);
+      secureLog.info('[WORKFLOW-SERVICE] Starting workflow with config:', config);
       
       this.emit('workflow:start', config);
 
@@ -97,7 +98,7 @@ export class WorkflowService {
           // Si la réponse n'est pas du JSON, utiliser le message par défaut
         }
         
-        console.error('[WORKFLOW-SERVICE] API error:', { 
+        secureLog.error('[WORKFLOW-SERVICE] API error:', { 
           status: response.status, 
           statusText: response.statusText,
           errorMessage,
@@ -125,7 +126,7 @@ export class WorkflowService {
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
-      console.error('[WORKFLOW-SERVICE] Error starting workflow:', errorMessage);
+      secureLog.error('[WORKFLOW-SERVICE] Error starting workflow:', errorMessage);
       
       this.emit('workflow:error', {
         nodeId: 'prompt-node',
@@ -150,13 +151,13 @@ export class WorkflowService {
     this.eventSource = new EventSource(`/api/workflow/stream/${jobId}`);
 
     this.eventSource.onopen = () => {
-      console.log('[WORKFLOW-SERVICE] Progress stream connected');
+      secureLog.info('[WORKFLOW-SERVICE] Progress stream connected');
     };
 
     this.eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log('[WORKFLOW-SERVICE] Progress update:', data);
+        secureLog.info('[WORKFLOW-SERVICE] Progress update:', data);
 
         switch (data.type) {
           case 'progress':
@@ -194,12 +195,12 @@ export class WorkflowService {
             break;
         }
       } catch (error) {
-        console.error('[WORKFLOW-SERVICE] Error parsing progress data:', error);
+        secureLog.error('[WORKFLOW-SERVICE] Error parsing progress data:', error);
       }
     };
 
     this.eventSource.onerror = (error) => {
-      console.error('[WORKFLOW-SERVICE] Progress stream error:', error);
+      secureLog.error('[WORKFLOW-SERVICE] Progress stream error:', error);
       this.emit('workflow:error', {
         nodeId: 'unknown',
         error: 'Connection to workflow progress lost',

@@ -4,6 +4,7 @@ import { StripeCustomerService } from '@/lib/stripe/customer-service';
 import { StripeSubscriptionService } from '@/lib/stripe/subscription-service';
 import { PRICING_CONFIG, getPlanByPriceId, stripe } from '@/lib/stripe/config';
 import { TRPCError } from '@trpc/server';
+import { secureLog } from '@/lib/secure-logger';
 
 export const stripeRouter = createTRPCRouter({
   // Create Stripe customer and checkout session  
@@ -120,7 +121,7 @@ export const stripeRouter = createTRPCRouter({
           planName: getPlanByPriceId(subscription.items.data[0]?.price.id || '') || 'unknown',
         };
       } catch (error) {
-        console.error('Failed to retrieve subscription:', error);
+        secureLog.error('Failed to retrieve subscription:', error);
         return null;
       }
     }),

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerUser } from '@/lib/auth/server-auth';
 import { db } from '@/server/api/db';
 import { getWorkflowOrchestrator } from '@/lib/services/workflow-orchestrator';
+import { secureLog } from '@/lib/secure-logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
           }, {} as Record<string, number>),
         };
       } catch (error) {
-        console.warn('Failed to get DB stats:', error);
+        secureLog.warn('Failed to get DB stats:', error);
       }
     }
 
@@ -64,7 +65,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(health);
 
   } catch (error) {
-    console.error('Health check error:', error);
+    secureLog.error('Health check error:', error);
     return NextResponse.json(
       {
         status: 'error',

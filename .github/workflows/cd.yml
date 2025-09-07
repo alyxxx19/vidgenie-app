@@ -1,0 +1,291 @@
+name: 'CD Pipeline'
+
+# ==================================================
+# PHASE 5.3 - Pipeline de déploiement continu
+# Déploiement automatique vers staging et production
+# ==================================================
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Environment to deploy to'
+        required: true
+        default: 'staging'
+        type: choice
+        options:
+        - staging
+        - production
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ================================
+  # Build et push des images Docker
+  # ================================
+  build:
+    name: 'Build & Push Docker Images'
+    runs-on: ubuntu-latest
+    outputs:
+      image-tag: ${{ steps.meta.outputs.tags }}
+      image-digest: ${{ steps.build.outputs.digest }}
+    
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+
+      - name: 'Set up Docker Buildx'
+        uses: docker/setup-buildx-action@v3
+
+      - name: 'Login to Container Registry'
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 'Extract metadata'
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}
+            type=sha
+
+      - name: 'Build and push Docker image'
+        id: build
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          target: runner
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            BUILDTIME=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.created'] }}
+            VERSION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.version'] }}
+            REVISION=${{ fromJSON(steps.meta.outputs.json).labels['org.opencontainers.image.revision'] }}
+
+  # ================================
+  # Déploiement vers Staging
+  # ================================
+  deploy-staging:
+    name: 'Deploy to Staging'
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'staging')
+    environment:
+      name: staging
+      url: https://staging.vidgenie.com
+    
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+
+      - name: 'Deploy to staging server'
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.STAGING_HOST }}
+          username: ${{ secrets.STAGING_USER }}
+          key: ${{ secrets.STAGING_SSH_KEY }}
+          port: ${{ secrets.STAGING_PORT }}
+          script: |
+            cd /app/vidgenie
+            
+            # Pull latest code
+            git pull origin main
+            
+            # Update environment variables
+            echo "DATABASE_URL=${{ secrets.STAGING_DATABASE_URL }}" > .env.production
+            echo "NEXTAUTH_SECRET=${{ secrets.NEXTAUTH_SECRET }}" >> .env.production
+            echo "NEXTAUTH_URL=https://staging.vidgenie.com" >> .env.production
+            echo "ENCRYPTION_KEY=${{ secrets.ENCRYPTION_KEY }}" >> .env.production
+            echo "OPENAI_API_KEY=${{ secrets.OPENAI_API_KEY }}" >> .env.production
+            echo "GOOGLE_CLIENT_ID=${{ secrets.GOOGLE_CLIENT_ID }}" >> .env.production
+            echo "GOOGLE_CLIENT_SECRET=${{ secrets.GOOGLE_CLIENT_SECRET }}" >> .env.production
+            
+            # Deploy with Docker Compose
+            docker-compose -f docker-compose.prod.yml pull
+            docker-compose -f docker-compose.prod.yml up -d
+            
+            # Wait for services to be ready
+            sleep 30
+            
+            # Run health check
+            curl -f https://staging.vidgenie.com/api/health || exit 1
+            
+            echo "✅ Staging deployment completed successfully"
+
+      - name: 'Run post-deployment tests'
+        run: |
+          # API endpoint tests
+          curl -f https://staging.vidgenie.com/api/health
+          curl -f https://staging.vidgenie.com/api/auth/providers
+          
+          # Performance check
+          curl -w "@curl-format.txt" -o /dev/null -s https://staging.vidgenie.com/
+
+      - name: 'Notify deployment success'
+        uses: 8398a7/action-slack@v3
+        if: success()
+        with:
+          status: success
+          text: '✅ Staging deployment successful for commit ${{ github.sha }}'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+  # ================================
+  # Tests de régression sur staging
+  # ================================
+  regression-tests:
+    name: 'Regression Tests'
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    if: success()
+    
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+
+      - name: 'Setup Node.js'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: 'Install dependencies'
+        run: npm ci --audit=false --fund=false
+
+      - name: 'Run E2E tests against staging'
+        run: npm run test:e2e
+        env:
+          BASE_URL: https://staging.vidgenie.com
+          TEST_USER_EMAIL: ${{ secrets.TEST_USER_EMAIL }}
+          TEST_USER_PASSWORD: ${{ secrets.TEST_USER_PASSWORD }}
+
+      - name: 'Upload test results'
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: e2e-test-results
+          path: test-results/
+
+  # ================================
+  # Déploiement vers Production
+  # ================================
+  deploy-production:
+    name: 'Deploy to Production'
+    runs-on: ubuntu-latest
+    needs: [build, regression-tests]
+    if: startsWith(github.ref, 'refs/tags/v') || (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'production')
+    environment:
+      name: production
+      url: https://vidgenie.com
+    
+    steps:
+      - name: 'Checkout code'
+        uses: actions/checkout@v4
+
+      - name: 'Create deployment backup'
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT }}
+          script: |
+            cd /app/vidgenie
+            
+            # Create backup
+            BACKUP_DIR="backups/$(date +%Y%m%d_%H%M%S)"
+            mkdir -p "$BACKUP_DIR"
+            
+            # Backup current deployment
+            docker-compose -f docker-compose.prod.yml exec -T postgres \
+              pg_dump -U postgres vidgenie > "$BACKUP_DIR/database.sql"
+            
+            docker run --rm -v vidgenie-app_redis_prod_data:/data \
+              -v "$(pwd)/$BACKUP_DIR:/backup" alpine \
+              tar czf /backup/redis_data.tar.gz -C /data .
+            
+            echo "✅ Backup created in $BACKUP_DIR"
+
+      - name: 'Deploy to production'
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.PRODUCTION_HOST }}
+          username: ${{ secrets.PRODUCTION_USER }}
+          key: ${{ secrets.PRODUCTION_SSH_KEY }}
+          port: ${{ secrets.PRODUCTION_PORT }}
+          script: |
+            cd /app/vidgenie
+            
+            # Pull latest code
+            git pull origin main
+            
+            # Update environment variables (production)
+            echo "DATABASE_URL=${{ secrets.PRODUCTION_DATABASE_URL }}" > .env.production
+            echo "NEXTAUTH_SECRET=${{ secrets.PRODUCTION_NEXTAUTH_SECRET }}" >> .env.production
+            echo "NEXTAUTH_URL=https://vidgenie.com" >> .env.production
+            echo "ENCRYPTION_KEY=${{ secrets.PRODUCTION_ENCRYPTION_KEY }}" >> .env.production
+            echo "OPENAI_API_KEY=${{ secrets.PRODUCTION_OPENAI_API_KEY }}" >> .env.production
+            echo "GOOGLE_CLIENT_ID=${{ secrets.PRODUCTION_GOOGLE_CLIENT_ID }}" >> .env.production
+            echo "GOOGLE_CLIENT_SECRET=${{ secrets.PRODUCTION_GOOGLE_CLIENT_SECRET }}" >> .env.production
+            
+            # Rolling deployment
+            docker-compose -f docker-compose.prod.yml pull
+            docker-compose -f docker-compose.prod.yml up -d --no-deps app
+            
+            # Wait for new instance to be ready
+            sleep 60
+            
+            # Health check
+            curl -f https://vidgenie.com/api/health || exit 1
+            
+            # Update other services if needed
+            docker-compose -f docker-compose.prod.yml up -d
+            
+            echo "✅ Production deployment completed successfully"
+
+      - name: 'Post-deployment verification'
+        run: |
+          # Critical endpoint checks
+          curl -f https://vidgenie.com/api/health
+          curl -f https://vidgenie.com/api/auth/providers
+          
+          # Performance verification
+          RESPONSE_TIME=$(curl -w '%{time_total}' -o /dev/null -s https://vidgenie.com/)
+          echo "Response time: ${RESPONSE_TIME}s"
+          
+          if (( $(echo "$RESPONSE_TIME > 2" | bc -l) )); then
+            echo "❌ Response time too slow: ${RESPONSE_TIME}s"
+            exit 1
+          fi
+
+      - name: 'Notify production deployment'
+        uses: 8398a7/action-slack@v3
+        if: success()
+        with:
+          status: success
+          text: '🚀 Production deployment successful! Version: ${{ github.ref_name }}'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+
+      - name: 'Create GitHub release'
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: ncipollo/release-action@v1
+        with:
+          generateReleaseNotes: true
+          makeLatest: true

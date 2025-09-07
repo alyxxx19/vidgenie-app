@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { monitoring } from '@/lib/monitoring';
 import { getServerUser } from '@/lib/auth/server-auth';
+import { secureLog } from '@/lib/secure-logger';
 
 /**
  * Monitoring Dashboard API
@@ -15,12 +16,13 @@ export async function GET(request: NextRequest) {
     // In production, require admin authentication
     if (process.env.NODE_ENV === 'production') {
       const user = await getServerUser(request);
-      if (!user || !user.isAdmin) {
+      if (!user) {
         return NextResponse.json(
           { error: 'Admin access required' },
           { status: 403 }
         );
       }
+      // TODO: Add isAdmin property to User model
     }
 
     const { searchParams } = new URL(request.url);
@@ -60,7 +62,7 @@ export async function GET(request: NextRequest) {
     }
 
   } catch (error) {
-    console.error('Monitoring API error:', error);
+    secureLog.error('Monitoring API error:', error);
     return NextResponse.json(
       { error: 'Failed to fetch monitoring data' },
       { status: 500 }

@@ -1,0 +1,59 @@
+# ==================================================
+# Règles OWASP ZAP pour tests de sécurité
+# PHASE 5.3 - Configuration ZAP
+# ==================================================
+
+# Format: ID	THRESHOLD	NEW
+# ID = Identifiant de la règle
+# THRESHOLD = IGNORE|INFO|WARN|FAIL
+# NEW = IGNORE|INFO|WARN|FAIL (pour nouvelles alertes)
+
+# Règles critiques - Échec si détectées
+10021	FAIL	FAIL	# X-Content-Type-Options header missing
+10020	FAIL	FAIL	# X-Frame-Options header missing
+10038	FAIL	FAIL	# Content Security Policy missing
+10035	FAIL	FAIL	# Strict-Transport-Security header missing
+10054	FAIL	FAIL	# Cookie without SameSite attribute
+
+# Règles importantes - Avertissement
+10016	WARN	WARN	# Web Browser XSS Protection not enabled
+10017	WARN	WARN	# Cross-domain JavaScript source file inclusion
+10015	WARN	WARN	# Incomplete or no Cache-control and Pragma HTTP header set
+
+# Injections - Critique
+40018	FAIL	FAIL	# SQL Injection
+40019	FAIL	FAIL	# SQL Injection - MySQL
+40020	FAIL	FAIL	# SQL Injection - PostgreSQL
+40021	FAIL	FAIL	# SQL Injection - Oracle
+40022	FAIL	FAIL	# SQL Injection - Hypersonic SQL
+40024	FAIL	FAIL	# SQL Injection - Generic
+90019	FAIL	FAIL	# Server Side Code Injection
+
+# XSS - Critique
+40012	FAIL	FAIL	# Cross Site Scripting (Reflected)
+40014	FAIL	FAIL	# Cross Site Scripting (Persistent)
+40016	FAIL	FAIL	# Cross Site Scripting (Persistent) - Prime
+40017	FAIL	FAIL	# Cross Site Scripting (Persistent) - Spider
+
+# Authentification et autorisation
+10105	FAIL	FAIL	# Weak Authentication Method
+10108	FAIL	FAIL	# Reverse Tabnabbing
+2	WARN	WARN	# Private IP Disclosure
+3	WARN	WARN	# Session ID in URL Rewrite
+
+# Configuration serveur
+10049	WARN	WARN	# Non-Storable Content
+10050	WARN	WARN	# Retrieved from Cache
+10051	WARN	WARN	# Relative Path Confusion
+10052	WARN	WARN	# X-ChromeLogger-Data Header Information Leak
+
+# Règles à ignorer pour le développement
+10109	IGNORE	IGNORE	# Modern Web Application (false positive)
+10110	IGNORE	IGNORE	# Dangerous JS Functions (peut être normal)
+10111	IGNORE	IGNORE	# Authentication Request Identified (peut être normal)
+
+# Règles informatives seulement
+90001	INFO	INFO	# Insecure JSF ViewState
+90011	INFO	INFO	# Charset Mismatch
+90020	INFO	INFO	# Missing Anti-clickjacking Header
+90022	INFO	INFO	# Application Error Disclosure

@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { cookies } from 'next/headers';
 import { cache } from 'react';
+import { secureLog } from '@/lib/secure-logger';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -55,7 +56,7 @@ export const getUser = cache(async () => {
     
     return user;
   } catch (error) {
-    console.error('Error getting user:', error);
+    secureLog.error('Error getting user:', error);
     return null;
   }
 });
@@ -74,13 +75,13 @@ export const getUserProfile = cache(async () => {
       .single();
     
     if (error) {
-      console.error('Error getting user profile:', error);
+      secureLog.error('Error getting user profile:', error);
       return { ...user, profile: null };
     }
     
     return { ...user, profile };
   } catch (error) {
-    console.error('Error getting user profile:', error);
+    secureLog.error('Error getting user profile:', error);
     return { ...user, profile: null };
   }
 });

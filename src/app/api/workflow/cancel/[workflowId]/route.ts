@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerUser } from '@/lib/auth/server-auth';
 import { db } from '@/server/api/db';
+import { secureLog } from '@/lib/secure-logger';
 
 export interface WorkflowCancelResponse {
   success: boolean;
@@ -15,7 +16,7 @@ export interface WorkflowCancelResponse {
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { workflowId: string } }
+  { params }: { params: Promise<{ workflowId: string }> }
 ): Promise<NextResponse> {
   try {
     // Authentification
@@ -27,7 +28,7 @@ export async function POST(
       );
     }
 
-    const workflowId = params.workflowId;
+    const workflowId = (await params).workflowId;
 
     // Récupérer le workflow depuis la base de données
     const workflow = await db.workflowExecution.findFirst({
@@ -98,7 +99,7 @@ export async function POST(
     // Cela pourrait être fait via un événement ou une base de données partagée
     // Pour l'instant, le job se terminera naturellement avec un statut CANCELLED
 
-    console.log(`Workflow ${workflowId} cancelled by user ${user.id}`);
+    secureLog.info(`Workflow ${workflowId} cancelled by user ${user.id}`);
 
     const response: WorkflowCancelResponse = {
       success: true,
@@ -109,14 +110,14 @@ export async function POST(
     return NextResponse.json(response);
 
   } catch (error) {
-    console.error('Workflow cancel error:', error);
+    secureLog.error('Workflow cancel error:', error);
     
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
     return NextResponse.json(
       { 
         success: false,
-        workflowId: params.workflowId,
+        workflowId: (await params).workflowId,
         error: errorMessage 
       } as WorkflowCancelResponse,
       { status: 500 }

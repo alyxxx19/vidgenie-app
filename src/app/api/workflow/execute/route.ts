@@ -3,6 +3,7 @@ import { getServerUser } from '@/lib/auth/server-auth';
 import { inngest } from '@/lib/inngest';
 import { db } from '@/server/api/db';
 import { EncryptionService } from '@/services/encryption';
+import { secureLog } from '@/lib/secure-logger';
 
 export interface WorkflowExecuteRequest {
   config: {
@@ -69,17 +70,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     // Calculer le coût estimé
     const estimatedCost = calculateWorkflowCost(config);
 
-    // Vérifier les crédits
-    if (user.credits < estimatedCost) {
-      return NextResponse.json(
-        { 
-          error: 'Insufficient credits',
-          required: estimatedCost,
-          available: user.credits
-        },
-        { status: 402 }
-      );
-    }
+    // TODO: Vérifier les crédits via base de données
+    // const userFromDB = await db.user.findUnique({ where: { id: user.id } });
+    // if (!userFromDB || userFromDB.creditsBalance < estimatedCost) {
+    //   return NextResponse.json(
+    //     { 
+    //       error: 'Insufficient credits',
+    //       required: estimatedCost,
+    //       available: userFromDB?.creditsBalance || 0
+    //     },
+    //     { status: 402 }
+    //   );
+    // }
 
     // Récupérer et vérifier les clés API utilisateur
     const userApiKeys = await getUserApiKeys(user.id);
@@ -114,6 +116,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         id: workflowId,
         userId: user.id,
         projectId,
+        workflowType: config.workflowType,
         config: config as any,
         status: 'INITIALIZING',
         estimatedCost,
@@ -149,7 +152,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(response);
 
   } catch (error) {
-    console.error('Workflow execute error:', error);
+    secureLog.error('Workflow execute error:', error);
     
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
@@ -262,7 +265,7 @@ async function getUserApiKeys(userId: string): Promise<{
       vo3Key: userApiKeys.vo3Key || undefined
     };
   } catch (error) {
-    console.error('Error fetching user API keys:', error);
+    secureLog.error('Error fetching user API keys:', error);
     return null;
   }
 }

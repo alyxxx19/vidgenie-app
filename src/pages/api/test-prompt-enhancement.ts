@@ -1,5 +1,6 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { promptEnhancer } from '@/lib/services/prompt-enhancer';
+import { secureLog } from '@/lib/secure-logger';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Cette API est uniquement pour tester l'amélioration de prompts
@@ -12,7 +13,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    console.log('[TEST-ENHANCEMENT] Testing prompt enhancement...');
+    secureLog.info('[TEST-ENHANCEMENT] Testing prompt enhancement...');
     
     const { 
       prompt, 
@@ -30,13 +31,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    console.log('[TEST-ENHANCEMENT] Original prompt:', prompt.slice(0, 50) + '...');
+    secureLog.info('[TEST-ENHANCEMENT] Original prompt:', prompt.slice(0, 50) + '...');
 
     let finalPrompt = prompt.trim();
     let enhancementResult: any = { success: false, originalPrompt: prompt.trim() };
 
     if (enhanceEnabled && promptEnhancer) {
-      console.log('[TEST-ENHANCEMENT] Enhancing with GPT...');
+      secureLog.info('[TEST-ENHANCEMENT] Enhancing with GPT...');
       enhancementResult = await promptEnhancer.enhanceImagePrompt(prompt.trim(), {
         temperature,
         mood,
@@ -48,12 +49,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       finalPrompt = enhancementResult.enhancedPrompt || prompt.trim();
       
       if (enhancementResult.success) {
-        console.log('[TEST-ENHANCEMENT] Enhancement successful');
+        secureLog.info('[TEST-ENHANCEMENT] Enhancement successful');
       } else {
-        console.log('[TEST-ENHANCEMENT] Enhancement failed:', enhancementResult.error);
+        secureLog.info('[TEST-ENHANCEMENT] Enhancement failed:', enhancementResult.error);
       }
     } else {
-      console.log('[TEST-ENHANCEMENT] Enhancement disabled or not available');
+      secureLog.info('[TEST-ENHANCEMENT] Enhancement disabled or not available');
     }
 
     // Simuler le résultat DALL-E 3 (sans vraiment générer)
@@ -84,7 +85,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
   } catch (error: any) {
-    console.error('[TEST-ENHANCEMENT] Error:', error);
+    secureLog.error('[TEST-ENHANCEMENT] Error:', error);
     return res.status(500).json({
       error: error.message || 'Prompt enhancement test failed',
       details: error.stack || 'No stack trace available',

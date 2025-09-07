@@ -109,7 +109,7 @@ export class VideoGeneratorService {
       return result;
 
     } catch (error) {
-      console.error('Video generation failed:', error);
+      secureLog.error('Video generation failed:', error);
       
       return {
         success: false,

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerUser } from '@/lib/auth/server-auth';
 import { db } from '@/server/api/db';
+import { secureLog } from '@/lib/secure-logger';
 
 export interface CreditDeductRequest {
   amount: number;
@@ -99,7 +100,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     });
 
     // Log pour monitoring
-    console.log(`Credits deducted: ${amount} from user ${user.id} for ${reason}`);
+    secureLog.info(`Credits deducted: ${amount} from user ${user.id} for ${reason}`);
 
     // Enregistrer l'événement d'usage
     await db.usageEvent.create({
@@ -125,7 +126,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json(response);
 
   } catch (error) {
-    console.error('Credit deduction error:', error);
+    secureLog.error('Credit deduction error:', error);
     
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     
@@ -179,7 +180,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     });
 
   } catch (error) {
-    console.error('Get credit transactions error:', error);
+    secureLog.error('Get credit transactions error:', error);
     
     return NextResponse.json(
       { 

@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User as SupabaseUser, Session } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
+import { secureLog } from '@/lib/secure-logger';
 import type { Tables } from '@/lib/supabase/types';
 
 type UserProfile = Tables<'users'>;
@@ -53,14 +54,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
         
         // Other database errors
-        console.error('Error loading user profile:', error.message || error);
+        secureLog.error('Error loading user profile:', error.message || error);
         setProfile(null);
         return;
       }
 
       setProfile(profileData);
     } catch (error) {
-      console.error('Error loading user profile:', error);
+      secureLog.error('Error loading user profile:', error);
       setProfile(null);
     }
   };
@@ -77,7 +78,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data: { session }, error } = await supabase.auth.getSession();
       
       if (error) {
-        console.error('Error getting session:', error);
+        secureLog.security('Error getting session:', error);
       } else {
         setSession(session);
         setUser(session?.user ?? null);
@@ -128,7 +129,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       return { error: null };
     } catch (error) {
-      console.error('Signin catch error:', error);
+      secureLog.security('Signin catch error:', error);
       return { error };
     }
   };
@@ -154,7 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       return { error: null };
     } catch (error) {
-      console.error('Signup catch error:', error);
+      secureLog.security('Signup catch error:', error);
       return { error };
     }
   };
@@ -164,7 +165,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { error } = await supabase.auth.signOut();
     
     if (error) {
-      console.error('Error signing out:', error);
+      secureLog.security('Error signing out:', error);
     }
     
     setUser(null);
@@ -191,7 +192,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       return { error };
     } catch (error) {
-      console.error(`OAuth ${provider} catch error:`, error);
+      secureLog.security(`OAuth ${provider} catch error:`, error);
       return { error };
     }
   };

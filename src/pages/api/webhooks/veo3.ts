@@ -2,6 +2,7 @@ import { NextApiRequest, NextApiResponse } from 'next';
 import { db as prisma } from '@/server/api/db';
 import { uploadToS3 } from '@/lib/s3';
 import crypto from 'crypto';
+import { secureLog } from '@/lib/secure-logger';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -46,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (!generationJob) {
-      console.warn(`Webhook received for unknown job: ${providerJobId}`);
+      secureLog.warn(`Webhook received for unknown job: ${providerJobId}`);
       return res.status(404).json({ error: 'Job not found' });
     }
 
@@ -213,13 +214,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         break;
 
       default:
-        console.warn(`Unknown webhook status: ${status}`);
+        secureLog.warn(`Unknown webhook status: ${status}`);
         break;
     }
 
     res.status(200).json({ success: true });
   } catch (error) {
-    console.error('Veo3 webhook error:', error);
+    secureLog.error('Veo3 webhook error:', error);
     res.status(500).json({ 
       error: 'Internal server error',
       message: error instanceof Error ? error.message : 'Unknown error',

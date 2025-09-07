@@ -282,7 +282,7 @@ class MonitoringService {
     // Send to Datadog, New Relic, or similar
     if (process.env.DATADOG_API_KEY) {
       // Implementation would go here
-      console.log('[MONITORING] Metric sent to Datadog:', metric.name);
+      secureLog.info('[MONITORING] Metric sent to Datadog:', metric.name);
     }
 
     // Send to custom monitoring endpoint
@@ -292,7 +292,7 @@ class MonitoringService {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'metric', data: metric })
       }).catch(error => {
-        console.error('Failed to send metric to webhook:', error);
+        secureLog.error('Failed to send metric to webhook:', error);
       });
     }
   }
@@ -303,7 +303,7 @@ class MonitoringService {
     // Send to Sentry for errors
     if (log.level === 'error' && process.env.NEXT_PUBLIC_SENTRY_DSN) {
       // Sentry integration would go here
-      console.log('[MONITORING] Error sent to Sentry');
+      secureLog.info('[MONITORING] Error sent to Sentry');
     }
 
     // Send to structured logging service
@@ -313,7 +313,7 @@ class MonitoringService {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ type: 'log', data: log })
       }).catch(error => {
-        console.error('Failed to send log to webhook:', error);
+        secureLog.error('Failed to send log to webhook:', error);
       });
     }
   }
@@ -333,7 +333,7 @@ class MonitoringService {
           metric: alert.metric
         })
       }).catch(error => {
-        console.error('Failed to send alert to webhook:', error);
+        secureLog.error('Failed to send alert to webhook:', error);
       });
     }
   }
@@ -378,7 +378,7 @@ class MonitoringService {
     const context = log.context ? ` ${JSON.stringify(log.context)}` : '';
     const requestId = log.requestId ? ` [${log.requestId}]` : '';
     
-    console.log(`${timestamp} ${level}${requestId} ${log.message}${context}`);
+    secureLog.info(`${timestamp} ${level}${requestId} ${log.message}${context}`);
   }
 
   private getCurrentRequestId(): string | undefined {

@@ -4,6 +4,7 @@ import OpenAI from 'openai';
 import { getCreditsManager, CREDIT_COSTS } from '@/lib/services/credits-manager';
 import { db } from '@/server/api/db';
 import { createClient } from '@supabase/supabase-js';
+import { secureLog } from '@/lib/secure-logger';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Cette API fonctionne en développement et production avec gestion des crédits
@@ -16,7 +17,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    console.log('[REAL-IMAGE-API] Starting real image generation with enhancement...');
+    secureLog.info('[REAL-IMAGE-API] Starting real image generation with enhancement...');
     
     const { 
       prompt, 
@@ -38,7 +39,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    console.log('[REAL-IMAGE-API] 📝 Original prompt:', prompt.slice(0, 50) + '...');
+    secureLog.info('[REAL-IMAGE-API] 📝 Original prompt:', prompt.slice(0, 50) + '...');
 
     // ÉTAPE 0: Vérifier et déduire les crédits (sauf en mode dev avec skip)
     let userId: string | null = null;
@@ -65,7 +66,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         }
 
         userId = user.id;
-        console.log('[REAL-IMAGE-API] 👤 User authenticated:', user.email);
+        secureLog.info('[REAL-IMAGE-API] 👤 User authenticated:', user.email);
 
         // Calculer le coût total
         const creditsManager = getCreditsManager(db);
@@ -97,17 +98,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         creditsDeducted = true;
         transactionId = deductionResult.transactionId;
-        console.log(`[REAL-IMAGE-API] 💳 Credits deducted: ${totalCost} (new balance: ${deductionResult.newBalance})`);
+        secureLog.info(`[REAL-IMAGE-API] 💳 Credits deducted: ${totalCost} (new balance: ${deductionResult.newBalance})`);
 
       } catch (creditError: any) {
-        console.error('[REAL-IMAGE-API] Credit management error:', creditError);
+        secureLog.error('[REAL-IMAGE-API] Credit management error:', creditError);
         return res.status(500).json({
           error: creditError.message || 'Credit management failed',
           details: process.env.NODE_ENV === 'development' ? creditError.stack : undefined,
         });
       }
     } else {
-      console.log('[REAL-IMAGE-API] 🔧 Skipping credits check (dev mode)');
+      secureLog.info('[REAL-IMAGE-API] 🔧 Skipping credits check (dev mode)');
     }
 
     // ÉTAPE 1: Améliorer le prompt avec GPT-4 si activé
@@ -115,7 +116,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let enhancementResult: any = { success: false, originalPrompt: prompt.trim() };
 
     if (enhanceEnabled && promptEnhancer) {
-      console.log('[REAL-IMAGE-API] 🧠 Step 1: Enhancing prompt with GPT-4...');
+      secureLog.info('[REAL-IMAGE-API] 🧠 Step 1: Enhancing prompt with GPT-4...');
       enhancementResult = await promptEnhancer.enhanceImagePrompt(prompt.trim(), {
         temperature,
         mood,
@@ -127,20 +128,20 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       finalPrompt = enhancementResult.enhancedPrompt || prompt.trim();
       
       if (enhancementResult.success) {
-        console.log('[REAL-IMAGE-API] ✅ Prompt enhanced successfully!');
-        console.log('[REAL-IMAGE-API] 🎨 Enhanced prompt:', finalPrompt.slice(0, 100) + '...');
+        secureLog.info('[REAL-IMAGE-API] ✅ Prompt enhanced successfully!');
+        secureLog.info('[REAL-IMAGE-API] 🎨 Enhanced prompt:', finalPrompt.slice(0, 100) + '...');
       } else {
-        console.log('[REAL-IMAGE-API] ⚠️ Enhancement failed, using original prompt');
+        secureLog.info('[REAL-IMAGE-API] ⚠️ Enhancement failed, using original prompt');
       }
     } else {
-      console.log('[REAL-IMAGE-API] 🔧 GPT enhancement disabled');
+      secureLog.info('[REAL-IMAGE-API] 🔧 GPT enhancement disabled');
     }
 
     // ÉTAPE 2: Générer l'image avec le modèle configuré
     const useGptImage = process.env.USE_GPT_IMAGE !== 'false' && req.body.useGptImage !== false; // Default to true
     const imageModel = useGptImage ? 'gpt-image-1' : 'dall-e-3';
     
-    console.log(`[REAL-IMAGE-API] 🎨 Step 2: Generating image with ${imageModel}...`);
+    secureLog.info(`[REAL-IMAGE-API] 🎨 Step 2: Generating image with ${imageModel}...`);
     
     if (!process.env.OPENAI_API_KEY) {
       throw new Error('OpenAI API key not configured');
@@ -170,7 +171,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           size: gptImageSize,
           n: 1,
         });
-        console.log('[REAL-IMAGE-API] ✅ Generated with gpt-image-1');
+        secureLog.info('[REAL-IMAGE-API] ✅ Generated with gpt-image-1');
       } else {
         // Configuration pour DALL-E 3 (fallback)
         imageResponse = await openai.images.generate({
@@ -181,12 +182,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           style: style as 'natural' | 'vivid',
           n: 1,
         });
-        console.log('[REAL-IMAGE-API] ✅ Generated with DALL-E 3');
+        secureLog.info('[REAL-IMAGE-API] ✅ Generated with DALL-E 3');
       }
     } catch (error: any) {
       // Si gpt-image-1 échoue (non vérifié), basculer sur DALL-E 3
       if (useGptImage && error.message?.includes('verified')) {
-        console.log('[REAL-IMAGE-API] ⚠️ gpt-image-1 requires verification, falling back to DALL-E 3');
+        secureLog.info('[REAL-IMAGE-API] ⚠️ gpt-image-1 requires verification, falling back to DALL-E 3');
         imageResponse = await openai.images.generate({
           model: 'dall-e-3',
           prompt: finalPrompt,
@@ -195,7 +196,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           style: style as 'natural' | 'vivid',
           n: 1,
         });
-        console.log('[REAL-IMAGE-API] ✅ Generated with DALL-E 3 (fallback)');
+        secureLog.info('[REAL-IMAGE-API] ✅ Generated with DALL-E 3 (fallback)');
       } else {
         throw error;
       }
@@ -208,9 +209,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       throw new Error('No image URL returned from OpenAI');
     }
 
-    console.log('[REAL-IMAGE-API] ✅ Image generated successfully!');
-    console.log('[REAL-IMAGE-API] 🖼️ Image URL:', imageUrl);
-    console.log('[REAL-IMAGE-API] 📝 DALL-E revised prompt:', revisedPrompt?.slice(0, 100) + '...');
+    secureLog.info('[REAL-IMAGE-API] ✅ Image generated successfully!');
+    secureLog.info('[REAL-IMAGE-API] 🖼️ Image URL:', imageUrl);
+    secureLog.info('[REAL-IMAGE-API] 📝 DALL-E revised prompt:', revisedPrompt?.slice(0, 100) + '...');
 
     // Calculer le coût réel utilisé
     const actualCreditsUsed = CREDIT_COSTS.IMAGE_GENERATION + (enhanceEnabled && enhancementResult.success ? CREDIT_COSTS.GPT_ENHANCEMENT : 0);
@@ -223,7 +224,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const balanceInfo = await creditsManager.getBalance(userId);
         currentBalance = balanceInfo.balance;
       } catch (err) {
-        console.warn('[REAL-IMAGE-API] Could not fetch balance:', err);
+        secureLog.warn('[REAL-IMAGE-API] Could not fetch balance:', err);
       }
     }
 
@@ -265,7 +266,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
   } catch (error: any) {
-    console.error('[REAL-IMAGE-API] ❌ Generation failed:', error);
+    secureLog.error('[REAL-IMAGE-API] ❌ Generation failed:', error);
     
     // Rembourser les crédits si ils ont été déduits
     if (creditsDeducted && userId && !skipCreditsCheck) {
@@ -279,9 +280,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           'Image generation failed',
           transactionId || undefined
         );
-        console.log('[REAL-IMAGE-API] 💰 Credits refunded due to error');
+        secureLog.info('[REAL-IMAGE-API] 💰 Credits refunded due to error');
       } catch (refundError) {
-        console.error('[REAL-IMAGE-API] Failed to refund credits:', refundError);
+        secureLog.error('[REAL-IMAGE-API] Failed to refund credits:', refundError);
       }
     }
     

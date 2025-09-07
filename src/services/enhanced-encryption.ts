@@ -1,4 +1,5 @@
 import * as crypto from 'crypto';
+import { secureLog } from '@/lib/secure-logger';
 
 /**
  * Service de chiffrement renforcé avec AES-256-GCM
@@ -38,7 +39,7 @@ export class EnhancedEncryptionService {
       throw new Error('ENCRYPTION_KEY environment variable is required in production');
     }
     
-    console.warn('⚠️  Generating temporary encryption key for development. Set ENCRYPTION_KEY in production!');
+    secureLog.warn('⚠️  Generating temporary encryption key for development. Set ENCRYPTION_KEY in production!');
     return crypto.randomBytes(this.keyLength).toString('hex').substring(0, this.keyLength);
   }
 
@@ -256,7 +257,7 @@ let enhancedEncryptionService: EnhancedEncryptionService | null = null;
 try {
   enhancedEncryptionService = new EnhancedEncryptionService();
 } catch (error) {
-  console.error('Failed to initialize enhanced encryption service:', error);
+  secureLog.error('Failed to initialize enhanced encryption service:', error);
   // Fallback vers l'ancien service si nécessaire
 }
 

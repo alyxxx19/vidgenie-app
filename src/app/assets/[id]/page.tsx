@@ -20,10 +20,11 @@ import SEOEditor from '@/components/seo-editor';
 import { formatBytes, formatDuration } from '@/lib/utils/format';
 
 interface AssetPageProps {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 }
 
-export default function AssetPage({ params }: AssetPageProps) {
+export default async function AssetPage({ params }: AssetPageProps) {
+  const { id } = await params;
   const { user, isLoading } = useAuth();
   const [_editingDescription, _setEditingDescription] = useState<string | null>(null);
   const [_editingHashtags, _setEditingHashtags] = useState<string | null>(null);
@@ -40,7 +41,7 @@ export default function AssetPage({ params }: AssetPageProps) {
     redirect('/auth/signin');
   }
 
-  const { data: asset, isLoading: assetLoading } = api.assets.getById.useQuery({ id: params.id });
+  const { data: asset, isLoading: assetLoading } = api.assets.getById.useQuery({ id });
   const updateSEOMutation = api.assets.updateSEO.useMutation();
   const publishMutation = api.publishing.publishToPlatform.useMutation();
 
@@ -79,7 +80,7 @@ export default function AssetPage({ params }: AssetPageProps) {
 
   const handleSEOSave = (platform: string, data: { description: string; hashtags: string[] }) => {
     updateSEOMutation.mutate({
-      id: params.id,
+      id,
       platform: platform as any,
       description: data.description,
       hashtags: data.hashtags,
@@ -88,7 +89,7 @@ export default function AssetPage({ params }: AssetPageProps) {
 
   const handlePublish = (platform: string, data: { description: string; hashtags: string[] }) => {
     publishMutation.mutate({
-      assetId: params.id,
+      assetId: id,
       platform: platform as any,
       description: data.description,
       hashtags: data.hashtags,

@@ -24,6 +24,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { api } from '@/app/providers';
+import { secureLog } from '@/lib/secure-logger';
 
 interface AvatarUploadProps {
   currentAvatar?: string;
@@ -179,7 +180,7 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarUpdate }: Avatar
       updateAvatarMutation.mutate({ avatarUrl: publicUrl });
 
     } catch (error) {
-      console.error('Upload error:', error);
+      secureLog.error('Upload error:', error);
       toast.error(error instanceof Error ? error.message : 'Erreur lors de l\'upload');
       setIsUploading(false);
     }

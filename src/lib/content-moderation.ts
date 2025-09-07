@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { secureLog } from '@/lib/secure-logger';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || '',
@@ -43,7 +44,7 @@ class OpenAIModerationService implements ContentModerationService {
         severity,
       };
     } catch (error) {
-      console.error('Text moderation error:', error);
+      secureLog.error('Text moderation error:', error);
       // En cas d'erreur, on refuse par sécurité
       return {
         flagged: true,
@@ -86,7 +87,7 @@ class OpenAIModerationService implements ContentModerationService {
       const result = JSON.parse(content) as ModerationResult;
       return result;
     } catch (error) {
-      console.error('Image moderation error:', error);
+      secureLog.error('Image moderation error:', error);
       // En cas d'erreur, on refuse par sécurité
       return {
         flagged: true,
@@ -218,7 +219,7 @@ export async function moderatePrompt(prompt: string): Promise<{
 }> {
   // En mode développement, on bypasse la modération pour simplifier les tests
   if (process.env.NODE_ENV === 'development' && process.env.SKIP_MODERATION === 'true') {
-    console.log('[DEV] Moderation bypassed for prompt:', prompt.slice(0, 50) + '...');
+    secureLog.info('[DEV] Moderation bypassed for prompt:', prompt.slice(0, 50) + '...');
     return {
       allowed: true,
       reason: 'Development mode - moderation bypassed',
@@ -235,11 +236,11 @@ export async function moderatePrompt(prompt: string): Promise<{
       severity: result.severity,
     };
   } catch (error) {
-    console.error('Prompt moderation error:', error);
+    secureLog.error('Prompt moderation error:', error);
     
     // En mode développement, on autorise en cas d'erreur de service
     if (process.env.NODE_ENV === 'development') {
-      console.warn('[DEV] Moderation service failed, allowing content in development mode');
+      secureLog.warn('[DEV] Moderation service failed, allowing content in development mode');
       return {
         allowed: true,
         reason: 'Development mode - moderation service unavailable but content allowed',
@@ -271,9 +272,9 @@ export async function moderateGeneratedImage(imageUrl: string): Promise<{
       severity: result.severity,
     };
   } catch (error) {
-    console.error('Image moderation error:', error);
+    secureLog.error('Image moderation error:', error);
     // En cas d'erreur, on autorise mais on log
-    console.warn('Image moderation failed, allowing content but logging for review');
+    secureLog.warn('Image moderation failed, allowing content but logging for review');
     return {
       allowed: true,
       reason: 'Moderation service unavailable - content allowed for review',

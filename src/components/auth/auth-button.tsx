@@ -6,13 +6,20 @@ import { cn } from '@/lib/utils';
 import { forwardRef } from 'react';
 
 interface AuthButtonProps extends ButtonProps {
+  children?: React.ReactNode;
+  type?: "button" | "submit" | "reset";
+  className?: string;
+  disabled?: boolean;
+  onClick?: () => void | Promise<void>;
+  variant?: "default" | "destructive" | "outline" | "secondary" | "ghost" | "link";
+  size?: "default" | "sm" | "lg" | "icon";
   isLoading?: boolean;
   icon?: React.ReactNode;
   loadingText?: string;
   loadingIcon?: React.ReactNode;
 }
 
-export const AuthButton = forwardRef<HTMLButtonElement, AuthButtonProps>(
+const AuthButton = forwardRef<HTMLButtonElement, AuthButtonProps>(
   (
     {
       children,
@@ -22,7 +29,10 @@ export const AuthButton = forwardRef<HTMLButtonElement, AuthButtonProps>(
       loadingIcon,
       className,
       disabled,
+      onClick,
+      variant,
       size = 'lg',
+      type,
       ...props
     },
     ref
@@ -30,6 +40,9 @@ export const AuthButton = forwardRef<HTMLButtonElement, AuthButtonProps>(
     return (
       <Button
         ref={ref}
+        type={type}
+        onClick={onClick}
+        variant={variant}
         disabled={isLoading || disabled}
         size={size}
         className={cn(
@@ -64,3 +77,5 @@ export const AuthButton = forwardRef<HTMLButtonElement, AuthButtonProps>(
 );
 
 AuthButton.displayName = 'AuthButton';
+
+export { AuthButton };

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
 import { createClient } from '@/lib/supabase/client';
+import { secureLog } from '@/lib/secure-logger';
 
 interface GenerateImageRequest {
   prompt: string;
@@ -31,7 +32,7 @@ export function useSimpleImageGeneration() {
       setError(null);
       setGenerationResult(null);
 
-      console.log('[HOOK] Starting image generation:', request.prompt.slice(0, 50));
+      secureLog.info('[HOOK] Starting image generation:', request.prompt.slice(0, 50));
 
       // Obtenir le token d'authentification Supabase
       const supabase = createClient();
@@ -56,14 +57,14 @@ export function useSimpleImageGeneration() {
         throw new Error(data.error || 'Generation failed');
       }
 
-      console.log('[HOOK] Image generated successfully:', data.imageUrl);
+      secureLog.info('[HOOK] Image generated successfully:', data.imageUrl);
 
       setGenerationResult(data);
       toast.success('Image generated successfully!');
       return data;
 
     } catch (err: any) {
-      console.error('[HOOK] Generation failed:', err);
+      secureLog.error('[HOOK] Generation failed:', err);
       const errorMessage = err.message || 'Image generation failed';
       setError(errorMessage);
       toast.error(errorMessage);

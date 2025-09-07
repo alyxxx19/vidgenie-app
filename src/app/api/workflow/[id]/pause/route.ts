@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerUser } from '@/lib/auth/server-auth';
 import { db } from '@/server/api/db';
 import { getWorkflowOrchestrator } from '@/lib/services/workflow-orchestrator';
+import { secureLog } from '@/lib/secure-logger';
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Authentication
@@ -17,7 +18,7 @@ export async function POST(
       );
     }
 
-    const workflowId = params.id;
+    const workflowId = (await params).id;
     
     // Verify that the job belongs to the user
     const job = await db.generationJob.findFirst({
@@ -51,8 +52,10 @@ export async function POST(
       data: { 
         status: 'PAUSED',
         // Keep the original status in metadata for resume
-        providerData: {
-          ...job.providerData,
+        providerData: job.providerData ? {
+          ...job.providerData as Record<string, any>,
+          pausedFromStatus: job.status
+        } : {
           pausedFromStatus: job.status
         }
       },
@@ -69,7 +72,7 @@ export async function POST(
     });
 
   } catch (error) {
-    console.error('Pause workflow error:', error);
+    secureLog.error('Pause workflow error:', error);
     
     return NextResponse.json(
       { error: 'Failed to pause workflow' },

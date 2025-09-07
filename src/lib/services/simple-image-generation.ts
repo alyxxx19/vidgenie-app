@@ -1,5 +1,6 @@
 import OpenAI from 'openai';
 import { moderatePrompt } from '@/lib/content-moderation';
+import { secureLog } from '@/lib/secure-logger';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || '',
@@ -27,7 +28,7 @@ export interface SimpleImageResponse {
 export class SimpleImageGenerationService {
   async generateImage(request: SimpleImageRequest): Promise<SimpleImageResponse> {
     try {
-      console.log('[IMAGE_GEN] Starting generation with prompt:', request.prompt.slice(0, 100));
+      secureLog.info('[IMAGE_GEN] Starting generation with prompt:', request.prompt.slice(0, 100));
 
       // Vérification de l'API Key
       if (!process.env.OPENAI_API_KEY) {
@@ -43,7 +44,7 @@ export class SimpleImageGenerationService {
         };
       }
 
-      console.log('[IMAGE_GEN] Content moderation passed');
+      secureLog.info('[IMAGE_GEN] Content moderation passed');
 
       // Génération de l'image
       const response = await openai.images.generate({
@@ -61,7 +62,7 @@ export class SimpleImageGenerationService {
         throw new Error('No image URL returned from OpenAI');
       }
 
-      console.log('[IMAGE_GEN] Image generated successfully:', image.url);
+      secureLog.info('[IMAGE_GEN] Image generated successfully:', image.url);
 
       // Parse dimensions from size parameter
       const [width, height] = (request.size || '1024x1792').split('x').map(Number);
@@ -77,7 +78,7 @@ export class SimpleImageGenerationService {
         },
       };
     } catch (error: any) {
-      console.error('[IMAGE_GEN] Generation failed:', error);
+      secureLog.error('[IMAGE_GEN] Generation failed:', error);
       
       let errorMessage = 'Image generation failed';
       if (error?.message) {
@@ -104,7 +105,7 @@ export class SimpleImageGenerationService {
 
   async downloadImageAsBuffer(imageUrl: string): Promise<Buffer> {
     try {
-      console.log('[IMAGE_GEN] Downloading image from:', imageUrl);
+      secureLog.info('[IMAGE_GEN] Downloading image from:', imageUrl);
       
       const response = await fetch(imageUrl);
       if (!response.ok) {
@@ -112,11 +113,11 @@ export class SimpleImageGenerationService {
       }
       
       const buffer = Buffer.from(await response.arrayBuffer());
-      console.log('[IMAGE_GEN] Image downloaded, size:', buffer.length, 'bytes');
+      secureLog.info('[IMAGE_GEN] Image downloaded, size:', buffer.length, 'bytes');
       
       return buffer;
     } catch (error) {
-      console.error('[IMAGE_GEN] Download failed:', error);
+      secureLog.error('[IMAGE_GEN] Download failed:', error);
       throw new Error('Failed to download generated image');
     }
   }

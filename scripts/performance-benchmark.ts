@@ -333,12 +333,11 @@ async function runPromptEnhancementBenchmarks(runner: BenchmarkRunner): Promise<
     async () => {
       const start = performance.now();
       const result = await service.enhance(`Benchmark prompt ${Math.random()}`, {
-        creativity: Math.random(),
-        targetAudience: 'general'
+        context: 'general' as const
       });
       const latency = performance.now() - start;
       
-      return { success: result.success, latency, error: result.error };
+      return { success: !!result.enhanced, latency, error: result.enhanced ? undefined : 'Enhancement failed' };
     }
   ));
 
@@ -355,12 +354,12 @@ async function runPromptEnhancementBenchmarks(runner: BenchmarkRunner): Promise<
     async () => {
       const start = performance.now();
       const result = await service.enhance(`Medium load test ${Math.random()}`, {
-        creativity: 0.7,
-        targetAudience: 'professional'
+        temperature: 0.7,
+        context: 'general'
       });
       const latency = performance.now() - start;
       
-      return { success: result.success, latency, error: result.error };
+      return { success: !!result.enhanced, latency, error: result.enhanced ? undefined : 'Enhancement failed' };
     }
   ));
 
@@ -377,13 +376,12 @@ async function runPromptEnhancementBenchmarks(runner: BenchmarkRunner): Promise<
     async () => {
       const start = performance.now();
       const result = await service.enhance(`High load test ${Math.random()}`, {
-        creativity: Math.random(),
-        targetAudience: Math.random() > 0.5 ? 'general' : 'professional',
-        contentType: Math.random() > 0.5 ? 'image' : 'video'
+        temperature: Math.random() * 0.8 + 0.2,
+        context: Math.random() > 0.5 ? 'image' : 'video'
       });
       const latency = performance.now() - start;
       
-      return { success: result.success, latency, error: result.error };
+      return { success: !!result.enhanced, latency, error: result.enhanced ? undefined : 'Enhancement failed' };
     }
   ));
 
@@ -409,14 +407,14 @@ async function runImageGenerationBenchmarks(runner: BenchmarkRunner): Promise<Be
     async () => {
       const start = performance.now();
       const result = await service.generate(`Benchmark image ${Math.random()}`, {
-        model: 'dall-e-3',
+        provider: 'dalle3',
         size: '1024x1024',
         quality: 'standard',
         style: 'vivid'
       });
       const latency = performance.now() - start;
       
-      return { success: result.success, latency, error: result.error };
+      return { success: result.success && result.images.length > 0, latency, error: result.error || (!result.success ? 'Image generation failed' : undefined) };
     }
   ));
 
@@ -433,14 +431,14 @@ async function runImageGenerationBenchmarks(runner: BenchmarkRunner): Promise<Be
     async () => {
       const start = performance.now();
       const result = await service.generate(`HD benchmark image ${Math.random()}`, {
-        model: 'dall-e-3',
+        provider: 'dalle3',
         size: '1024x1792',
         quality: 'hd',
         style: 'natural'
       });
       const latency = performance.now() - start;
       
-      return { success: result.success, latency, error: result.error };
+      return { success: result.success && result.images.length > 0, latency, error: result.error || (!result.success ? 'Image generation failed' : undefined) };
     }
   ));
 
@@ -475,7 +473,7 @@ async function runVideoGenerationBenchmarks(runner: BenchmarkRunner): Promise<Be
       );
       const latency = performance.now() - start;
       
-      return { success: result.success, latency, error: result.error };
+      return { success: result.success && !!(result.job || result.video), latency, error: result.error || (!result.success ? 'Video generation failed' : undefined) };
     }
   ));
 
@@ -538,18 +536,18 @@ async function runWorkflowBenchmarks(runner: BenchmarkRunner): Promise<Benchmark
       try {
         // Step 1: Enhance prompt
         const enhanceResult = await promptService.enhance(`Workflow benchmark ${Math.random()}`);
-        if (!enhanceResult.success) {
-          throw new Error(`Prompt enhancement failed: ${enhanceResult.error}`);
+        if (!enhanceResult.enhanced) {
+          throw new Error(`Prompt enhancement failed`);
         }
         
         // Step 2: Generate image
-        const imageResult = await imageService.generate(enhanceResult.enhancedPrompt);
+        const imageResult = await imageService.generate(enhanceResult.enhanced);
         if (!imageResult.success) {
           throw new Error(`Image generation failed: ${imageResult.error}`);
         }
         
         // Step 3: Create video job
-        const videoResult = await videoService.generateFromImage(imageResult.imageUrl);
+        const videoResult = await videoService.generateFromImage(imageResult.images[0]?.url);
         if (!videoResult.success) {
           throw new Error(`Video generation failed: ${videoResult.error}`);
         }

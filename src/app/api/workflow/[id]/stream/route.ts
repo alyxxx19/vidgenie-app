@@ -2,10 +2,11 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerUser } from '@/lib/auth/server-auth';
 import { db } from '@/server/api/db';
 import { getWorkflowOrchestrator } from '@/lib/services/workflow-orchestrator';
+import { secureLog } from '@/lib/secure-logger';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Authentification
@@ -14,7 +15,7 @@ export async function GET(
       return new Response('Authentication required', { status: 401 });
     }
 
-    const workflowId = params.id;
+    const workflowId = (await params).id;
     
     // Vérifier que le job appartient à l'utilisateur
     const job = await db.generationJob.findFirst({
@@ -99,7 +100,7 @@ export async function GET(
               controller.close();
             }
           } catch (error) {
-            console.error('Status check error:', error);
+            secureLog.error('Status check error:', error);
             send({
               type: 'error',
               error: 'Status check failed',
@@ -129,7 +130,7 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error('SSE stream error:', error);
+    secureLog.error('SSE stream error:', error);
     return new Response('Internal server error', { status: 500 });
   }
 }

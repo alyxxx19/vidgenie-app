@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerUser } from '@/lib/auth/server-auth';
 import { db } from '@/server/api/db';
+import { secureLog } from '@/lib/secure-logger';
 
 export interface WorkflowStatusResponse {
   success: boolean;
@@ -35,7 +36,7 @@ export interface WorkflowStatusResponse {
  */
 export async function GET(
   request: NextRequest,
-  { params }: { params: { workflowId: string } }
+  { params }: { params: Promise<{ workflowId: string }> }
 ): Promise<NextResponse> {
   try {
     // Authentification
@@ -47,7 +48,7 @@ export async function GET(
       );
     }
 
-    const workflowId = params.workflowId;
+    const workflowId = (await params).workflowId;
 
     // Récupérer le workflow depuis la base de données
     const workflow = await db.workflowExecution.findFirst({
@@ -113,7 +114,7 @@ export async function GET(
     return NextResponse.json(response);
 
   } catch (error) {
-    console.error('Workflow status error:', error);
+    secureLog.error('Workflow status error:', error);
     
     const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     

@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
 import { createClient } from '@supabase/supabase-js';
+import { secureLog } from '@/lib/secure-logger';
 import type { Database } from '@/lib/supabase/types';
 
 // Server-side Supabase client for API routes
@@ -13,19 +14,19 @@ export function createServerSupabaseClient() {
 // Server-side auth verification
 export async function getServerUser(request: Request) {
   try {
-    console.log('[SERVER-AUTH] Starting auth verification');
+    secureLog.info('[SERVER-AUTH] Starting auth verification');
     
     const cookieStore = cookies();
     const allCookies = cookieStore.getAll();
     
     // Log des cookies pour debug (sans valeurs sensibles)
-    console.log('[SERVER-AUTH] Available cookies:', allCookies.map(c => c.name));
+    secureLog.info('[SERVER-AUTH] Available cookies:', allCookies.map(c => c.name));
     
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
     
     if (!supabaseUrl || !supabaseAnonKey) {
-      console.error('[SERVER-AUTH] Missing environment variables:', {
+      secureLog.security('[SERVER-AUTH] Missing environment variables:', {
         hasUrl: !!supabaseUrl,
         hasAnonKey: !!supabaseAnonKey
       });
@@ -41,11 +42,11 @@ export async function getServerUser(request: Request) {
       },
     });
     
-    console.log('[SERVER-AUTH] Calling supabase.auth.getUser()');
+    secureLog.info('[SERVER-AUTH] Calling supabase.auth.getUser()');
     const { data: { user }, error } = await supabase.auth.getUser();
     
     if (error) {
-      console.error('[SERVER-AUTH] Supabase auth error:', {
+      secureLog.security('[SERVER-AUTH] Supabase auth error:', {
         message: error.message,
         name: error.name,
         status: error.status
@@ -54,11 +55,11 @@ export async function getServerUser(request: Request) {
     }
     
     if (!user) {
-      console.log('[SERVER-AUTH] No user found in session');
+      secureLog.info('[SERVER-AUTH] No user found in session');
       return null;
     }
     
-    console.log('[SERVER-AUTH] User authenticated:', {
+    secureLog.info('[SERVER-AUTH] User authenticated:', {
       id: user.id,
       email: user.email,
       hasSession: true
@@ -66,7 +67,7 @@ export async function getServerUser(request: Request) {
     
     return user;
   } catch (error) {
-    console.error('[SERVER-AUTH] Unexpected error during auth verification:', {
+    secureLog.security('[SERVER-AUTH] Unexpected error during auth verification:', {
       error: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined
     });

@@ -101,7 +101,7 @@ export class ApiValidationService {
         };
       }
     } catch (error) {
-      console.error('OpenAI validation error:', error);
+      secureLog.error('OpenAI validation error:', error);
       
       if (error instanceof Error && error.name === 'AbortError') {
         return {
@@ -189,7 +189,7 @@ export class ApiValidationService {
         };
       }
     } catch (error) {
-      console.error('NanoBanana validation error:', error);
+      secureLog.error('NanoBanana validation error:', error);
       
       if (error instanceof Error && error.name === 'AbortError') {
         return {
@@ -295,7 +295,7 @@ export class ApiValidationService {
         };
       }
     } catch (error) {
-      console.error('VEO3 validation error:', error);
+      secureLog.error('VEO3 validation error:', error);
       
       if (error instanceof Error && error.name === 'AbortError') {
         return {
@@ -353,14 +353,14 @@ export class ApiValidationService {
         
         // Si c'est une erreur réseau et qu'il reste des tentatives
         if (!result.isValid && result.error?.type === 'network' && attempt < retries) {
-          console.log(`Tentative ${attempt + 1}/${retries + 1} échouée pour ${provider}, retry dans 1s...`);
+          secureLog.info(`Tentative ${attempt + 1}/${retries + 1} échouée pour ${provider}, retry dans 1s...`);
           await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1))); // Backoff progressif
           continue;
         }
         
         return result;
       } catch (error) {
-        console.error(`Erreur lors de la validation ${provider} (tentative ${attempt + 1}):`, error);
+        secureLog.error(`Erreur lors de la validation ${provider} (tentative ${attempt + 1}):`, error);
         
         if (attempt === retries) {
           return {

@@ -7,6 +7,7 @@ import { uploadToS3 } from '@/lib/s3';
 import { inngest } from '@/lib/inngest';
 import { moderatePrompt } from '@/lib/content-moderation';
 import crypto from 'crypto';
+import { secureLog } from '@/lib/secure-logger';
 
 const imageGenerationSchema = z.object({
   prompt: z.string().min(10).max(2000),
@@ -100,7 +101,7 @@ export const generationRouter = createTRPCRouter({
           }
         });
       } catch (error) {
-        console.warn('Inngest not available, running in development mode:', error);
+        secureLog.warn('Inngest not available, running in development mode:', error);
         
         // Mode développement : génération immédiate
         if (process.env.NODE_ENV === 'development') {
@@ -274,7 +275,7 @@ export const generationRouter = createTRPCRouter({
           }
         });
       } catch (error) {
-        console.warn('Inngest not available, running in development mode:', error);
+        secureLog.warn('Inngest not available, running in development mode:', error);
         
         // Mode développement : simulation
         if (process.env.NODE_ENV === 'development') {
@@ -740,7 +741,7 @@ export const generationRouter = createTRPCRouter({
           }
         });
       } catch (error) {
-        console.warn('Inngest not available, running in development mode:', error);
+        secureLog.warn('Inngest not available, running in development mode:', error);
         // Le mode développement sera géré par les workers Inngest
       }
 
@@ -777,7 +778,7 @@ export const generationRouter = createTRPCRouter({
         try {
           await veo3Client.cancelJob(job.providerJobId);
         } catch (error) {
-          console.warn('Failed to cancel provider job:', error);
+          secureLog.warn('Failed to cancel provider job:', error);
         }
       }
 
@@ -862,7 +863,7 @@ export const generationRouter = createTRPCRouter({
           data: { jobId: job.id }
         });
       } catch (error) {
-        console.warn('Inngest not available for retry:', error);
+        secureLog.warn('Inngest not available for retry:', error);
       }
 
       return { success: true };

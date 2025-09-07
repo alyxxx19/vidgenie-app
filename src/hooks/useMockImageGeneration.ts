@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { secureLog } from '@/lib/secure-logger';
 
 interface GenerateImageRequest {
   prompt: string;
@@ -31,7 +32,7 @@ export function useMockImageGeneration() {
       setError(null);
       setGenerationResult(null);
 
-      console.log('[MOCK-HOOK] Starting mock image generation:', request.prompt.slice(0, 50));
+      secureLog.info('[MOCK-HOOK] Starting mock image generation:', request.prompt.slice(0, 50));
 
       const response = await fetch('/api/mock-generate-image', {
         method: 'POST',
@@ -44,18 +45,18 @@ export function useMockImageGeneration() {
       const data = await response.json();
 
       if (!response.ok) {
-        console.error('[MOCK-HOOK] API Error:', data);
+        secureLog.error('[MOCK-HOOK] API Error:', data);
         throw new Error(data.error || 'Generation failed');
       }
 
-      console.log('[MOCK-HOOK] Mock image generated successfully:', data.imageUrl);
+      secureLog.info('[MOCK-HOOK] Mock image generated successfully:', data.imageUrl);
 
       setGenerationResult(data);
       toast.success(data.note || 'Mock image generated successfully!');
       return data;
 
     } catch (err: any) {
-      console.error('[MOCK-HOOK] Generation failed:', err);
+      secureLog.error('[MOCK-HOOK] Generation failed:', err);
       const errorMessage = err.message || 'Mock image generation failed';
       setError(errorMessage);
       toast.error(errorMessage);

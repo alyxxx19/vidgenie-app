@@ -1,6 +1,7 @@
 import { NextApiRequest, NextApiResponse } from 'next';
 import { db } from '@/server/api/db';
 import { simpleStorage } from '@/lib/services/simple-storage';
+import { secureLog } from '@/lib/secure-logger';
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   // Cette API est uniquement pour le développement
@@ -13,7 +14,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    console.log('[MOCK-API] Mock image generation request');
+    secureLog.info('[MOCK-API] Mock image generation request');
     
     const { prompt, style, quality, size, projectId } = req.body;
 
@@ -23,7 +24,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       });
     }
 
-    console.log('[MOCK-API] Generating mock image for:', prompt.slice(0, 50) + '...');
+    secureLog.info('[MOCK-API] Generating mock image for:', prompt.slice(0, 50) + '...');
 
     // Utilisateur de développement
     const DEV_USER_ID = 'dev-user-123';
@@ -55,7 +56,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
-    console.log('[MOCK-API] Job created:', generationJob.id);
+    secureLog.info('[MOCK-API] Job created:', generationJob.id);
 
     // Générer une image placeholder avec les dimensions demandées
     const sizeMap: Record<string, { width: number; height: number }> = {
@@ -69,7 +70,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // Utiliser un service de placeholder gratuit
     const mockImageUrl = `https://picsum.photos/${dimensions.width}/${dimensions.height}?random=${Date.now()}`;
     
-    console.log('[MOCK-API] Mock image URL:', mockImageUrl);
+    secureLog.info('[MOCK-API] Mock image URL:', mockImageUrl);
 
     // Simuler un petit délai
     await new Promise(resolve => setTimeout(resolve, 2000));
@@ -129,7 +130,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       },
     });
 
-    console.log('[MOCK-API] Mock generation completed successfully');
+    secureLog.info('[MOCK-API] Mock generation completed successfully');
 
     return res.status(200).json({
       success: true,
@@ -143,7 +144,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
   } catch (error: any) {
-    console.error('[MOCK-API] Error:', error);
+    secureLog.error('[MOCK-API] Error:', error);
     return res.status(500).json({
       error: error.message || 'Mock generation failed'
     });

@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
+import { secureLog } from '@/lib/secure-logger';
 
 export const userRouter = createTRPCRouter({
   // Récupérer le profil complet de l'utilisateur
@@ -147,7 +148,7 @@ export const userRouter = createTRPCRouter({
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         
-        let checkDate = new Date(today);
+        const checkDate = new Date(today);
         
         for (let i = 0; i < 30; i++) {
           const hasContentThisDay = recentAssets.some(asset => {
@@ -385,7 +386,7 @@ export const userRouter = createTRPCRouter({
       });
 
       if (updateError) {
-        console.error('Erreur mise à jour mot de passe:', updateError);
+        secureLog.error('Erreur mise à jour mot de passe:', updateError);
         throw new Error('Erreur lors de la mise à jour du mot de passe');
       }
 
@@ -561,7 +562,7 @@ export const userRouter = createTRPCRouter({
         });
 
         if (enrollError) {
-          console.error('Erreur lors de l\'enrôlement 2FA:', enrollError);
+          secureLog.error('Erreur lors de l\'enrôlement 2FA:', enrollError);
           throw new Error('Impossible de configurer la 2FA');
         }
 
@@ -576,7 +577,7 @@ export const userRouter = createTRPCRouter({
           message: 'Scannez le QR code avec votre application d\'authentification',
         };
       } catch (error) {
-        console.error('Erreur setup 2FA:', error);
+        secureLog.error('Erreur setup 2FA:', error);
         throw new Error('Erreur lors de la configuration 2FA');
       }
     }),
@@ -624,7 +625,7 @@ export const userRouter = createTRPCRouter({
           accessToken: verifyData.access_token,
         };
       } catch (error) {
-        console.error('Erreur verification 2FA:', error);
+        secureLog.error('Erreur verification 2FA:', error);
         throw new Error(error instanceof Error ? error.message : 'Code invalide');
       }
     }),
@@ -662,7 +663,7 @@ export const userRouter = createTRPCRouter({
           });
           
           if (unenrollError) {
-            console.error('Erreur lors de la désinscription du facteur:', unenrollError);
+            secureLog.error('Erreur lors de la désinscription du facteur:', unenrollError);
           }
         }
 
@@ -679,7 +680,7 @@ export const userRouter = createTRPCRouter({
           message: 'Authentification à deux facteurs désactivée',
         };
       } catch (error) {
-        console.error('Erreur disable 2FA:', error);
+        secureLog.error('Erreur disable 2FA:', error);
         throw new Error(error instanceof Error ? error.message : 'Erreur lors de la désactivation 2FA');
       }
     }),
@@ -711,7 +712,7 @@ export const userRouter = createTRPCRouter({
           })),
         };
       } catch (error) {
-        console.error('Erreur get 2FA status:', error);
+        secureLog.error('Erreur get 2FA status:', error);
         return {
           enabled: false,
           factors: [],

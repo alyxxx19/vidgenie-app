@@ -1,4 +1,5 @@
 import OpenAI from 'openai';
+import { secureLog } from '@/lib/secure-logger';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY || '',
@@ -55,7 +56,7 @@ export class ImageGenerationService {
         },
       };
     } catch (error) {
-      console.error('Image generation error:', error);
+      secureLog.error('Image generation error:', error);
       throw new Error(
         error instanceof Error 
           ? `Image generation failed: ${error.message}`
@@ -72,7 +73,7 @@ export class ImageGenerationService {
       }
       return Buffer.from(await response.arrayBuffer());
     } catch (error) {
-      console.error('Image download error:', error);
+      secureLog.error('Image download error:', error);
       throw new Error('Failed to download generated image');
     }
   }

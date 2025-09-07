@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { validateStripeConfig, getAllConfiguredPrices, stripe } from '@/lib/stripe/config';
+import { secureLog } from '@/lib/secure-logger';
 
 export async function GET() {
   try {
@@ -73,7 +74,7 @@ export async function GET() {
     });
 
   } catch (error: any) {
-    console.error('[STRIPE-CONFIG-API] Error:', error);
+    secureLog.error('[STRIPE-CONFIG-API] Error:', error);
     
     return NextResponse.json(
       { 

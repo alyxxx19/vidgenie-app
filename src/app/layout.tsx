@@ -3,7 +3,8 @@ import { Inter, Poppins, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from '@/components/ui/toaster';
-import { AccessibilityChecker } from '@/components/ui/accessibility-checker';
+import { LazyWrapper } from '@/components/lazy/LazyWrapper';
+import { LazyAccessibilityChecker } from '@/components/lazy';
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -38,7 +39,9 @@ export default function RootLayout({
         <Providers>
           {children}
           <Toaster />
-          <AccessibilityChecker />
+          <LazyWrapper name="accessibility checker" retryable={false}>
+            <LazyAccessibilityChecker />
+          </LazyWrapper>
         </Providers>
       </body>
     </html>

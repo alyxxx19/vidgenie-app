@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { StripeSubscriptionService } from '@/lib/stripe/subscription-service';
 import { db } from '@/server/api/db';
+import { secureLog } from '@/lib/secure-logger';
 
 export async function POST(_request: NextRequest) {
   try {
@@ -47,7 +48,7 @@ export async function POST(_request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Customer Portal creation error:', error);
+    secureLog.error('Customer Portal creation error:', error);
     
     return NextResponse.json(
       { 

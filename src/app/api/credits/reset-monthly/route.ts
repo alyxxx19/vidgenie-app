@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/server/api/db';
 import { getCreditsManager } from '@/lib/services/credits-manager';
 import { PRICING_CONFIG } from '@/lib/stripe/config';
+import { secureLog } from '@/lib/secure-logger';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,7 +17,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log('[MONTHLY-RESET] Starting monthly credits reset...');
+    secureLog.info('[MONTHLY-RESET] Starting monthly credits reset...');
     
     // Obtenir tous les utilisateurs avec des abonnements actifs
     const activeUsers = await db.user.findMany({
@@ -33,7 +34,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log(`[MONTHLY-RESET] Found ${activeUsers.length} active subscribers`);
+    secureLog.info(`[MONTHLY-RESET] Found ${activeUsers.length} active subscribers`);
 
     const creditsManager = getCreditsManager(db);
     let resetCount = 0;
@@ -48,11 +49,11 @@ export async function POST(request: NextRequest) {
           // Réinitialiser les crédits selon le plan
           await creditsManager.resetMonthlyCredits(user.id, planCredits);
           
-          console.log(`[MONTHLY-RESET] Reset credits for ${user.email}: ${planCredits} credits (${user.planId} plan)`);
+          secureLog.info(`[MONTHLY-RESET] Reset credits for ${user.email}: ${planCredits} credits (${user.planId} plan)`);
           resetCount++;
         }
       } catch (userError) {
-        console.error(`[MONTHLY-RESET] Failed to reset credits for user ${user.email}:`, userError);
+        secureLog.error(`[MONTHLY-RESET] Failed to reset credits for user ${user.email}:`, userError);
         errorCount++;
       }
     }
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log(`[MONTHLY-RESET] Cleanup: Deleted ${deletedWebhooks.count} old webhooks`);
+    secureLog.info(`[MONTHLY-RESET] Cleanup: Deleted ${deletedWebhooks.count} old webhooks`);
 
     const result = {
       success: true,
@@ -79,12 +80,12 @@ export async function POST(request: NextRequest) {
       cleanupDeleted: deletedWebhooks.count,
     };
 
-    console.log('[MONTHLY-RESET] Monthly reset completed:', result);
+    secureLog.info('[MONTHLY-RESET] Monthly reset completed:', result);
 
     return NextResponse.json(result);
 
   } catch (error: any) {
-    console.error('[MONTHLY-RESET] Failed:', error);
+    secureLog.error('[MONTHLY-RESET] Failed:', error);
     
     return NextResponse.json(
       { 
@@ -109,7 +110,7 @@ function getPlanCredits(planId: string): number {
     case 'enterprise':
       return PRICING_CONFIG.ENTERPRISE.credits;
     default:
-      console.warn(`[MONTHLY-RESET] Unknown plan ID: ${planId}, defaulting to 0 credits`);
+      secureLog.warn(`[MONTHLY-RESET] Unknown plan ID: ${planId}, defaulting to 0 credits`);
       return 0;
   }
 }

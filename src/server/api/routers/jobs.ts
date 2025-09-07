@@ -2,6 +2,7 @@ import { z } from 'zod';
 import { createTRPCRouter, protectedProcedure } from '../trpc';
 import { TRPCError } from '@trpc/server';
 import { inngest } from '@/lib/inngest';
+import { secureLog } from '@/lib/secure-logger';
 
 export const jobsRouter = createTRPCRouter({
   // Submit a new generation job
@@ -78,7 +79,7 @@ export const jobsRouter = createTRPCRouter({
           data: { jobId: job.id }
         });
       } catch (error) {
-        console.warn('Inngest not available, running in development mode:', error);
+        secureLog.warn('Inngest not available, running in development mode:', error);
         // For development, simulate immediate completion with mock data
         if (process.env.NODE_ENV === 'development') {
           setTimeout(async () => {

@@ -4,6 +4,7 @@ import { StripeCustomerService } from '@/lib/stripe/customer-service';
 import { StripeSubscriptionService } from '@/lib/stripe/subscription-service';
 import { getPriceId, isPlanAvailable, PRICING_CONFIG } from '@/lib/stripe/config';
 import { db } from '@/server/api/db';
+import { secureLog } from '@/lib/secure-logger';
 import type { PricingPlan } from '@/lib/stripe/config';
 
 interface CheckoutRequest {
@@ -13,7 +14,7 @@ interface CheckoutRequest {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('[STRIPE-CHECKOUT] Starting checkout process...');
+    secureLog.info('[STRIPE-CHECKOUT] Starting checkout process...');
     
     const { plan, interval }: CheckoutRequest = await request.json();
     
@@ -40,7 +41,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log(`[STRIPE-CHECKOUT] Creating checkout for ${plan} plan (${interval}ly)`);
+    secureLog.info(`[STRIPE-CHECKOUT] Creating checkout for ${plan} plan (${interval}ly)`);
 
     // Vérifier l'authentification
     const authHeader = request.headers.get('authorization');
@@ -111,8 +112,8 @@ export async function POST(request: NextRequest) {
     const successUrl = `${baseUrl}/account/billing?success=true&plan=${plan}&interval=${interval}`;
     const cancelUrl = `${baseUrl}/pricing?canceled=true`;
 
-    console.log(`[STRIPE-CHECKOUT] Price ID: ${priceId}`);
-    console.log(`[STRIPE-CHECKOUT] Customer ID: ${customerId}`);
+    secureLog.info(`[STRIPE-CHECKOUT] Price ID: ${priceId}`);
+    secureLog.info(`[STRIPE-CHECKOUT] Customer ID: ${customerId}`);
 
     // Créer la session de checkout avec métadonnées enrichies
     const session = await StripeSubscriptionService.createCheckoutSession({
@@ -124,8 +125,8 @@ export async function POST(request: NextRequest) {
     });
 
     // Logger pour debugging
-    console.log(`[STRIPE-CHECKOUT] Session created: ${session.id}`);
-    console.log(`[STRIPE-CHECKOUT] Redirect URL: ${session.url}`);
+    secureLog.info(`[STRIPE-CHECKOUT] Session created: ${session.id}`);
+    secureLog.info(`[STRIPE-CHECKOUT] Redirect URL: ${session.url}`);
 
     // Informations sur le plan pour le client
     const planInfo = PRICING_CONFIG[plan];
@@ -148,7 +149,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Checkout creation error:', error);
+    secureLog.error('Checkout creation error:', error);
     
     return NextResponse.json(
       { 

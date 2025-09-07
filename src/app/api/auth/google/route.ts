@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { redirect } from 'next/navigation';
 import { authRateLimit, getRateLimitIdentifier, applyRateLimit } from '@/lib/rate-limit';
+import { secureLog } from '@/lib/secure-logger';
 
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
     });
 
     if (error) {
-      console.error('Google OAuth initiation error:', error);
+      secureLog.security('Google OAuth initiation error:', error);
       return redirect(`/auth/signin?error=${encodeURIComponent(error.message)}`);
     }
 
@@ -49,7 +49,7 @@ export async function GET(request: Request) {
     // Fallback redirect
     return redirect('/auth/signin?error=oauth_initiation_failed');
   } catch (error: any) {
-    console.error('Google OAuth endpoint error:', error);
+    secureLog.security('Google OAuth endpoint error:', error);
     
     // Handle rate limit errors specifically
     if (error.message && error.message.includes('Trop de')) {

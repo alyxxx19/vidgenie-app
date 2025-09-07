@@ -4,6 +4,7 @@ import { veo3Client } from './veo3-client';
 import { moderatePrompt } from '@/lib/content-moderation';
 import { uploadToS3 } from '@/lib/s3';
 import { PrismaClient } from '@prisma/client';
+import { secureLog } from '@/lib/secure-logger';
 
 export interface WorkflowStep {
   id: string;
@@ -304,7 +305,7 @@ export class WorkflowOrchestrator extends EventEmitter {
       };
 
     } catch (error) {
-      console.error('Workflow error:', error);
+      secureLog.error('Workflow error:', error);
       
       // Marquer toutes les étapes restantes comme échouées
       const currentSteps = this.activeWorkflows.get(params.jobId) || steps;
@@ -376,9 +377,9 @@ export class WorkflowOrchestrator extends EventEmitter {
     });
 
     // Logs pour le debug
-    console.log(`Workflow ${workflowId} - Step ${stepId}: ${status} (${progress}%)`);
+    secureLog.info(`Workflow ${workflowId} - Step ${stepId}: ${status} (${progress}%)`);
     if (error) {
-      console.error(`Workflow ${workflowId} - Step ${stepId} error:`, error);
+      secureLog.error(`Workflow ${workflowId} - Step ${stepId} error:`, error);
     }
   }
 
@@ -400,11 +401,11 @@ export class WorkflowOrchestrator extends EventEmitter {
         try {
           await veo3Client.cancelJob(job.providerJobId);
         } catch (error) {
-          console.warn('Failed to cancel VEO3 job:', error);
+          secureLog.warn('Failed to cancel VEO3 job:', error);
         }
       }
     } catch (error) {
-      console.warn('Error during workflow cancellation:', error);
+      secureLog.warn('Error during workflow cancellation:', error);
     }
 
     // Marquer toutes les étapes comme annulées

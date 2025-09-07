@@ -1,4 +1,5 @@
 import { stripe } from './config';
+import { secureLog } from '@/lib/secure-logger';
 import type { User } from '@prisma/client';
 
 export class StripeCustomerService {
@@ -11,7 +12,7 @@ export class StripeCustomerService {
         await stripe.customers.retrieve(user.stripeCustomerId);
         return user.stripeCustomerId;
       } catch (error) {
-        console.error('Stripe customer not found, creating new one:', error);
+        secureLog.error('Stripe customer not found, creating new one:', error);
       }
     }
 

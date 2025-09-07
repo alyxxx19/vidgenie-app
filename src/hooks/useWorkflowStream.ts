@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { WorkflowStep } from '@/components/workflow-visualizer';
+import { secureLog } from '@/lib/secure-logger';
 
 export interface WorkflowStreamData {
   type: 'status' | 'workflow:update' | 'workflow:complete' | 'error' | 'ping';
@@ -58,7 +59,7 @@ export function useWorkflowStream(workflowId: string | null): UseWorkflowStreamR
     eventSourceRef.current = eventSource;
 
     eventSource.onopen = () => {
-      console.log('SSE connection opened');
+      secureLog.info('SSE connection opened');
       setIsConnected(true);
       setStatus('connected');
       reconnectAttempts.current = 0;
@@ -67,7 +68,7 @@ export function useWorkflowStream(workflowId: string | null): UseWorkflowStreamR
     eventSource.onmessage = (event) => {
       try {
         const data: WorkflowStreamData = JSON.parse(event.data);
-        console.log('SSE message received:', data);
+        secureLog.info('SSE message received:', data);
 
         switch (data.type) {
           case 'workflow:update':
@@ -99,30 +100,30 @@ export function useWorkflowStream(workflowId: string | null): UseWorkflowStreamR
             break;
 
           case 'status':
-            console.log('Workflow status:', data.status);
+            secureLog.info('Workflow status:', data.status);
             break;
 
           case 'error':
-            console.error('SSE error:', data.error);
+            secureLog.error('SSE error:', data.error);
             setError(data.error || 'Unknown error');
             setStatus('failed');
             break;
 
           case 'ping':
-            console.log('SSE ping received');
+            secureLog.info('SSE ping received');
             break;
 
           default:
-            console.log('Unknown SSE message type:', data.type);
+            secureLog.info('Unknown SSE message type:', data.type);
         }
       } catch (err) {
-        console.error('Failed to parse SSE message:', err);
+        secureLog.error('Failed to parse SSE message:', err);
         setError('Failed to parse server message');
       }
     };
 
     eventSource.onerror = (err) => {
-      console.error('SSE error:', err);
+      secureLog.error('SSE error:', err);
       setIsConnected(false);
       
       // Ne pas essayer de se reconnecter si le workflow est terminé
@@ -134,7 +135,7 @@ export function useWorkflowStream(workflowId: string | null): UseWorkflowStreamR
       // Tentative de reconnexion avec backoff exponentiel
       if (reconnectAttempts.current < maxReconnectAttempts) {
         const delay = Math.pow(2, reconnectAttempts.current) * 1000; // 1s, 2s, 4s, 8s, 16s
-        console.log(`SSE reconnecting in ${delay}ms (attempt ${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
+        secureLog.info(`SSE reconnecting in ${delay}ms (attempt ${reconnectAttempts.current + 1}/${maxReconnectAttempts})`);
         
         reconnectTimeoutRef.current = setTimeout(() => {
           eventSource.close();
@@ -179,11 +180,11 @@ export function useWorkflowStream(workflowId: string | null): UseWorkflowStreamR
     const handleVisibilityChange = () => {
       if (document.hidden) {
         // Page cachée, on peut réduire la fréquence ou suspendre
-        console.log('Page hidden, SSE connection maintained');
+        secureLog.info('Page hidden, SSE connection maintained');
       } else {
         // Page visible, s'assurer que la connexion est active
         if (workflowId && !eventSourceRef.current && status !== 'completed' && status !== 'failed') {
-          console.log('Page visible, reconnecting SSE');
+          secureLog.info('Page visible, reconnecting SSE');
           reconnect();
         }
       }

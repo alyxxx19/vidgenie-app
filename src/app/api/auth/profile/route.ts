@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabase } from '@/lib/supabase';
 import { db } from '@/server/api/db';
+import { secureLog } from '@/lib/secure-logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
     // Get user from our database
     const dbUser = await db.user.findUnique({
       where: { id: user.id },
-      include: { plan: true },
+      // include: { plan: true }, // TODO: Add plan relation to schema
     });
 
     if (!dbUser) {
@@ -36,7 +37,7 @@ export async function GET(request: NextRequest) {
       planId: dbUser.planId,
     });
   } catch (error) {
-    console.error('Profile error:', error);
+    secureLog.error('Profile error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

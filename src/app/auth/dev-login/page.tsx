@@ -89,10 +89,8 @@ export default function DevLoginPage() {
               isLoading={isLoading}
               loadingText="connecting..."
               icon={<User className="w-4 h-4" />}
-              disabled={isLoading}
             >
-              dev_authenticate
-              <ArrowRight className="w-4 h-4 ml-2" />
+              <>dev_authenticate<ArrowRight className="w-4 h-4 ml-2" /></>
             </AuthButton>
           </form>
 

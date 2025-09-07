@@ -16,6 +16,7 @@ import {
   Camera,
   Palette
 } from 'lucide-react';
+import { secureLog } from '@/lib/secure-logger';
 import { VIDEO_TEMPLATES, TEMPLATE_CATEGORIES, type VideoTemplate } from '@/lib/video-templates';
 
 interface VideoTemplateShowcaseProps {
@@ -206,7 +207,7 @@ export function VideoTemplateShowcase({
                       onClick={(e) => {
                         e.stopPropagation();
                         // Handle bookmark/save template
-                        console.log('Bookmark template:', template.id);
+                        secureLog.info('Bookmark template:', template.id);
                       }}
                       className="h-6 w-6 p-0"
                     >

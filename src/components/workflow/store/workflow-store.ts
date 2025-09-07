@@ -16,6 +16,7 @@ import {
 } from '../types/workflow';
 import { v4 as uuidv4 } from 'uuid';
 import { workflowService } from '../services/workflow-service';
+import { secureLog } from '@/lib/secure-logger';
 
 // Nœuds initiaux du workflow
 const createInitialNodes = (): WorkflowNode[] => [
@@ -577,7 +578,7 @@ export const useWorkflowStore = create<WorkflowStore>((set, get) => ({
       set({ workflowId: response.jobId });
 
     } catch (error) {
-      console.error('Workflow startup failed:', error);
+      secureLog.error('Workflow startup failed:', error);
       
       // Clean up event listeners
       workflowService.off('workflow:progress', handleProgress);
