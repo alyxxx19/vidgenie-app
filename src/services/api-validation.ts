@@ -28,8 +28,8 @@ export class ApiValidationService {
    */
   async validateOpenAIKey(apiKey: string): Promise<ValidationResult> {
     try {
-      // Vérification du format de base
-      if (!apiKey || !apiKey.startsWith('sk-') || apiKey.length < 20) {
+      // Vérification du format de base - plus flexible
+      if (!apiKey || !apiKey.startsWith('sk-') || apiKey.length < 15) {
         return {
           isValid: false,
           provider: 'openai',
@@ -48,8 +48,8 @@ export class ApiValidationService {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         },
-        // Timeout de 10 secondes
-        signal: AbortSignal.timeout(10000)
+        // Timeout de 20 secondes avec retry
+        signal: AbortSignal.timeout(20000)
       });
 
       if (response.ok) {
@@ -101,11 +101,13 @@ export class ApiValidationService {
         };
       }
     } catch (error) {
+      console.error('OpenAI validation error:', error);
+      
       if (error instanceof Error && error.name === 'AbortError') {
         return {
           isValid: false,
           provider: 'openai',
-          message: 'Timeout lors de la validation - vérifiez votre connexion',
+          message: 'Timeout lors de la validation - vérifiez votre connexion (20s)',
           error: {
             code: 'TIMEOUT',
             type: 'network'
@@ -116,7 +118,7 @@ export class ApiValidationService {
       return {
         isValid: false,
         provider: 'openai',
-        message: 'Erreur réseau lors de la validation',
+        message: `Erreur réseau: ${error instanceof Error ? error.message : 'Inconnue'}`,
         error: {
           code: 'NETWORK_ERROR',
           type: 'network'
@@ -130,12 +132,12 @@ export class ApiValidationService {
    */
   async validateNanoBananaKey(apiKey: string): Promise<ValidationResult> {
     try {
-      // Vérification du format de base
-      if (!apiKey || !apiKey.startsWith('nb_') || apiKey.length < 20) {
+      // Vérification du format de base - plus flexible
+      if (!apiKey || apiKey.trim().length < 10) {
         return {
           isValid: false,
           provider: 'nanobanana',
-          message: 'Format de clé NanoBanana invalide (doit commencer par nb_)',
+          message: 'Format de clé NanoBanana invalide (longueur minimum requise)',
           error: {
             code: 'INVALID_FORMAT',
             type: 'invalid_format'
@@ -143,28 +145,29 @@ export class ApiValidationService {
         };
       }
 
-      // Test avec l'API NanoBanana - endpoint léger pour validation
-      const response = await fetch('https://api.nanobanana.com/v1/account', {
-        method: 'GET',
+      // Test avec l'API NanoBanana - endpoint réel pour validation
+      const response = await fetch('https://api.nanobananaapi.ai/v1/generate', {
+        method: 'POST',
         headers: {
           'Authorization': `Bearer ${apiKey}`,
           'Content-Type': 'application/json'
         },
-        signal: AbortSignal.timeout(10000)
+        body: JSON.stringify({
+          model: 'google/nano-banana',
+          prompt: 'test validation',
+          output_format: 'jpeg',
+          num_inference_steps: 1
+        }),
+        signal: AbortSignal.timeout(20000)
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.ok || response.status === 202) {
         return {
           isValid: true,
           provider: 'nanobanana',
-          message: 'Clé NanoBanana valide',
-          details: {
-            model: 'NanoBanana models available',
-            organization: data.username || undefined
-          }
+          message: 'Clé NanoBanana valide (Google Gemini 2.5)'
         };
-      } else if (response.status === 401) {
+      } else if (response.status === 401 || response.status === 403) {
         return {
           isValid: false,
           provider: 'nanobanana',
@@ -186,11 +189,13 @@ export class ApiValidationService {
         };
       }
     } catch (error) {
+      console.error('NanoBanana validation error:', error);
+      
       if (error instanceof Error && error.name === 'AbortError') {
         return {
           isValid: false,
           provider: 'nanobanana',
-          message: 'Timeout lors de la validation - vérifiez votre connexion',
+          message: 'Timeout lors de la validation - vérifiez votre connexion (20s)',
           error: {
             code: 'TIMEOUT',
             type: 'network'
@@ -201,7 +206,7 @@ export class ApiValidationService {
       return {
         isValid: false,
         provider: 'nanobanana',
-        message: 'Erreur réseau lors de la validation',
+        message: `Erreur réseau: ${error instanceof Error ? error.message : 'Inconnue'}`,
         error: {
           code: 'NETWORK_ERROR',
           type: 'network'
@@ -215,12 +220,12 @@ export class ApiValidationService {
    */
   async validateVEO3Key(apiKey: string): Promise<ValidationResult> {
     try {
-      // Vérification du format de base
-      if (!apiKey || apiKey.length < 10) {
+      // Vérification du format de base - plus flexible
+      if (!apiKey || apiKey.trim().length < 8) {
         return {
           isValid: false,
           provider: 'veo3',
-          message: 'Format de clé VEO3 invalide',
+          message: 'Format de clé VEO3 invalide (longueur minimum requise)',
           error: {
             code: 'INVALID_FORMAT',
             type: 'invalid_format'
@@ -228,25 +233,25 @@ export class ApiValidationService {
         };
       }
 
-      // Test avec l'API VO3/Fal.ai - endpoint de santé ou modèles
-      const response = await fetch('https://fal.run/fal-ai/fast-lightning-sdxl', {
+      // Test avec l'API Fal.ai - endpoint simple pour validation
+      const response = await fetch('https://fal.run/fal-ai/flux/schnell', {
         method: 'POST',
         headers: {
           'Authorization': `Key ${apiKey}`,
           'Content-Type': 'application/json'
         },
         body: JSON.stringify({
-          prompt: "test validation", // Prompt minimal pour validation
-          sync_mode: false
+          prompt: 'test',
+          image_size: 'square_hd'
         }),
-        signal: AbortSignal.timeout(10000)
+        signal: AbortSignal.timeout(20000)
       });
 
-      if (response.ok) {
+      if (response.ok || response.status === 202) {
         return {
           isValid: true,
           provider: 'veo3',
-          message: 'Clé VEO3 valide'
+          message: 'Clé VEO3 valide (fal.ai)'
         };
       } else if (response.status === 401 || response.status === 403) {
         return {
@@ -268,6 +273,16 @@ export class ApiValidationService {
             type: 'rate_limit'
           }
         };
+      } else if (response.status === 400) {
+        // 400 peut indiquer une clé valide mais paramètres invalides
+        const errorText = await response.text().catch(() => '');
+        if (errorText.includes('prompt') || errorText.includes('parameter')) {
+          return {
+            isValid: true,
+            provider: 'veo3',
+            message: 'Clé VEO3 valide (erreur de paramètres attendue)'
+          };
+        }
       } else {
         return {
           isValid: false,
@@ -280,11 +295,13 @@ export class ApiValidationService {
         };
       }
     } catch (error) {
+      console.error('VEO3 validation error:', error);
+      
       if (error instanceof Error && error.name === 'AbortError') {
         return {
           isValid: false,
           provider: 'veo3',
-          message: 'Timeout lors de la validation VEO3',
+          message: 'Timeout lors de la validation VEO3 - vérifiez votre connexion (20s)',
           error: {
             code: 'TIMEOUT',
             type: 'network'
@@ -295,7 +312,7 @@ export class ApiValidationService {
       return {
         isValid: false,
         provider: 'veo3',
-        message: 'Erreur réseau lors de la validation VEO3',
+        message: `Erreur réseau VEO3: ${error instanceof Error ? error.message : 'Inconnue'}`,
         error: {
           code: 'NETWORK_ERROR',
           type: 'network'
@@ -305,27 +322,73 @@ export class ApiValidationService {
   }
 
   /**
-   * Valide une clé selon son provider
+   * Valide une clé selon son provider avec retry automatique
    */
-  async validateKey(provider: string, apiKey: string): Promise<ValidationResult> {
-    switch (provider.toLowerCase()) {
-      case 'openai':
-        return this.validateOpenAIKey(apiKey);
-      case 'nanobanana':
-        return this.validateNanoBananaKey(apiKey);
-      case 'veo3':
-        return this.validateVEO3Key(apiKey);
-      default:
-        return {
-          isValid: false,
-          provider,
-          message: `Provider non supporté: ${provider}`,
-          error: {
-            code: 'UNSUPPORTED_PROVIDER',
-            type: 'invalid_format'
-          }
-        };
+  async validateKey(provider: string, apiKey: string, retries = 2): Promise<ValidationResult> {
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        let result: ValidationResult;
+        
+        switch (provider.toLowerCase()) {
+          case 'openai':
+            result = await this.validateOpenAIKey(apiKey);
+            break;
+          case 'nanobanana':
+            result = await this.validateNanoBananaKey(apiKey);
+            break;
+          case 'veo3':
+            result = await this.validateVEO3Key(apiKey);
+            break;
+          default:
+            return {
+              isValid: false,
+              provider,
+              message: `Provider non supporté: ${provider}`,
+              error: {
+                code: 'UNSUPPORTED_PROVIDER',
+                type: 'invalid_format'
+              }
+            };
+        }
+        
+        // Si c'est une erreur réseau et qu'il reste des tentatives
+        if (!result.isValid && result.error?.type === 'network' && attempt < retries) {
+          console.log(`Tentative ${attempt + 1}/${retries + 1} échouée pour ${provider}, retry dans 1s...`);
+          await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1))); // Backoff progressif
+          continue;
+        }
+        
+        return result;
+      } catch (error) {
+        console.error(`Erreur lors de la validation ${provider} (tentative ${attempt + 1}):`, error);
+        
+        if (attempt === retries) {
+          return {
+            isValid: false,
+            provider,
+            message: `Échec après ${retries + 1} tentatives`,
+            error: {
+              code: 'MAX_RETRIES_EXCEEDED',
+              type: 'network'
+            }
+          };
+        }
+        
+        // Attendre avant la prochaine tentative
+        await new Promise(resolve => setTimeout(resolve, 1000 * (attempt + 1)));
+      }
     }
+    
+    // Cette ligne ne devrait jamais être atteinte
+    return {
+      isValid: false,
+      provider,
+      message: 'Erreur inattendue lors de la validation',
+      error: {
+        code: 'UNEXPECTED_ERROR',
+        type: 'unknown'
+      }
+    };
   }
 
   /**

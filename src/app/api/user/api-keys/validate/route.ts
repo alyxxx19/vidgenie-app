@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { apiValidationService, type ValidationResult } from '@/services/api-validation';
+import { apiKeyRateLimit, getRateLimitIdentifier } from '@/lib/rate-limit';
 
 /**
  * POST /api/user/api-keys/validate
@@ -40,9 +41,33 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Rate limiting simple (peut être amélioré avec Redis)
-    const clientIp = request.ip || 'unknown';
-    console.log(`Validation de clé ${provider} depuis IP ${clientIp} pour utilisateur ${user.id}`);
+    // Rate limiting avec Redis
+    const identifier = getRateLimitIdentifier(request, user.id);
+    try {
+      const rateLimitResult = await apiKeyRateLimit.limit(identifier);
+      
+      if (!rateLimitResult.success) {
+        console.log(`Rate limit exceeded for API key validation: ${identifier}`);
+        return NextResponse.json({
+          success: false,
+          error: `Trop de validations. Limite: ${rateLimitResult.limit}/h. Réessayez dans ${Math.ceil((rateLimitResult.reset - Date.now()) / 1000)} secondes.`,
+          validationResult: {
+            isValid: false,
+            provider,
+            message: 'Rate limit atteint pour les validations',
+            error: {
+              code: 'RATE_LIMITED',
+              type: 'rate_limit' as const
+            }
+          }
+        }, { status: 429 });
+      }
+    } catch (rateLimitError) {
+      console.error('Rate limit error during validation:', rateLimitError);
+      // Continue sans rate limiting en cas d'erreur Redis
+    }
+
+    console.log(`Validation de clé ${provider} pour utilisateur ${user.id}`);
 
     // Validation de la clé
     let validationResult: ValidationResult;
