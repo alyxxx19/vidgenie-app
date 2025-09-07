@@ -27,11 +27,13 @@ import {
   Clock,
   Award,
   Zap,
-  RefreshCcw
+  RefreshCcw,
+  Key
 } from 'lucide-react';
 import Link from 'next/link';
 import { toast } from 'sonner';
 import UserSection from '@/components/user-section';
+import { ApiKeysSection } from '@/components/settings/ApiKeysSection';
 import { api } from '@/app/providers';
 
 const achievementLabels = {
@@ -393,6 +395,10 @@ export default function ProfilePage() {
               <Shield className="w-3 h-3" />
               sécurité
             </TabsTrigger>
+            <TabsTrigger value="api-keys" className="flex items-center gap-2 data-[state=active]:bg-card data-[state=active]:text-foreground font-mono text-xs">
+              <Key className="w-3 h-3" />
+              api keys
+            </TabsTrigger>
           </TabsList>
 
           {/* Overview Tab */}
@@ -526,6 +532,11 @@ export default function ProfilePage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* API Keys Tab */}
+          <TabsContent value="api-keys" className="space-y-6">
+            <ApiKeysSection />
           </TabsContent>
         </Tabs>
       </div>

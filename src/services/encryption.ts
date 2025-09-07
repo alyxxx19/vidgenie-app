@@ -116,7 +116,7 @@ export interface EncryptedData {
 }
 
 export interface ApiKeyData {
-  provider: 'openai' | 'dalle' | 'vo3';
+  provider: 'openai' | 'flux' | 'veo3';
   encryptedKey: string;
   iv: string;
   isActive: boolean;

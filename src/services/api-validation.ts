@@ -126,28 +126,101 @@ export class ApiValidationService {
   }
 
   /**
-   * Valide une clé API DALL-E (utilise la même validation qu'OpenAI)
+   * Valide une clé API NanoBanana
    */
-  async validateDALLEKey(apiKey: string): Promise<ValidationResult> {
-    const result = await this.validateOpenAIKey(apiKey);
-    return {
-      ...result,
-      provider: 'dalle',
-      message: result.message.replace('OpenAI', 'DALL-E')
-    };
+  async validateNanoBananaKey(apiKey: string): Promise<ValidationResult> {
+    try {
+      // Vérification du format de base
+      if (!apiKey || !apiKey.startsWith('nb_') || apiKey.length < 20) {
+        return {
+          isValid: false,
+          provider: 'nanobanana',
+          message: 'Format de clé NanoBanana invalide (doit commencer par nb_)',
+          error: {
+            code: 'INVALID_FORMAT',
+            type: 'invalid_format'
+          }
+        };
+      }
+
+      // Test avec l'API NanoBanana - endpoint léger pour validation
+      const response = await fetch('https://api.nanobanana.com/v1/account', {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${apiKey}`,
+          'Content-Type': 'application/json'
+        },
+        signal: AbortSignal.timeout(10000)
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          isValid: true,
+          provider: 'nanobanana',
+          message: 'Clé NanoBanana valide',
+          details: {
+            model: 'NanoBanana models available',
+            organization: data.username || undefined
+          }
+        };
+      } else if (response.status === 401) {
+        return {
+          isValid: false,
+          provider: 'nanobanana',
+          message: 'Clé API NanoBanana invalide ou expirée',
+          error: {
+            code: 'UNAUTHORIZED',
+            type: 'authentication'
+          }
+        };
+      } else {
+        return {
+          isValid: false,
+          provider: 'nanobanana',
+          message: `Erreur API NanoBanana: ${response.status}`,
+          error: {
+            code: `HTTP_${response.status}`,
+            type: 'unknown'
+          }
+        };
+      }
+    } catch (error) {
+      if (error instanceof Error && error.name === 'AbortError') {
+        return {
+          isValid: false,
+          provider: 'nanobanana',
+          message: 'Timeout lors de la validation - vérifiez votre connexion',
+          error: {
+            code: 'TIMEOUT',
+            type: 'network'
+          }
+        };
+      }
+      
+      return {
+        isValid: false,
+        provider: 'nanobanana',
+        message: 'Erreur réseau lors de la validation',
+        error: {
+          code: 'NETWORK_ERROR',
+          type: 'network'
+        }
+      };
+    }
   }
 
   /**
-   * Valide une clé API VO3 (Fal.ai)
+   * Valide une clé API VEO3 (Fal.ai)
    */
-  async validateVO3Key(apiKey: string): Promise<ValidationResult> {
+  async validateVEO3Key(apiKey: string): Promise<ValidationResult> {
     try {
       // Vérification du format de base
       if (!apiKey || apiKey.length < 10) {
         return {
           isValid: false,
-          provider: 'vo3',
-          message: 'Format de clé VO3 invalide',
+          provider: 'veo3',
+          message: 'Format de clé VEO3 invalide',
           error: {
             code: 'INVALID_FORMAT',
             type: 'invalid_format'
@@ -172,14 +245,14 @@ export class ApiValidationService {
       if (response.ok) {
         return {
           isValid: true,
-          provider: 'vo3',
-          message: 'Clé VO3 valide'
+          provider: 'veo3',
+          message: 'Clé VEO3 valide'
         };
       } else if (response.status === 401 || response.status === 403) {
         return {
           isValid: false,
-          provider: 'vo3',
-          message: 'Clé API VO3 invalide ou expirée',
+          provider: 'veo3',
+          message: 'Clé API VEO3 invalide ou expirée',
           error: {
             code: 'UNAUTHORIZED',
             type: 'authentication'
@@ -188,8 +261,8 @@ export class ApiValidationService {
       } else if (response.status === 429) {
         return {
           isValid: false,
-          provider: 'vo3',
-          message: 'Limite de taux atteinte pour cette clé VO3',
+          provider: 'veo3',
+          message: 'Limite de taux atteinte pour cette clé VEO3',
           error: {
             code: 'RATE_LIMITED',
             type: 'rate_limit'
@@ -198,8 +271,8 @@ export class ApiValidationService {
       } else {
         return {
           isValid: false,
-          provider: 'vo3',
-          message: `Erreur API VO3: ${response.status}`,
+          provider: 'veo3',
+          message: `Erreur API VEO3: ${response.status}`,
           error: {
             code: `HTTP_${response.status}`,
             type: 'unknown'
@@ -210,8 +283,8 @@ export class ApiValidationService {
       if (error instanceof Error && error.name === 'AbortError') {
         return {
           isValid: false,
-          provider: 'vo3',
-          message: 'Timeout lors de la validation VO3',
+          provider: 'veo3',
+          message: 'Timeout lors de la validation VEO3',
           error: {
             code: 'TIMEOUT',
             type: 'network'
@@ -221,8 +294,8 @@ export class ApiValidationService {
       
       return {
         isValid: false,
-        provider: 'vo3',
-        message: 'Erreur réseau lors de la validation VO3',
+        provider: 'veo3',
+        message: 'Erreur réseau lors de la validation VEO3',
         error: {
           code: 'NETWORK_ERROR',
           type: 'network'
@@ -238,10 +311,10 @@ export class ApiValidationService {
     switch (provider.toLowerCase()) {
       case 'openai':
         return this.validateOpenAIKey(apiKey);
-      case 'dalle':
-        return this.validateDALLEKey(apiKey);
-      case 'vo3':
-        return this.validateVO3Key(apiKey);
+      case 'nanobanana':
+        return this.validateNanoBananaKey(apiKey);
+      case 'veo3':
+        return this.validateVEO3Key(apiKey);
       default:
         return {
           isValid: false,
@@ -315,5 +388,5 @@ export class ApiValidationService {
 export const apiValidationService = new ApiValidationService();
 
 // Types d'export pour TypeScript
-export type ApiProvider = 'openai' | 'dalle' | 'vo3';
+export type ApiProvider = 'openai' | 'nanobanana' | 'veo3';
 export type ValidationType = 'authentication' | 'rate_limit' | 'network' | 'invalid_format' | 'unknown';

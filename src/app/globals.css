@@ -746,3 +746,52 @@
   .stagger-3 { animation-delay: 0.3s; }
   .stagger-4 { animation-delay: 0.4s; }
 }
+
+/* Fix for white background input fields - Outside of @layer to prevent Tailwind processing */
+input.bg-white {
+  color: #000000 !important;
+}
+
+textarea.bg-white {
+  color: #000000 !important;
+}
+
+.bg-white input {
+  color: #000000 !important;
+}
+
+.bg-white textarea {
+  color: #000000 !important;
+}
+
+input.bg-white:focus {
+  color: #000000 !important;
+}
+
+textarea.bg-white:focus {
+  color: #000000 !important;
+}
+
+.bg-white input:focus {
+  color: #000000 !important;
+}
+
+.bg-white textarea:focus {
+  color: #000000 !important;
+}
+
+input.bg-white::placeholder {
+  color: #666666 !important;
+}
+
+textarea.bg-white::placeholder {
+  color: #666666 !important;
+}
+
+.bg-white input::placeholder {
+  color: #666666 !important;
+}
+
+.bg-white textarea::placeholder {
+  color: #666666 !important;
+}

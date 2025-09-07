@@ -244,7 +244,7 @@ export function PromptBuilder({
             placeholder="Describe what you want to generate..."
             value={value}
             onChange={(e) => onChange(e.target.value)}
-            className="min-h-[80px] bg-white border-border text-black font-mono text-xs"
+            className="min-h-[80px] bg-white border-border text-black focus:text-black active:text-black font-mono text-xs"
             maxLength={1000}
           />
         </div>
@@ -257,7 +257,7 @@ export function PromptBuilder({
               setSelectedTemplate(v);
               applyTemplate(v);
             }}>
-              <SelectTrigger className="bg-white border-border text-black font-mono text-xs">
+              <SelectTrigger className="bg-white border-border text-black focus:text-black active:text-black font-mono text-xs">
                 <SelectValue placeholder="Choose a template..." />
               </SelectTrigger>
               <SelectContent className="bg-black border-white/20 shadow-lg">
@@ -328,7 +328,7 @@ export function PromptBuilder({
                 setSelectedArtStyle(v);
                 onChange(buildGuidedPrompt());
               }}>
-                <SelectTrigger className="bg-white border-border text-black font-mono text-xs">
+                <SelectTrigger className="bg-white border-border text-black focus:text-black active:text-black font-mono text-xs">
                   <SelectValue placeholder="Select art style..." />
                 </SelectTrigger>
                 <SelectContent className="bg-black border-white/20 shadow-lg">
@@ -356,7 +356,7 @@ export function PromptBuilder({
                 placeholder="blur, low quality, distorted, ugly..."
                 value={negativePrompt}
                 onChange={(e) => setNegativePrompt(e.target.value)}
-                className="min-h-[40px] bg-white border-border text-black font-mono text-xs"
+                className="min-h-[40px] bg-white border-border text-black focus:text-black active:text-black font-mono text-xs"
                 maxLength={500}
               />
             </div>
@@ -384,7 +384,7 @@ export function PromptBuilder({
             <div>
               <Label className="font-mono text-xs text-muted-foreground mb-1 block">composition</Label>
               <Select value={selectedComposition} onValueChange={setSelectedComposition}>
-                <SelectTrigger className="bg-white border-border text-black font-mono text-xs">
+                <SelectTrigger className="bg-white border-border text-black focus:text-black active:text-black font-mono text-xs">
                   <SelectValue placeholder="Select composition..." />
                 </SelectTrigger>
                 <SelectContent className="bg-black border-white/20 shadow-lg">

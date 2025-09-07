@@ -1,6 +1,6 @@
 import OpenAI from 'openai';
 
-export type ImageProvider = 'dalle3' | 'dalle2';
+export type ImageProvider = 'gpt-image-1' | 'dalle3' | 'dalle2';
 export type ImageSize = '1024x1024' | '1792x1024' | '1024x1792';
 export type ImageQuality = 'standard' | 'hd';
 export type ImageStyle = 'vivid' | 'natural';
@@ -56,7 +56,7 @@ export class ImageGeneratorService {
   private openai: OpenAI;
   private provider: ImageProvider;
 
-  constructor(apiKey: string, provider: ImageProvider = 'dalle3') {
+  constructor(apiKey: string, provider: ImageProvider = 'gpt-image-1') {
     this.openai = new OpenAI({ apiKey });
     this.provider = provider;
   }
@@ -194,7 +194,14 @@ export class ImageGeneratorService {
       response_format: 'url' as const
     };
 
-    if (provider === 'dalle3') {
+    if (provider === 'gpt-image-1') {
+      return {
+        ...baseOptions,
+        model: 'gpt-image-1',
+        size: options.size,
+        n: 1
+      };
+    } else if (provider === 'dalle3') {
       return {
         ...baseOptions,
         model: 'dall-e-3',
@@ -223,6 +230,18 @@ export class ImageGeneratorService {
     count: number = 1
   ): number {
     const costs = {
+      'gpt-image-1': {
+        'standard': {
+          '1024x1024': 2,
+          '1792x1024': 3,
+          '1024x1792': 3
+        },
+        'hd': {
+          '1024x1024': 3,
+          '1792x1024': 5,
+          '1024x1792': 5
+        }
+      },
       dalle3: {
         'standard': {
           '1024x1024': 2,

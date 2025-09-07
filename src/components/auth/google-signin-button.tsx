@@ -46,8 +46,8 @@ export function GoogleSignInButton({
     setError(null);
 
     try {
-      // Use enhanced Google OAuth flow
-      await authService.signInWithGoogle(returnTo, organizationId);
+      // Use direct Supabase OAuth flow
+      await authService.signInWithOAuth('google');
       
       // Success callback
       onSuccess?.();

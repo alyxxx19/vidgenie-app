@@ -39,6 +39,9 @@ import { useDevImageGeneration } from '@/hooks/useDevImageGeneration';
 import { useTestPromptEnhancement } from '@/hooks/useTestPromptEnhancement';
 import { useCredits, useCreditsCheck, CREDIT_COSTS } from '@/hooks/useCredits';
 import { CreditsDisplay, CostEstimator } from '@/components/credits-display';
+import { ApiKeysStatus } from '@/components/ApiKeysStatus';
+import { ProviderSelector, ImageProvider, VideoProvider } from '@/components/ProviderSelector';
+import { useUserApiKeys } from '@/hooks/useUserApiKeys';
 
 export default function CreatePage() {
   const { user, isLoading: authLoading } = useAuth();
@@ -48,6 +51,15 @@ export default function CreatePage() {
   const { balance, hasEnoughCredits, isLoading: creditsLoading } = useCredits();
   const imageCreditsCheck = useCreditsCheck('IMAGE_GENERATION');
   const videoCreditsCheck = useCreditsCheck('VIDEO_GENERATION');
+  
+  // API Keys utilisateur
+  const {
+    canRunTextToImage,
+    canRunTextToVideo, 
+    canRunImageToVideo,
+    canRunCompleteWorkflow,
+    getWorkflowError
+  } = useUserApiKeys();
   
   // Image generation states
   const [imagePrompt, setImagePrompt] = useState('');
@@ -77,6 +89,10 @@ export default function CreatePage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [workflowCurrentStep, setWorkflowCurrentStep] = useState(0);
+  
+  // Provider selection states
+  const [selectedImageProvider, setSelectedImageProvider] = useState<ImageProvider>('openai');
+  const [selectedVideoProvider, setSelectedVideoProvider] = useState<VideoProvider>('veo3');
 
   // Load prompt from URL params if provided
   useEffect(() => {
@@ -178,9 +194,17 @@ export default function CreatePage() {
   const { data: userProjects } = api.projects.list.useQuery();
 
   const handleGenerate = async () => {
+    // Vérifications communes pour tous les workflows
     if (workflowMode === 'complete') {
       if (!imagePrompt.trim() || !videoPrompt.trim()) {
         toast.error('Please provide both image and video prompts');
+        return;
+      }
+
+      // Vérifier les clés API pour le workflow complet
+      if (!canRunCompleteWorkflow()) {
+        const errorMessage = getWorkflowError('complete');
+        toast.error(`API Keys required: ${errorMessage}`);
         return;
       }
       
@@ -206,6 +230,13 @@ export default function CreatePage() {
     } else if (workflowMode === 'image-only') {
       if (!imagePrompt.trim()) {
         toast.error('Please provide an image prompt');
+        return;
+      }
+
+      // Vérifier les clés API pour la génération d'images
+      if (!canRunTextToImage()) {
+        const errorMessage = getWorkflowError('text-to-image');
+        toast.error(`API Keys required: ${errorMessage}`);
         return;
       }
       
@@ -239,6 +270,26 @@ export default function CreatePage() {
       if (result) {
         toast.success('Image generated successfully!');
       }
+    } else if (workflowMode === 'video-from-image') {
+      if (!videoPrompt.trim()) {
+        toast.error('Please provide a video prompt');
+        return;
+      }
+
+      // Vérifier les clés API pour image-to-video
+      if (!canRunImageToVideo()) {
+        const errorMessage = getWorkflowError('image-to-video');
+        toast.error(`API Keys required: ${errorMessage}`);
+        return;
+      }
+
+      // Vérifier les crédits pour la vidéo
+      if (!videoCreditsCheck.canPerform) {
+        toast.error(videoCreditsCheck.message);
+        return;
+      }
+
+      toast.info('Image-to-video workflow not yet implemented');
     }
   };
 
@@ -336,9 +387,13 @@ export default function CreatePage() {
       </header>
 
       <div className="max-w-7xl mx-auto px-4 py-6 relative z-10">
-        {/* Affichage des crédits */}
-        <div className="mb-6">
+        {/* Affichage des crédits et API keys */}
+        <div className="mb-6 space-y-4">
           <CreditsDisplay variant="compact" />
+          <ApiKeysStatus 
+            selectedWorkflow={selectedWorkflowType} 
+            showCompact={true}
+          />
         </div>
 
         {/* Workflow Type Selector */}
@@ -537,6 +592,17 @@ export default function CreatePage() {
 
           {/* Center Column - Configuration */}
           <div className="lg:col-span-1 space-y-4">
+            {/* Provider Selection */}
+            <ProviderSelector
+              selectedImageProvider={selectedImageProvider}
+              onImageProviderChange={setSelectedImageProvider}
+              selectedVideoProvider={selectedVideoProvider}
+              onVideoProviderChange={setSelectedVideoProvider}
+              workflowType={workflowMode === 'complete' ? 'complete' : 
+                          workflowMode === 'image-only' ? 'image-only' : 
+                          workflowMode === 'video-from-image' ? 'video-only' : 'complete'}
+            />
+
             <Card className="bg-card border-border">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 font-mono text-sm text-white">
@@ -802,7 +868,11 @@ export default function CreatePage() {
                     // Désactiver si pas assez de crédits
                     (workflowMode === 'image-only' && !imageCreditsCheck.canPerform) ||
                     (workflowMode === 'complete' && !hasEnoughCredits('IMAGE_TO_VIDEO', enhanceEnabled ? CREDIT_COSTS.GPT_ENHANCEMENT : 0)) ||
-                    (workflowMode === 'video-from-image' && !videoCreditsCheck.canPerform)
+                    (workflowMode === 'video-from-image' && !videoCreditsCheck.canPerform) ||
+                    // Désactiver si clés API manquantes
+                    (workflowMode === 'complete' && !canRunCompleteWorkflow()) ||
+                    (workflowMode === 'image-only' && !canRunTextToImage()) ||
+                    (workflowMode === 'video-from-image' && !canRunImageToVideo())
                   }
                   className="w-full bg-white hover:bg-white/90 text-black font-mono text-xs h-8"
                 >

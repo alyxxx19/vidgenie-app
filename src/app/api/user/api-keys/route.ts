@@ -2,21 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabaseClient } from '@/lib/supabase/server';
 import { encryptionService } from '@/services/encryption';
 import { apiValidationService, type ValidationResult } from '@/services/api-validation';
-import { PrismaClient } from '@prisma/client';
-
-const prisma = new PrismaClient();
+import prisma from '@/lib/prisma';
 
 /**
  * GET /api/user/api-keys
  * Récupère les clés API de l'utilisateur (chiffrées, pour affichage masqué)
  */
 export async function GET(request: NextRequest) {
+  console.log('[API-KEYS GET] Starting request');
+  
   try {
     // Authentification via Supabase
     const supabase = await createServerSupabaseClient();
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
+    console.log('[API-KEYS GET] Auth check:', { userId: user?.id, error: authError });
+
     if (authError || !user) {
+      console.error('[API-KEYS GET] Auth failed:', authError);
       return NextResponse.json(
         { error: 'Non authentifié' },
         { status: 401 }
@@ -24,6 +27,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Récupération des clés API depuis la base de données
+    console.log('[API-KEYS GET] Fetching credentials for user:', user.id);
+    
     const apiCredentials = await prisma.apiCredential.findMany({
       where: {
         userId: user.id,
@@ -67,15 +72,17 @@ export async function GET(request: NextRequest) {
       };
     });
 
+    console.log('[API-KEYS GET] Returning', formattedKeys.length, 'keys');
+    
     return NextResponse.json({
       success: true,
       data: formattedKeys
     });
 
   } catch (error) {
-    console.error('Erreur lors de la récupération des clés API:', error);
+    console.error('[API-KEYS GET] Error:', error);
     return NextResponse.json(
-      { error: 'Erreur serveur lors de la récupération' },
+      { error: 'Erreur serveur lors de la récupération', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }
@@ -110,7 +117,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validation des providers supportés
-    const supportedProviders = ['openai', 'dalle', 'vo3'];
+    const supportedProviders = ['openai', 'nanobanana', 'veo3'];
     if (!supportedProviders.includes(provider.toLowerCase())) {
       return NextResponse.json(
         { error: `Provider non supporté. Supportés: ${supportedProviders.join(', ')}` },
@@ -199,9 +206,9 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Erreur lors de la sauvegarde:', error);
+    console.error('[API-KEYS POST] Error:', error);
     return NextResponse.json(
-      { error: 'Erreur serveur lors de la sauvegarde' },
+      { error: 'Erreur serveur lors de la sauvegarde', details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

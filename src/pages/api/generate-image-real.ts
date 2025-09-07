@@ -137,7 +137,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     // ÉTAPE 2: Générer l'image avec le modèle configuré
-    const useGptImage = process.env.USE_GPT_IMAGE === 'true' || req.body.useGptImage === true;
+    const useGptImage = process.env.USE_GPT_IMAGE !== 'false' && req.body.useGptImage !== false; // Default to true
     const imageModel = useGptImage ? 'gpt-image-1' : 'dall-e-3';
     
     console.log(`[REAL-IMAGE-API] 🎨 Step 2: Generating image with ${imageModel}...`);

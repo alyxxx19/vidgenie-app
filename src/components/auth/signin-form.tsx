@@ -73,7 +73,7 @@ export function SignInForm() {
               placeholder="user@domain.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="h-10 bg-white border-border text-black placeholder:text-muted-foreground focus:border-border focus:ring-0 font-mono text-sm"
+              className="h-10 bg-white border-border text-black placeholder:text-muted-foreground focus:border-border focus:ring-0 focus:text-black active:text-black font-mono text-sm"
               required
             />
           </div>
@@ -86,7 +86,7 @@ export function SignInForm() {
               placeholder="••••••••••••"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="h-10 bg-white border-border text-black placeholder:text-muted-foreground focus:border-border focus:ring-0 font-mono text-sm"
+              className="h-10 bg-white border-border text-black placeholder:text-muted-foreground focus:border-border focus:ring-0 focus:text-black active:text-black font-mono text-sm"
               required
             />
           </div>

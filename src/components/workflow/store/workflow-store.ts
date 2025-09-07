@@ -62,7 +62,7 @@ const createInitialNodes = (): WorkflowNode[] => [
     type: NODE_TYPES.IMAGE,
     position: DEFAULT_NODE_POSITIONS[NODE_IDS.IMAGE],
     data: {
-      label: 'dalle3_gen',
+      label: 'gpt_image_gen',
       status: 'idle',
       config: {
         costCredits: NODE_CREDIT_COSTS[NODE_TYPES.IMAGE],
@@ -204,7 +204,7 @@ const createNodesForWorkflowType = (workflowType: WorkflowType): WorkflowNode[] 
 
       case NODE_TYPES.IMAGE:
         nodeData = {
-          label: 'dalle3_gen',
+          label: 'gpt_image_gen',
           status: 'idle',
           config: {
             costCredits: NODE_CREDIT_COSTS[NODE_TYPES.IMAGE],

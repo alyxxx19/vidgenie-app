@@ -171,6 +171,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setProfile(null);
     setSession(null);
     setIsLoading(false);
+    
+    // Redirect to home page after signout
+    window.location.href = '/';
   };
 
   const signInWithOAuth = async (provider: 'google' | 'github') => {

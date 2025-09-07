@@ -45,19 +45,19 @@ const API_KEY_CONFIGS = {
   openai: {
     label: 'openai_api_key',
     placeholder: 'sk-...',
-    helpText: 'text generation & prompt enhancement',
+    helpText: 'text generation & prompt enhancement + gpt-image-1',
     docsUrl: 'https://platform.openai.com/api-keys'
   },
-  dalle: {
-    label: 'dalle_api_key',
-    placeholder: 'sk-...',
-    helpText: 'image generation with dall-e 3',
-    docsUrl: 'https://platform.openai.com/api-keys'
+  nanobanana: {
+    label: 'nanobanana_api_key',
+    placeholder: 'nb_...',
+    helpText: 'alternative image generation provider',
+    docsUrl: 'https://nanobanana.com/api'
   },
-  vo3: {
-    label: 'vo3_api_key',
+  veo3: {
+    label: 'veo3_api_key',
     placeholder: 'fal_...',
-    helpText: 'image-to-video transformation',
+    helpText: 'image-to-video with google veo3',
     docsUrl: 'https://fal.ai/dashboard'
   }
 } as const;
@@ -74,18 +74,26 @@ export function ApiKeysSection() {
     setError(null);
 
     try {
+      console.log('[ApiKeysSection] Loading API keys...');
+      
       const response = await fetch('/api/user/api-keys', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json'
-        }
+        },
+        credentials: 'include' // Ensure cookies are sent
       });
 
+      const responseText = await response.text();
+      console.log('[ApiKeysSection] Response status:', response.status);
+      
       if (!response.ok) {
+        console.error('[ApiKeysSection] Error response:', responseText);
         throw new Error(`Erreur HTTP: ${response.status}`);
       }
 
-      const result: ApiKeysData = await response.json();
+      const result: ApiKeysData = JSON.parse(responseText);
+      console.log('[ApiKeysSection] Loaded keys:', result.data?.length || 0);
       
       if (result.success) {
         // Convertir le tableau en objet indexé par provider
@@ -95,11 +103,13 @@ export function ApiKeysSection() {
         }, {} as Record<string, ApiKey>);
         
         setApiKeys(keysMap);
+        console.log('[ApiKeysSection] Keys set in state:', Object.keys(keysMap));
       } else {
         throw new Error('Réponse non valide du serveur');
       }
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+      console.error('[ApiKeysSection] Load error:', err);
       setError(errorMessage);
       toast.error(`Erreur lors du chargement: ${errorMessage}`);
     } finally {
@@ -118,11 +128,14 @@ export function ApiKeysSection() {
   // Sauvegarde d'une clé API
   const handleSaveKey = useCallback(async (provider: string, apiKey: string): Promise<boolean> => {
     try {
+      console.log('[ApiKeysSection] Saving key for provider:', provider);
+      
       const response = await fetch('/api/user/api-keys', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
+        credentials: 'include', // Ensure cookies are sent
         body: JSON.stringify({
           provider,
           apiKey,
@@ -130,22 +143,25 @@ export function ApiKeysSection() {
         })
       });
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || `Erreur HTTP: ${response.status}`);
-      }
+      const responseData = await response.json();
+      console.log('[ApiKeysSection] Save response:', responseData);
 
-      const result = await response.json();
+      if (!response.ok) {
+        throw new Error(responseData.error || `Erreur HTTP: ${response.status}`);
+      }
       
-      if (result.success) {
+      if (responseData.success) {
         // Recharger les données pour avoir les informations à jour
+        console.log('[ApiKeysSection] Key saved successfully, reloading...');
         await loadApiKeys(false);
+        toast.success(`Clé ${provider} sauvegardée avec succès`);
         return true;
       } else {
-        throw new Error(result.error || 'Échec de la sauvegarde');
+        throw new Error(responseData.error || 'Échec de la sauvegarde');
       }
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue';
+      console.error('[ApiKeysSection] Save error:', error);
       toast.error(`Erreur lors de la sauvegarde: ${errorMessage}`);
       return false;
     }
@@ -193,6 +209,7 @@ export function ApiKeysSection() {
 
   // Chargement initial
   useEffect(() => {
+    console.log('[ApiKeysSection] Component mounted, loading keys...');
     loadApiKeys();
   }, [loadApiKeys]);
 
@@ -367,7 +384,7 @@ export function ApiKeysSection() {
                 {/* Composant de saisie */}
                 <ApiKeyInput
                   label={config.label}
-                  provider={provider as 'openai' | 'dalle' | 'vo3'}
+                  provider={provider as 'openai' | 'nanobanana' | 'veo3'}
                   placeholder={config.placeholder}
                   helpText={config.helpText}
                   value={existingKey?.maskedKey}
@@ -392,7 +409,7 @@ export function ApiKeysSection() {
                   </Alert>
                 )}
 
-                {provider !== 'vo3' && <Separator className="mt-6" />}
+                {provider !== 'veo3' && <Separator className="mt-6" />}
               </div>
             );
           })}

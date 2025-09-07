@@ -21,7 +21,7 @@ import { toast } from 'sonner';
 
 interface ApiKeyInputProps {
   label: string;
-  provider: 'openai' | 'dalle' | 'vo3';
+  provider: 'openai' | 'nanobanana' | 'veo3';
   placeholder: string;
   helpText: string;
   value?: string; // Clé masquée existante
@@ -200,11 +200,11 @@ export function ApiKeyInput({
             onChange={(e) => handleValueChange(e.target.value)}
             placeholder={value ? `existing: ${value}` : placeholder}
             disabled={disabled || isSaving}
-            className={`pr-24 bg-secondary/50 border-secondary text-white font-mono text-sm ${
+            className={`pr-24 bg-white border-border text-black placeholder:text-gray-500 font-mono text-sm ${
               validationStatus === 'valid' ? 'border-green-500 focus:border-green-500' :
               validationStatus === 'invalid' ? 'border-red-500 focus:border-red-500' :
-              'border-secondary focus:border-white/50'
-            }`}
+              'border-border focus:border-white/50'
+            } focus:text-black`}
           />
           
           {/* Contrôles dans l'input */}
@@ -214,7 +214,7 @@ export function ApiKeyInput({
               type="button"
               variant="ghost"
               size="sm"
-              className="h-6 w-6 p-0 hover:bg-white/10 text-muted-foreground hover:text-white"
+              className="h-6 w-6 p-0 hover:bg-black/10 text-gray-600 hover:text-black"
               onClick={() => setIsVisible(!isVisible)}
               disabled={disabled}
             >
@@ -230,7 +230,7 @@ export function ApiKeyInput({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 hover:bg-white/10 text-muted-foreground hover:text-white"
+                className="h-6 w-6 p-0 hover:bg-black/10 text-gray-600 hover:text-black"
                 onClick={handleValidate}
                 disabled={disabled || validationStatus === 'validating' || !apiKey.trim()}
               >
@@ -247,7 +247,7 @@ export function ApiKeyInput({
                 type="button"
                 variant="ghost"
                 size="sm"
-                className="h-6 w-6 p-0 hover:bg-white/10 text-muted-foreground hover:text-white"
+                className="h-6 w-6 p-0 hover:bg-black/10 text-gray-600 hover:text-black"
                 onClick={handleClear}
                 disabled={disabled || isSaving}
               >
@@ -296,7 +296,7 @@ export function ApiKeyInput({
           disabled={disabled || isSaving || !apiKey.trim() || !hasUnsavedChanges}
           size="sm"
           variant="default"
-          className="flex-1 bg-white hover:bg-white/90 text-black font-mono text-xs"
+          className="flex-1 bg-white hover:bg-white/90 text-black hover:text-black focus:text-black active:text-black font-mono text-xs"
         >
           {isSaving ? (
             <>
@@ -317,7 +317,7 @@ export function ApiKeyInput({
             disabled={disabled || validationStatus === 'validating' || !apiKey.trim()}
             size="sm"
             variant="outline"
-            className="border-secondary text-white hover:bg-secondary/50 font-mono"
+            className="border-border text-white hover:bg-white hover:text-black font-mono text-xs"
           >
             {validationStatus === 'validating' ? (
               <Loader2 className="w-3 h-3 animate-spin" />

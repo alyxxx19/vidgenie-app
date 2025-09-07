@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Validation des providers supportés
-    const supportedProviders = ['openai', 'dalle', 'vo3'];
+    const supportedProviders = ['openai', 'nanobanana', 'veo3'];
     if (!supportedProviders.includes(provider.toLowerCase())) {
       return NextResponse.json(
         { error: `Provider non supporté. Supportés: ${supportedProviders.join(', ')}` },

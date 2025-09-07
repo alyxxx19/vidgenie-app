@@ -78,7 +78,7 @@ export const executeWorkflow = inngest.createFunction(
 
     // Initialiser les services avec les clés décryptées
     const promptEnhancer = decryptedKeys.openaiKey ? new PromptEnhancerService(decryptedKeys.openaiKey) : null;
-    const imageGenerator = decryptedKeys.imageGenKey ? new ImageGeneratorService(decryptedKeys.imageGenKey, 'dalle3') : null;
+    const imageGenerator = decryptedKeys.imageGenKey ? new ImageGeneratorService(decryptedKeys.imageGenKey, 'gpt-image-1') : null;
     const videoGenerator = decryptedKeys.vo3Key ? new VideoGeneratorService(decryptedKeys.vo3Key, 'fal-ai') : null;
 
     let enhancedPrompt: string | undefined;
