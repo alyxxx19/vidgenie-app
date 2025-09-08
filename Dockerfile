@@ -3,7 +3,7 @@
 # ==================================================
 
 # Stage 1: Base image avec Node.js
-FROM node:18-alpine AS base
+FROM node:24-alpine AS base
 
 # Installe les dépendances système nécessaires
 RUN apk add --no-cache libc6-compat openssl curl
