@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { ArrowRight, Play } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import PricingSection from '@/components/pricing-section';
+import BlurText from '@/components/ui/blur-text';
+import CircularText from '@/components/ui/circular-text';
 
 const StatsCounter = ({ value, label }: { value: string; label: string }) => {
   const [count, setCount] = useState(0);
@@ -98,7 +100,18 @@ export default function HomePage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background relative">
+      {/* Circular Text Animation - Fixed Bottom Right */}
+      <div className="fixed bottom-4 right-4 z-50 opacity-30 hover:opacity-70 transition-opacity duration-300">
+        <CircularText 
+          text="VID*GENIE*APP*" 
+          radius={25}
+          fontSize={10}
+          className="text-muted-foreground font-mono uppercase tracking-wider"
+          duration={20}
+        />
+      </div>
+
       {/* Navigation */}
       <nav className={`fixed top-0 w-full z-50 transition-all duration-300 border-b border-border ${
         navScrolled 
@@ -165,17 +178,37 @@ export default function HomePage() {
           </div>
 
           {/* Title */}
-          <h1 className="text-6xl md:text-7xl lg:text-8xl font-normal tracking-tight mb-6" style={{ lineHeight: '1', letterSpacing: '-0.02em' }}>
-            <span className="text-foreground">Agent AI</span>
-            <br />
-            <span className="text-muted-foreground">Vidéo Intelligent</span>
-          </h1>
+          <div className="mb-8 space-y-2">
+            <BlurText
+              text="Agent AI"
+              delay={150}
+              animateBy="words"
+              direction="top"
+              className="text-6xl md:text-7xl lg:text-8xl font-normal tracking-tight text-foreground block"
+              onAnimationComplete={() => console.log('Agent AI animation completed')}
+            />
+            <BlurText
+              text="Vidéo Intelligent"
+              delay={200}
+              animateBy="words"
+              direction="top"
+              className="text-5xl md:text-6xl lg:text-7xl font-light tracking-tight text-muted-foreground block"
+              onAnimationComplete={() => console.log('Vidéo Intelligent animation completed')}
+            />
+          </div>
 
           {/* Description */}
-          <p className="text-lg text-muted-foreground max-w-2xl mb-12 font-mono" style={{ lineHeight: '1.6' }}>
-            Agent AI intelligent qui facilite et automatise vos workflows de création vidéo.
-            Génération, optimisation et distribution automatisées sur TikTok, YouTube Shorts et Instagram Reels.
-          </p>
+          <div className="max-w-3xl mx-auto mb-12">
+            <BlurText
+              text="Agent AI intelligent qui facilite et automatise vos workflows de création vidéo. Génération, optimisation et distribution automatisées sur TikTok, YouTube Shorts et Instagram Reels."
+              delay={100}
+              animateBy="words"
+              direction="top"
+              className="text-lg md:text-xl leading-relaxed text-muted-foreground font-mono text-center block"
+              stepDuration={0.25}
+              onAnimationComplete={() => console.log('Description animation completed')}
+            />
+          </div>
 
           {/* Buttons */}
           <div className="flex gap-3 flex-wrap mb-16 justify-center">

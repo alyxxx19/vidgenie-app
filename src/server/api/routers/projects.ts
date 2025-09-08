@@ -215,4 +215,38 @@ export const projectsRouter = createTRPCRouter({
         activeJobs,
       };
     }),
+
+  // Alias for compatibility with frontend
+  list: protectedProcedure
+    .query(async ({ ctx }) => {
+      const projects = await ctx.db.project.findMany({
+        where: {
+          userId: ctx.userId,
+        },
+        include: {
+          _count: {
+            select: {
+              jobs: true,
+              assets: true,
+              posts: true,
+            },
+          },
+        },
+        orderBy: {
+          updatedAt: 'desc',
+        },
+      });
+
+      return projects.map(project => ({
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        isDefault: project.isDefault,
+        createdAt: project.createdAt,
+        updatedAt: project.updatedAt,
+        contentCount: project._count.assets,
+        publishedCount: project._count.posts,
+        scheduledCount: 0,
+      }));
+    }),
 });

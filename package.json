@@ -96,6 +96,7 @@
     "cmdk": "^1.1.1",
     "embla-carousel-react": "^8.6.0",
     "enhanced-postgres-mcp-server": "^1.0.1",
+    "framer-motion": "^12.23.12",
     "google-auth-library": "^10.3.0",
     "inngest": "^3.40.1",
     "input-otp": "^1.4.2",

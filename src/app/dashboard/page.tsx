@@ -62,6 +62,13 @@ export default function DashboardPage() {
     { enabled: !!user, staleTime: 300000 }
   );
   
+  // Préchargement intelligent des composants - MUST be before any conditional returns
+  useEffect(() => {
+    if (user && !isLoading) {
+      // Précharger les composants de dashboard après le chargement initial
+      preloadComponentsByRoute('/dashboard');
+    }
+  }, [user, isLoading]);
   
   // Handle loading and auth states AFTER all hooks
   if (!isLoading && !user) {
@@ -75,14 +82,6 @@ export default function DashboardPage() {
   if (!isLoading && isInitialLoad) {
     setIsInitialLoad(false);
   }
-
-  // Préchargement intelligent des composants
-  useEffect(() => {
-    if (user && !isLoading) {
-      // Précharger les composants de dashboard après le chargement initial
-      preloadComponentsByRoute('/dashboard');
-    }
-  }, [user, isLoading]);
 
   if (!user) {
     return null;
@@ -175,7 +174,7 @@ export default function DashboardPage() {
               <h1 className="text-xl font-mono uppercase tracking-wide text-foreground">dashboard</h1>
               <div className="flex items-center gap-4 mt-1">
                 <p className="text-xs font-mono text-muted-foreground">
-                  {user?.name || 'user'} • online
+                  {user?.email?.split('@')[0] || 'user'} • online
                 </p>
                 <TimeDisplay />
               </div>

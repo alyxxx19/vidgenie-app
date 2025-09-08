@@ -61,6 +61,28 @@ class SecureLogger {
     }
     
     if (typeof data === 'object' && data !== null) {
+      // Check if it's a Promise or Next.js dynamic API object
+      if (data instanceof Promise || 
+          (data.constructor && data.constructor.name === 'DynamicServerError') ||
+          (typeof data.then === 'function')) {
+        return '[PROMISE_OR_ASYNC_VALUE]';
+      }
+      
+      // Check for Next.js params/searchParams that need React.use()
+      // These objects throw errors when trying to enumerate them directly
+      try {
+        // Try to access keys to see if it throws
+        const testKeys = Object.keys(data);
+        // If we get here, it's a normal object
+      } catch (error: any) {
+        if (error?.message?.includes('params') || 
+            error?.message?.includes('searchParams') ||
+            error?.message?.includes('React.use()')) {
+          return '[NEXT_DYNAMIC_API_OBJECT]';
+        }
+        return '[UNENUMERABLE_OBJECT]';
+      }
+      
       // Check for circular references
       if (visited.has(data)) {
         return '[CIRCULAR_REFERENCE]';
@@ -80,7 +102,13 @@ class SecureLogger {
             sanitized[key] = this.sanitize(value, depth + 1, visited);
           }
         }
-      } catch (error) {
+      } catch (error: any) {
+        // Additional check for Next.js dynamic API errors
+        if (error?.message?.includes('params') || 
+            error?.message?.includes('searchParams') ||
+            error?.message?.includes('React.use()')) {
+          return '[NEXT_DYNAMIC_API_OBJECT]';
+        }
         return '[SANITIZATION_ERROR]';
       }
       

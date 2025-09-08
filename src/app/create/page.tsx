@@ -97,6 +97,11 @@ export default function CreatePage() {
   const [currentJobId, setCurrentJobId] = useState<string | null>(null);
   const [workflowCurrentStep, setWorkflowCurrentStep] = useState(0);
   
+  // Error handling states
+  const [hasError, setHasError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [componentLoadError, setComponentLoadError] = useState(false);
+  
   // Provider selection states
   const [selectedImageProvider, setSelectedImageProvider] = useState<ImageProvider>('openai');
   const [selectedVideoProvider, setSelectedVideoProvider] = useState<VideoProvider>('veo3');
@@ -155,8 +160,7 @@ export default function CreatePage() {
       toast.success('Image-to-video workflow started');
     },
     onError: (error) => {
-      setIsGenerating(false);
-      toast.error(error.message);
+      handleError(error, 'Complete workflow generation');
     },
   });
 
@@ -206,7 +210,15 @@ export default function CreatePage() {
     setCurrentJobId(null);
   }, [workflowMode]);
 
-  const { data: userProjects } = api.projects.list.useQuery();
+  const { data: userProjects, error: projectsError } = api.projects.list.useQuery(
+    undefined,
+    {
+      onError: (error) => {
+        handleError(error, 'Projects loading');
+      },
+      retry: 3,
+    }
+  );
 
   const handleGenerate = async () => {
     // Vérifications communes pour tous les workflows
@@ -304,7 +316,22 @@ export default function CreatePage() {
         return;
       }
 
-      toast.info('Image-to-video workflow not yet implemented');
+      // TODO: Implémenter la logique réelle d'image vers vidéo
+      setIsGenerating(true);
+      
+      try {
+        // Simuler le processus pour l'instant
+        toast.info('Starting image-to-video generation...');
+        
+        // Cette logique devra être remplacée par un vrai appel API
+        setTimeout(() => {
+          setIsGenerating(false);
+          toast.success('Image-to-video workflow completed (demo)');
+        }, 3000);
+        
+      } catch (error) {
+        handleError(error as Error, 'Image-to-video generation');
+      }
     }
   };
 
@@ -362,6 +389,29 @@ export default function CreatePage() {
     setSelectedWorkflowType(null);
   };
 
+  const handleError = (error: Error | string, context: string) => {
+    const errorMsg = typeof error === 'string' ? error : error.message;
+    setHasError(true);
+    setErrorMessage(`${context}: ${errorMsg}`);
+    setIsGenerating(false);
+    
+    // Log l'erreur de manière sécurisée
+    secureLog.error('Create page error', {
+      context,
+      error: errorMsg,
+      workflowMode,
+      selectedWorkflowType
+    });
+    
+    // Afficher un toast d'erreur
+    toast.error(`Error in ${context}: ${errorMsg}`);
+  };
+
+  const clearError = () => {
+    setHasError(false);
+    setErrorMessage(null);
+  };
+
   return (
     <div className="min-h-screen bg-minimal-gradient relative">
       {/* Minimal grid */}
@@ -401,7 +451,40 @@ export default function CreatePage() {
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 py-6 relative z-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 relative z-10">
+        {/* Error Display */}
+        {hasError && (
+          <div className="mb-6">
+            <Card className="border-red-500 bg-red-950/20">
+              <CardContent className="pt-4">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                    <span className="text-xs font-mono text-red-400">system_error</span>
+                  </div>
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    onClick={clearError}
+                    className="text-red-400 hover:text-red-300 h-6 w-6 p-0"
+                  >
+                    ×
+                  </Button>
+                </div>
+                <p className="text-xs font-mono text-red-300 mt-2">{errorMessage}</p>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => window.location.reload()}
+                  className="mt-3 text-xs font-mono h-7 border-red-500 text-red-400 hover:bg-red-950/40"
+                >
+                  reload_page
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Affichage des crédits et API keys */}
         <div className="mb-6 space-y-4">
           <CreditsDisplay variant="compact" />
@@ -413,25 +496,29 @@ export default function CreatePage() {
 
         {/* Workflow Type Selector */}
         {showWorkflowSelector && (
-          <LazyWrapper name="sélecteur de workflow" retryable={true}>
-            <LazyWorkflowTypeSelector
-              selectedType={selectedWorkflowType}
-              onSelect={handleWorkflowTypeSelect}
-              onContinue={selectedWorkflowType ? handleContinueToConfiguration : undefined}
-            />
-          </LazyWrapper>
+          <div className="animate-slide-in">
+            <LazyWrapper name="sélecteur de workflow" retryable={true}>
+              <LazyWorkflowTypeSelector
+                selectedType={selectedWorkflowType}
+                onSelect={handleWorkflowTypeSelect}
+                onContinue={selectedWorkflowType ? handleContinueToConfiguration : undefined}
+              />
+            </LazyWrapper>
+          </div>
         )}        
         
         {/* Smart Workflow Interface - Only show after workflow type is selected */}
         {!showWorkflowSelector && workflowMode === 'workflow' && selectedWorkflowType && (
-          <LazyWrapper name="interface workflow avancé" retryable={true}>
-            <LazyWorkflowInterfaceV2 projectId={selectedProject} />
-          </LazyWrapper>
+          <div className="animate-slide-in">
+            <LazyWrapper name="interface workflow avancé" retryable={true}>
+              <LazyWorkflowInterfaceV2 projectId={selectedProject} />
+            </LazyWrapper>
+          </div>
         )}
 
         {/* Workflow Steps Visualizer - New Design */}
         {!showWorkflowSelector && workflowMode !== 'workflow' && (
-          <div className="mb-8">
+          <div className="mb-8 animate-slide-in">
             <LazyWrapper name="visualiseur d'étapes" retryable={true}>
               <LazyWorkflowStepsVisualizer 
                 workflowType={workflowMode as 'complete' | 'image-only' | 'video-from-image'}
@@ -447,9 +534,12 @@ export default function CreatePage() {
         
         {/* Legacy Interface */}
         {!showWorkflowSelector && workflowMode !== 'workflow' && (
-          <div className="grid lg:grid-cols-3 gap-6">
-          {/* Left Column - Input */}
-          <div className="lg:col-span-1 space-y-4">
+          <div className="space-y-6 animate-slide-in">
+            {/* Mobile-first layout */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              {/* Input Column - Full width on mobile, 1/3 on desktop */}
+              <div className="xl:col-span-1 space-y-4 order-1">
+                <h2 className="text-sm font-mono text-white mb-4 xl:hidden">Configuration</h2>
             {/* Workflow Mode Selection */}
             <Card className="bg-card border-border">
               <CardHeader>
@@ -468,12 +558,15 @@ export default function CreatePage() {
                   ].map((mode) => (
                     <div 
                       key={mode.id}
-                      className={`p-2 border cursor-pointer transition-colors ${
+                      className={`p-3 border cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
                         workflowMode === mode.id 
-                          ? 'border-white bg-white/5' 
-                          : 'border-border hover:border-white/20'
+                          ? 'border-white bg-white/5 shadow-lg' 
+                          : 'border-border hover:border-white/20 hover:bg-white/5'
                       }`}
-                      onClick={() => setWorkflowMode(mode.id as any)}
+                      onClick={() => {
+                        setWorkflowMode(mode.id as any);
+                        clearError(); // Clear any existing errors when switching modes
+                      }}
                     >
                       <div className="flex items-center gap-2 mb-1">
                         <mode.icon className="w-3 h-3 text-white" />
@@ -615,8 +708,9 @@ export default function CreatePage() {
             </Card>
           </div>
 
-          {/* Center Column - Configuration */}
-          <div className="lg:col-span-1 space-y-4">
+              {/* Settings Column - Full width on mobile, 1/3 on desktop */}
+              <div className="xl:col-span-1 space-y-4 order-2">
+                <h2 className="text-sm font-mono text-white mb-4 xl:hidden">Settings & Providers</h2>
             {/* Provider Selection */}
             <ProviderSelector
               selectedImageProvider={selectedImageProvider}
@@ -768,8 +862,9 @@ export default function CreatePage() {
             </Card>
           </div>
 
-          {/* Right Column - Preview & Actions */}
-          <div className="lg:col-span-1 space-y-4">
+              {/* Preview & Actions Column - Full width on mobile, 1/3 on desktop */}
+              <div className="xl:col-span-1 space-y-4 order-3 xl:order-3">
+                <h2 className="text-sm font-mono text-white mb-4 xl:hidden">Generation & Preview</h2>
             <Card className="bg-card border-border">
               <CardHeader>
                 <CardTitle className="font-mono text-sm text-white">preview_&_generation</CardTitle>
@@ -903,7 +998,7 @@ export default function CreatePage() {
                     (workflowMode === 'image-only' && !canRunTextToImage()) ||
                     (workflowMode === 'video-from-image' && !canRunImageToVideo())
                   }
-                  className="w-full bg-white hover:bg-white/90 text-black font-mono text-xs h-8"
+                  className="w-full bg-white hover:bg-white/90 text-black font-mono text-xs h-10 sm:h-8"
                 >
                   {isGenerating || isGeneratingReal || isTestingPrompt ? (
                     <>
@@ -944,7 +1039,6 @@ export default function CreatePage() {
               </CardContent>
             </Card>
           </div>
-        </div>
         )}
       </div>
     </div>
