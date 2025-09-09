@@ -82,7 +82,7 @@ function WorkflowCanvasInner({ className }: WorkflowCanvasProps) {
   // Gestionnaire de drag des nœuds
   const onNodeDragStop = useCallback((event: React.MouseEvent, node: Node) => {
     // Mettre à jour la position dans le store si nécessaire
-    secureLog.info('Node dragged:', node.id, node.position);
+    secureLog.info('Node dragged:', { nodeId: node.id, position: node.position });
   }, []);
 
   // Fit view au chargement initial
@@ -104,7 +104,7 @@ function WorkflowCanvasInner({ className }: WorkflowCanvasProps) {
       };
     }
     
-    if (edge.data?.active) {
+    if (edge.data?.transferring) {
       return {
         ...baseStyle,
         stroke: '#3b82f6',
@@ -148,7 +148,6 @@ function WorkflowCanvasInner({ className }: WorkflowCanvasProps) {
           color="#404040" 
           gap={40} 
           size={1}
-          variant="dots"
           style={{ opacity: 0.3 }}
         />
         

@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
  * Accessible via /debug/auth-test
  */
 export default function AuthTestPage() {
-  const { user, loading } = useAuth();
+  const { user, isLoading } = useAuth();
   const [testResults, setTestResults] = useState<string>('');
   const [isTestRunning, setIsTestRunning] = useState(false);
 
@@ -28,7 +28,7 @@ export default function AuthTestPage() {
     addLog('🧪 Starting workflow authentication test...');
     
     // Test 1: Vérifier l'état d'auth côté client
-    addLog(`📊 Client auth state: user=${!!user}, loading=${loading}, userId=${user?.id}`);
+    addLog(`📊 Client auth state: user=${!!user}, isLoading=${isLoading}, userId=${user?.id}`);
     
     if (!user) {
       addLog('❌ User is not authenticated on client side');
@@ -118,7 +118,7 @@ export default function AuthTestPage() {
             <CardTitle className="flex items-center gap-2">
               Client Authentication Status
               <Badge variant={user ? 'default' : 'destructive'}>
-                {loading ? 'Loading' : user ? 'Authenticated' : 'Not Authenticated'}
+                {isLoading ? 'Loading' : user ? 'Authenticated' : 'Not Authenticated'}
               </Badge>
             </CardTitle>
           </CardHeader>
@@ -134,11 +134,11 @@ export default function AuthTestPage() {
               </div>
               <div>
                 <Label className="font-semibold">Loading:</Label>
-                <div className="font-mono">{loading.toString()}</div>
+                <div className="font-mono">{isLoading.toString()}</div>
               </div>
               <div>
                 <Label className="font-semibold">Session Active:</Label>
-                <div className="font-mono">{(!!user && !loading).toString()}</div>
+                <div className="font-mono">{(!!user && !isLoading).toString()}</div>
               </div>
             </div>
           </CardContent>
@@ -152,7 +152,7 @@ export default function AuthTestPage() {
           <CardContent>
             <Button 
               onClick={testWorkflowAuth} 
-              disabled={isTestRunning || loading}
+              disabled={isTestRunning || isLoading}
               className="mb-4"
             >
               {isTestRunning ? 'Running Tests...' : 'Run Authentication Test'}

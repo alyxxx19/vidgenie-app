@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
 import { redirect } from 'next/navigation';
@@ -16,7 +16,7 @@ import { LazyWrapper } from '@/components/lazy/LazyWrapper';
 import { 
   LazyPromptBuilder,
   LazyVideoPromptBuilder,
-  LazyWorkflowInterface,
+  // LazyWorkflowInterface,  // Temporarily commented out due to export issues
   LazyWorkflowInterfaceV2,
   LazyWorkflowStepsVisualizer,
   LazyWorkflowTypeSelector,
@@ -50,7 +50,7 @@ import { ProviderSelector, ImageProvider, VideoProvider } from '@/components/Pro
 import { useUserApiKeys } from '@/hooks/useUserApiKeys';
 import { secureLog } from '@/lib/secure-logger';
 
-export default function CreatePage() {
+function CreatePageContent() {
   const { user, isLoading: authLoading } = useAuth();
   const searchParams = useSearchParams();
   
@@ -91,6 +91,7 @@ export default function CreatePage() {
   // General states
   const [selectedProject, setSelectedProject] = useState<string | undefined>();
   const [workflowMode, setWorkflowMode] = useState<'complete' | 'image-only' | 'video-from-image' | 'workflow'>('workflow');
+  const [selectedImageAssetId, setSelectedImageAssetId] = useState<string | null>(null);
   const [selectedWorkflowType, setSelectedWorkflowType] = useState<WorkflowType | null>(null);
   const [showWorkflowSelector, setShowWorkflowSelector] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -157,10 +158,25 @@ export default function CreatePage() {
   const generateCompleteWorkflowMutation = api.generation.generateImageToVideo.useMutation({
     onSuccess: (data) => {
       setCurrentJobId(data.jobId);
+      setIsGenerating(false);
       toast.success('Image-to-video workflow started');
     },
     onError: (error) => {
-      handleError(error, 'Complete workflow generation');
+      setIsGenerating(false);
+      handleError(error.message, 'Complete workflow generation');
+    },
+  });
+
+  // Video from image mutation
+  const generateVideoFromImageMutation = api.generation.generateVideoFromImage.useMutation({
+    onSuccess: (data) => {
+      setCurrentJobId(data.jobId);
+      setIsGenerating(false);
+      toast.success('Video generation started');
+    },
+    onError: (error) => {
+      setIsGenerating(false);
+      handleError(error.message, 'Video from image generation');
     },
   });
 
@@ -213,12 +229,28 @@ export default function CreatePage() {
   const { data: userProjects, error: projectsError } = api.projects.list.useQuery(
     undefined,
     {
-      onError: (error) => {
-        handleError(error, 'Projects loading');
-      },
       retry: 3,
     }
   );
+
+  // Query pour les assets images disponibles
+  const { data: userAssets, isLoading: assetsLoading } = api.assets.getAll.useQuery(
+    undefined,
+    {
+      enabled: workflowMode === 'video-from-image',
+    }
+  );
+
+  // Filtrer uniquement les images prêtes
+  const userImageAssets = userAssets?.filter(asset => 
+    asset.mimeType.startsWith('image/') && asset.status === 'ready'
+  ) || [];
+
+  useEffect(() => {
+    if (projectsError) {
+      handleError(projectsError.message, 'Projects loading');
+    }
+  }, [projectsError]);
 
   const handleGenerate = async () => {
     // Vérifications communes pour tous les workflows
@@ -316,21 +348,26 @@ export default function CreatePage() {
         return;
       }
 
-      // TODO: Implémenter la logique réelle d'image vers vidéo
-      setIsGenerating(true);
-      
+      // Implémentation réelle d'image vers vidéo
+      if (!selectedImageAssetId) {
+        toast.error('Please select an image first. Generate an image in image-only mode or select from your assets.');
+        return;
+      }
+
       try {
-        // Simuler le processus pour l'instant
-        toast.info('Starting image-to-video generation...');
-        
-        // Cette logique devra être remplacée par un vrai appel API
-        setTimeout(() => {
-          setIsGenerating(false);
-          toast.success('Image-to-video workflow completed (demo)');
-        }, 3000);
-        
+        setIsGenerating(true);
+        await generateVideoFromImageMutation.mutateAsync({
+          imageAssetId: selectedImageAssetId,
+          prompt: videoPrompt.trim(),
+          duration: '8s',
+          resolution: videoResolution,
+          generateAudio: generateAudio,
+          projectId: selectedProject,
+        });
+        // Le succès sera géré par la mutation onSuccess
       } catch (error) {
-        handleError(error as Error, 'Image-to-video generation');
+        setIsGenerating(false);
+        handleError(error as Error, 'Video from image generation');
       }
     }
   };
@@ -580,13 +617,72 @@ export default function CreatePage() {
               </CardContent>
             </Card>
 
-            {/* Image Prompt - Use advanced PromptBuilder for image-only mode */}
+            {/* Image Selection for video-from-image mode */}
+            {workflowMode === 'video-from-image' && (
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 font-mono text-sm text-white">
+                    <Image className="w-4 h-4" />
+                    select_source_image
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {assetsLoading ? (
+                    <div className="text-center py-4">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white mx-auto"></div>
+                      <p className="text-muted-foreground font-mono text-xs mt-2">loading_assets...</p>
+                    </div>
+                  ) : userImageAssets.length === 0 ? (
+                    <div className="text-center py-4">
+                      <p className="text-muted-foreground font-mono text-xs">No images available. Generate some images first in image-only mode.</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      {userImageAssets.slice(0, 6).map((asset) => (
+                        <div
+                          key={asset.id}
+                          className={`p-3 border cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
+                            selectedImageAssetId === asset.id 
+                              ? 'border-white bg-white/10 shadow-lg' 
+                              : 'border-border hover:border-white/20 hover:bg-white/5'
+                          }`}
+                          onClick={() => setSelectedImageAssetId(asset.id)}
+                        >
+                          <div className="flex items-center gap-3">
+                            {asset.publicUrl && (
+                              <img 
+                                src={asset.publicUrl} 
+                                alt={asset.filename}
+                                className="w-12 h-12 object-cover rounded border border-border"
+                              />
+                            )}
+                            <div className="flex-1">
+                              <p className="font-mono text-xs text-white truncate">{asset.filename}</p>
+                              <p className="font-mono text-xs text-muted-foreground">
+                                {asset.width}×{asset.height} • {Math.round(asset.fileSize / 1024)}KB
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                      {userImageAssets.length > 6 && (
+                        <p className="text-muted-foreground font-mono text-xs text-center pt-2">
+                          Showing latest 6 images • Total: {userImageAssets.length}
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Image Prompt - Enhanced with LazyPromptBuilder */}
             {workflowMode === 'image-only' ? (
-              <LazyWrapper name="constructeur de prompts avancé" retryable={true}>
+              <LazyWrapper fallback={<div>Loading prompt builder...</div>}>
                 <LazyPromptBuilder
                   value={imagePrompt}
-                  onChange={setImagePrompt}
-                  onEnhanceToggle={setEnhanceEnabled}
+                  onChange={(value) => setImagePrompt(value)}
+                  onEnhanceToggle={(enabled) => setEnhanceEnabled(enabled)}
                   enhanceEnabled={enhanceEnabled}
                 />
               </LazyWrapper>
@@ -621,14 +717,13 @@ export default function CreatePage() {
               </Card>
             )}
 
-            {/* Video Prompt (for complete and video-from-image modes) */}
+            {/* Video Prompt - Enhanced with LazyVideoPromptBuilder */}
             {(workflowMode === 'complete' || workflowMode === 'video-from-image') && (
-              <LazyWrapper name="constructeur de prompts vidéo" retryable={true}>
+              <LazyWrapper fallback={<div>Loading video prompt builder...</div>}>
                 <LazyVideoPromptBuilder
                   value={videoPrompt}
-                  onChange={setVideoPrompt}
-                  onSettingsChange={setVideoSettings}
-                  onEnhanceToggle={setEnhanceEnabled}
+                  onChange={(value) => setVideoPrompt(value)}
+                  onEnhanceToggle={(enabled) => setEnhanceEnabled(enabled)}
                   enhanceEnabled={enhanceEnabled}
                 />
               </LazyWrapper>
@@ -1022,7 +1117,7 @@ export default function CreatePage() {
                       if (workflowMode === 'image-only') return '5 credits';
                       if (workflowMode === 'video-from-image') return '15 credits';
                       return '20 credits';
-                    })()} 
+                    })()}
                   </p>
                   <p>
                     eta: {(() => {
@@ -1030,7 +1125,7 @@ export default function CreatePage() {
                       if (workflowMode === 'image-only') return '30-60s';
                       if (workflowMode === 'video-from-image') return '1-3min'; // Shorter with 8s videos
                       return '2-5min';
-                    })()} 
+                    })()}
                   </p>
                   <p className="text-muted-foreground/60">
                     powered by openai + fal.ai veo 3
@@ -1039,8 +1134,25 @@ export default function CreatePage() {
               </CardContent>
             </Card>
           </div>
+            </div>
+          </div>
         )}
       </div>
     </div>
+  );
+}
+
+export default function CreatePage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-minimal-gradient flex items-center justify-center">
+        <div className="text-center animate-slide-in">
+          <div className="w-8 h-8 border border-white border-t-transparent rounded-full animate-spin mx-auto mb-3" />
+          <p className="text-muted-foreground font-mono text-xs">loading_creator...</p>
+        </div>
+      </div>
+    }>
+      <CreatePageContent />
+    </Suspense>
   );
 }

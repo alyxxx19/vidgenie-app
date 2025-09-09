@@ -299,16 +299,16 @@ export class DataProtectionManager {
           amount: true,
           type: true,
           createdAt: true,
-          description: true,
+          reason: true,
         }
       }),
-      this.prisma.apiKey.findMany({
+      this.prisma.userApiKeys.findMany({
         where: { userId },
         select: {
           id: true,
-          name: true,
           createdAt: true,
-          lastUsed: true,
+          lastUpdated: true,
+          validationStatus: true,
         }
       }),
     ]);
@@ -422,17 +422,13 @@ export class DataProtectionManager {
         where: { userId }
       }),
 
-      // Anonymiser les jobs
-      this.prisma.job.updateMany({
-        where: { userId },
-        data: {
-          // Garder pour statistiques mais anonymiser
-          userId: null,
-        }
+      // Supprimer les jobs
+      this.prisma.job.deleteMany({
+        where: { userId }
       }),
 
       // Supprimer les clés API
-      this.prisma.apiKey.deleteMany({
+      this.prisma.userApiKeys.deleteMany({
         where: { userId }
       }),
     ]);

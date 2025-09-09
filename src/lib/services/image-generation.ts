@@ -37,6 +37,10 @@ export class ImageGenerationService {
         response_format: 'url',
       });
 
+      if (!response.data || response.data.length === 0) {
+        throw new Error('No data returned from OpenAI');
+      }
+      
       const image = response.data[0];
       if (!image?.url) {
         throw new Error('No image URL returned from OpenAI');

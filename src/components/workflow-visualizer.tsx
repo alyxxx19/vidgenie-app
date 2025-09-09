@@ -20,7 +20,8 @@ import {
   AlertCircle,
   Download,
   ExternalLink,
-  RefreshCw
+  RefreshCw,
+  Info
 } from 'lucide-react';
 import NextImage from 'next/image';
 import { secureLog } from '@/lib/secure-logger';
@@ -91,7 +92,7 @@ export function WorkflowVisualizer({
     if (steps.length === 0) return;
 
     const completedSteps = steps.filter(s => s.status === 'completed').length;
-    const failedSteps = steps.filter(s => s.status === 'failed').length;
+    const failedStepsArray = steps.filter(s => s.status === 'failed');
     const processingSteps = steps.filter(s => s.status === 'processing');
 
     // Calculer le progrès global
@@ -107,7 +108,7 @@ export function WorkflowVisualizer({
     setCurrentStep(processingSteps[0]?.id || null);
 
     // Déterminer le statut global
-    if (failedSteps.length > 0) {
+    if (failedStepsArray.length > 0) {
       setOverallStatus('failed');
       setError(steps.find(s => s.status === 'failed')?.error || 'Workflow failed');
     } else if (completedSteps === steps.length && steps.length > 0) {

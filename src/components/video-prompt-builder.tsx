@@ -294,12 +294,17 @@ export function VideoPromptBuilder({
     setSelectedTemplate(templateKey);
     
     // Apply motion settings from template
-    setCameraMovement(template.motion.cameraMovement);
-    setSelectedMotions(template.motion.objectMotion);
-    setTransitionType(template.motion.transitionType);
+    if (template && typeof template === 'object' && 'motion' in template) {
+      const motion = (template as any).motion;
+      if (motion) {
+        setCameraMovement(motion.cameraMovement);
+        setSelectedMotions(motion.objectMotion);
+        setTransitionType(motion.transitionType);
+      }
+    }
     
     // Build prompt with current variables
-    let prompt = template.template;
+    let prompt = (template as any).template;
     Object.entries(templateVars).forEach(([key, value]) => {
       if (value.trim()) {
         prompt = prompt.replace(`{{${key}}}`, value);
@@ -458,7 +463,7 @@ export function VideoPromptBuilder({
             {(() => {
               const category = VIDEO_TEMPLATE_CATEGORIES[selectedCategory as keyof typeof VIDEO_TEMPLATE_CATEGORIES];
               const template = category?.templates[selectedTemplate as keyof typeof category.templates];
-              return template?.variables.map((variable) => (
+              return (template as any)?.variables?.map((variable: string) => (
                 <div key={variable}>
                   <Label className="font-mono text-xs text-muted-foreground">{variable}</Label>
                   <input

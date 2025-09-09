@@ -17,7 +17,7 @@ function AccessibilityChecker() {
         // Alerter si le contraste semble faible (implémentation basique)
         if (bgColor && textColor && bgColor !== 'rgba(0, 0, 0, 0)' && textColor !== 'rgba(0, 0, 0, 0)') {
           // Logique de vérification de contraste simplifiée
-          secureLog.info('Checking contrast for:', el, { bgColor, textColor });
+          secureLog.info('Checking contrast', { bgColor, textColor });
         }
       });
     };

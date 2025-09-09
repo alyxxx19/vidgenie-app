@@ -75,6 +75,8 @@ export interface WorkflowNodeData {
   // Métadonnées d'exécution
   startTime?: number;
   endTime?: number;
+  completedAt?: string; // ISO string timestamp
+  processingTime?: number; // durée de traitement en ms
   errorMessage?: string;
   
   // Données spécifiques par type
@@ -145,7 +147,7 @@ export interface WorkflowNode extends Node {
 }
 
 // Type d'edge React Flow pour les connexions
-export interface WorkflowEdge extends Edge {
+export interface WorkflowEdge {
   id: string;
   source: string;
   target: string;
@@ -172,6 +174,9 @@ export interface WorkflowTemplate {
 export interface WorkflowState {
   // Type de workflow sélectionné
   selectedWorkflowType: WorkflowType | null;
+  
+  // Configuration actuelle du workflow
+  currentConfig?: WorkflowConfig;
   
   // Identifiants
   workflowId?: string;
@@ -218,19 +223,22 @@ export interface WorkflowState {
 
 // Configuration initiale du workflow
 export interface WorkflowConfig {
-  imagePrompt: string;
-  videoPrompt: string;
+  workflowType: 'complete' | 'image-only' | 'video-from-image';
+  initialPrompt: string;
+  customImageUrl?: string; // Pour video-from-image workflow
   imageConfig: {
     style: 'natural' | 'vivid';
     quality: 'standard' | 'hd';
     size: '1024x1024' | '1792x1024' | '1024x1792';
   };
   videoConfig: {
-    duration: 8 | 15 | 30 | 60;
+    duration: 5 | 8 | 15 | 30 | 60;
     resolution: '720p' | '1080p' | '4k';
-    generateAudio: boolean;
+    generateAudio?: boolean;
+    motionIntensity?: 'low' | 'medium' | 'high';
   };
   projectId?: string;
+  userId?: string;
 }
 
 // Historique d'exécution
@@ -257,6 +265,7 @@ export interface WorkflowActions {
   // Gestion du type de workflow
   selectWorkflowType: (type: WorkflowType) => void;
   generateWorkflowFromTemplate: (type: WorkflowType) => void;
+  updateWorkflowConfig: (config: Partial<WorkflowConfig>) => void;
   
   // Gestion des nœuds
   updateNodeData: (nodeId: string, data: Partial<WorkflowNodeData>) => void;

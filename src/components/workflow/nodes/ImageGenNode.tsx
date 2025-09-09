@@ -22,13 +22,13 @@ export function ImageGenNode({ id, data, selected }: ImageGenNodeProps) {
   const getNodeClasses = () => {
     const baseClasses = `${NODE_SIZES.default} ${statusColors.bg} border-2 transition-all duration-300 rounded-xl shadow-lg backdrop-blur-sm`;
     
-    let borderClasses = statusColors.border;
+    let borderClasses: string = statusColors.border;
     let effectClasses = '';
 
     // Styles spécifiques selon l'état
     switch (data.status) {
       case 'loading':
-        borderClasses = `border-[${theme.accent}]`;
+        borderClasses = 'border-green-500';
         effectClasses = 'animate-pulse shadow-lg shadow-green-500/20';
         break;
       case 'success':
@@ -39,8 +39,8 @@ export function ImageGenNode({ id, data, selected }: ImageGenNodeProps) {
         break;
       default:
         if (selected) {
-          borderClasses = `border-[${theme.accent}]`;
-          effectClasses = `shadow-xl shadow-[${theme.accent}]/30`;
+          borderClasses = 'border-green-500';
+          effectClasses = 'shadow-xl shadow-green-500/30';
         }
     }
 
@@ -162,7 +162,7 @@ export function ImageGenNode({ id, data, selected }: ImageGenNodeProps) {
             {/* Aperçu de l'image */}
             <div className="relative">
               <NextImage
-                src={imageData?.imageUrl}
+                src={imageData?.imageUrl || '/placeholder-image.png'}
                 alt="Generated image"
                 width={200}
                 height={128}

@@ -5,7 +5,8 @@ import {
   getRateLimitIdentifier, 
   getRateLimitErrorResponse, 
   getRateLimitHeaders,
-  isWhitelisted
+  isWhitelisted,
+  RateLimitType
 } from '@/lib/rate-limit-config';
 import { secureLog } from '@/lib/secure-logger';
 
@@ -36,126 +37,6 @@ const PUBLIC_ROUTES = [
   '/about',
   '/contact',
 ];
-
-export async function middleware(request: NextRequest) {
-  const start = Date.now();
-  const { pathname } = request.nextUrl;
-  const clientIp = getRateLimitIdentifier(request);
-  const realIp = clientIp.split('_')[0];
-
-  try {
-    // 1. Vérifier rate limiting pour les routes API
-    if (pathname.startsWith('/api') && !isWhitelisted(realIp)) {
-      const rateLimitResult = await applyRateLimit(request, pathname, clientIp);
-      
-      if (!rateLimitResult.success) {
-        secureLog.security(`Rate limit exceeded for ${clientIp}`, {
-          pathname,
-          ip: realIp,
-          remaining: rateLimitResult.remaining
-        });
-        
-        return rateLimitResult.response;
-      }
-    }
-
-    let response = NextResponse.next({
-      request: {
-        headers: request.headers,
-      },
-    });
-
-    // Apply security headers to all responses
-    applySecurityHeaders(response, request);
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
-    {
-      cookies: {
-        get(name: string) {
-          return request.cookies.get(name)?.value;
-        },
-        set(name: string, value: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          response.cookies.set({
-            name,
-            value,
-            ...options,
-          });
-        },
-        remove(name: string, options: CookieOptions) {
-          request.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
-          response = NextResponse.next({
-            request: {
-              headers: request.headers,
-            },
-          });
-          response.cookies.set({
-            name,
-            value: '',
-            ...options,
-          });
-        },
-      },
-    }
-  );
-
-  const { data: { session } } = await supabase.auth.getSession();
-  const pathname = request.nextUrl.pathname;
-  const isAuthenticated = !!session?.user;
-
-  // Gestion des routes protégées
-  if (isProtectedRoute(pathname)) {
-    if (!isAuthenticated) {
-      const signInUrl = new URL('/auth/signin', request.url);
-      signInUrl.searchParams.set('redirectTo', pathname);
-      return NextResponse.redirect(signInUrl);
-    }
-  }
-
-  // Gestion des routes d'authentification (redirection si déjà connecté)
-  if (isAuthRoute(pathname) && isAuthenticated) {
-    const redirectTo = request.nextUrl.searchParams.get('redirectTo') || '/dashboard';
-    return NextResponse.redirect(new URL(redirectTo, request.url));
-  }
-
-    return response;
-  } catch (error) {
-    // Log des erreurs de middleware
-    secureLog.error('Middleware error', { pathname, ip: realIp, error });
-    
-    // En cas d'erreur, laisser passer la requête mais logger
-    let response = NextResponse.next({
-      request: {
-        headers: request.headers,
-      },
-    });
-    applySecurityHeaders(response, request);
-    return response;
-  } finally {
-    // Log des performances
-    const duration = Date.now() - start;
-    if (duration > 100) { // Log seulement si > 100ms
-      secureLog.performance(`Middleware processed ${pathname}`, duration, {
-        ip: realIp,
-      });
-    }
-  }
-}
 
 /**
  * Applique le rate limiting selon la route
@@ -229,8 +110,8 @@ async function applyRateLimit(
 /**
  * Détermine le type de rate limit selon la route
  */
-function getRateLimitTypeForRoute(pathname: string) {
-  const rateLimitRoutes = {
+function getRateLimitTypeForRoute(pathname: string): RateLimitType {
+  const rateLimitRoutes: Record<string, RateLimitType> = {
     '/api/auth/signin': 'auth',
     '/api/auth/signup': 'auth',
     '/api/auth/dev-login': 'auth',
@@ -330,6 +211,125 @@ function applySecurityHeaders(response: NextResponse, request: NextRequest) {
   headers.set('Cross-Origin-Opener-Policy', 'same-origin');
   headers.set('Cross-Origin-Embedder-Policy', 'require-corp');
   headers.set('Cross-Origin-Resource-Policy', 'same-origin');
+}
+
+export async function middleware(request: NextRequest) {
+  const start = Date.now();
+  const { pathname } = request.nextUrl;
+  const clientIp = getRateLimitIdentifier(request);
+  const realIp = clientIp.split('_')[0];
+
+  try {
+    // 1. Vérifier rate limiting pour les routes API
+    if (pathname.startsWith('/api') && !isWhitelisted(realIp)) {
+      const rateLimitResult = await applyRateLimit(request, pathname, clientIp);
+      
+      if (!rateLimitResult.success) {
+        secureLog.security(`Rate limit exceeded for ${clientIp}`, {
+          pathname,
+          ip: realIp,
+          remaining: rateLimitResult.remaining
+        });
+        
+        return rateLimitResult.response;
+      }
+    }
+
+    let response = NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    });
+
+    // Apply security headers to all responses
+    applySecurityHeaders(response, request);
+
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL ?? '',
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ?? '',
+    {
+      cookies: {
+        get(name: string) {
+          return request.cookies.get(name)?.value;
+        },
+        set(name: string, value: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          response.cookies.set({
+            name,
+            value,
+            ...options,
+          });
+        },
+        remove(name: string, options: CookieOptions) {
+          request.cookies.set({
+            name,
+            value: '',
+            ...options,
+          });
+          response = NextResponse.next({
+            request: {
+              headers: request.headers,
+            },
+          });
+          response.cookies.set({
+            name,
+            value: '',
+            ...options,
+          });
+        },
+      },
+    }
+  );
+
+  const { data: { session } } = await supabase.auth.getSession();
+  const isAuthenticated = !!session?.user;
+
+  // Gestion des routes protégées
+  if (isProtectedRoute(pathname)) {
+    if (!isAuthenticated) {
+      const signInUrl = new URL('/auth/signin', request.url);
+      signInUrl.searchParams.set('redirectTo', pathname);
+      return NextResponse.redirect(signInUrl);
+    }
+  }
+
+  // Gestion des routes d'authentification (redirection si déjà connecté)
+  if (isAuthRoute(pathname) && isAuthenticated) {
+    const redirectTo = request.nextUrl.searchParams.get('redirectTo') || '/dashboard';
+    return NextResponse.redirect(new URL(redirectTo, request.url));
+  }
+
+    return response;
+  } catch (error) {
+    // Log des erreurs de middleware
+    secureLog.error('Middleware error', { pathname, ip: realIp, error });
+    
+    // En cas d'erreur, laisser passer la requête mais logger
+    let response = NextResponse.next({
+      request: {
+        headers: request.headers,
+      },
+    });
+    applySecurityHeaders(response, request);
+    return response;
+  } finally {
+    // Log des performances
+    const duration = Date.now() - start;
+    if (duration > 100) { // Log seulement si > 100ms
+      secureLog.performance(`Middleware processed ${pathname}`, duration, {
+        ip: realIp,
+      });
+    }
+  }
 }
 
 // Helpers pour déterminer le type de route

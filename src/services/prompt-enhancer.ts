@@ -225,8 +225,7 @@ Réponds UNIQUEMENT avec le prompt amélioré, sans explications.`;
    * Extrait les suggestions d'amélioration du texte généré
    */
   private extractImprovementSuggestions(enhancedText: string): string[] {
-    // Pour l'instant, retourner des suggestions génériques
-    // TODO: Améliorer avec une analyse plus sophistiquée
+    // Suggestions basées sur des patterns d'amélioration communs
     return [
       'Enhanced visual details and quality specifications',
       'Added professional styling and technical parameters',

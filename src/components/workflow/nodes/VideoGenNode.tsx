@@ -21,13 +21,13 @@ export function VideoGenNode({ id, data, selected }: VideoGenNodeProps) {
   const getNodeClasses = () => {
     const baseClasses = `${NODE_SIZES.default} ${statusColors.bg} border-2 transition-all duration-300 rounded-xl shadow-lg backdrop-blur-sm`;
     
-    let borderClasses = statusColors.border;
+    let borderClasses: string = statusColors.border;
     let effectClasses = '';
 
     // Styles spécifiques selon l'état
     switch (data.status) {
       case 'loading':
-        borderClasses = `border-[${theme.accent}]`;
+        borderClasses = 'border-red-500';
         effectClasses = 'animate-pulse shadow-lg shadow-red-500/20';
         break;
       case 'success':
@@ -38,8 +38,8 @@ export function VideoGenNode({ id, data, selected }: VideoGenNodeProps) {
         break;
       default:
         if (selected) {
-          borderClasses = `border-[${theme.accent}]`;
-          effectClasses = `shadow-xl shadow-[${theme.accent}]/30`;
+          borderClasses = 'border-red-500';
+          effectClasses = 'shadow-xl shadow-red-500/30';
         }
     }
 

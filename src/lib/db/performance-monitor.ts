@@ -228,7 +228,7 @@ export function generatePerformanceReport() {
       report.recommendations.push('Error rate above normal - monitor closely');
     }
     
-    if (stats1h.performance.p95 > 1000) {
+    if (stats1h.performance.percentiles.p95 > 1000) {
       report.summary.status = 'degraded';
       report.recommendations.push('95th percentile response time above 1s - optimize slow queries');
     }

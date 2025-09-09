@@ -1,13 +1,13 @@
 'use client';
 
-import { WorkflowConfig, WorkflowNodeStatus, WorkflowResult } from '../types/workflow';
+import { WorkflowConfig, WorkflowNodeStatus } from '../types/workflow';
 import { secureLog } from '@/lib/secure-logger';
 
 export interface WorkflowServiceEvents {
   'workflow:start': (config: WorkflowConfig) => void;
   'workflow:progress': (data: { nodeId: string; progress: number; status: WorkflowNodeStatus }) => void;
   'workflow:nodeComplete': (data: { nodeId: string; result: any }) => void;
-  'workflow:complete': (result: WorkflowResult) => void;
+  'workflow:complete': (result: { success: boolean; imageUrl?: string; videoUrl?: string; duration?: number; metadata?: any }) => void;
   'workflow:error': (data: { nodeId: string; error: string }) => void;
 }
 
@@ -77,11 +77,13 @@ export class WorkflowService {
         },
         credentials: 'include', // Important: inclure les cookies de session
         body: JSON.stringify({
-          imagePrompt: config.imagePrompt,
-          videoPrompt: config.videoPrompt,
+          workflowType: config.workflowType,
+          initialPrompt: config.initialPrompt,
+          customImageUrl: config.customImageUrl,
           imageConfig: config.imageConfig,
           videoConfig: config.videoConfig,
           projectId: config.projectId,
+          userId: config.userId,
         }),
       });
 

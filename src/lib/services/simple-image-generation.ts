@@ -57,6 +57,10 @@ export class SimpleImageGenerationService {
         response_format: 'url',
       });
 
+      if (!response.data || response.data.length === 0) {
+        throw new Error('No data returned from OpenAI');
+      }
+      
       const image = response.data[0];
       if (!image?.url) {
         throw new Error('No image URL returned from OpenAI');
@@ -113,7 +117,7 @@ export class SimpleImageGenerationService {
       }
       
       const buffer = Buffer.from(await response.arrayBuffer());
-      secureLog.info('[IMAGE_GEN] Image downloaded, size:', buffer.length, 'bytes');
+      secureLog.info(`[IMAGE_GEN] Image downloaded, size: ${buffer.length} bytes`);
       
       return buffer;
     } catch (error) {

@@ -230,14 +230,14 @@ export class FileValidationService {
   private static detectFileCategory(mimeType: string, extension: string): keyof typeof ALLOWED_MIME_TYPES | null {
     // Vérification par MIME type en priorité
     for (const [category, mimes] of Object.entries(ALLOWED_MIME_TYPES)) {
-      if (mimes.includes(mimeType as any)) {
+      if ((mimes as readonly string[]).includes(mimeType)) {
         return category as keyof typeof ALLOWED_MIME_TYPES;
       }
     }
 
     // Fallback sur l'extension
     for (const [category, extensions] of Object.entries(ALLOWED_EXTENSIONS)) {
-      if (extensions.includes(extension.toLowerCase())) {
+      if ((extensions as readonly string[]).includes(extension.toLowerCase())) {
         return category as keyof typeof ALLOWED_MIME_TYPES;
       }
     }
@@ -262,7 +262,7 @@ export class FileValidationService {
       return;
     }
 
-    if (allowedTypes.length > 0 && !allowedTypes.includes(mimeType)) {
+    if (allowedTypes.length > 0 && !(allowedTypes as readonly string[]).includes(mimeType)) {
       result.errors.push(`Type MIME non autorisé: ${mimeType}`);
     }
 
@@ -298,7 +298,7 @@ export class FileValidationService {
       return;
     }
 
-    if (allowedExts.length > 0 && !allowedExts.includes(extension.toLowerCase())) {
+    if (allowedExts.length > 0 && !(allowedExts as readonly string[]).includes(extension.toLowerCase())) {
       result.errors.push(`Extension non autorisée: ${extension}`);
     }
 

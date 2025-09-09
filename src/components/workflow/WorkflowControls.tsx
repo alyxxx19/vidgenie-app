@@ -54,7 +54,7 @@ export function WorkflowControls({ className, projectId }: WorkflowControlsProps
   } = useWorkflowStore();
 
   const { balance, hasEnoughCredits } = useCredits();
-  const { user, loading: authLoading } = useAuth();
+  const { user, isLoading: authLoading } = useAuth();
 
   // États du formulaire
   const [imagePrompt, setImagePrompt] = useState('');
@@ -99,8 +99,8 @@ export function WorkflowControls({ className, projectId }: WorkflowControlsProps
     }
 
     const config: WorkflowConfig = {
-      imagePrompt: imagePrompt.trim(),
-      videoPrompt: videoPrompt.trim(),
+      workflowType: 'complete', // Par défaut pour un workflow complet
+      initialPrompt: imagePrompt.trim() || videoPrompt.trim(),
       imageConfig: {
         style: imageStyle,
         quality: imageQuality,
@@ -372,7 +372,7 @@ export function WorkflowControls({ className, projectId }: WorkflowControlsProps
             <div className="space-y-3">
               <div>
                 <Label className="font-mono text-xs text-muted-foreground">style</Label>
-                <Select value={imageStyle} onValueChange={setImageStyle} disabled={isRunning}>
+                <Select value={imageStyle} onValueChange={(value: string) => setImageStyle(value as "natural" | "vivid")} disabled={isRunning}>
                   <SelectTrigger className="bg-background border-border text-white font-mono text-sm h-10 mt-2">
                     <SelectValue />
                   </SelectTrigger>
@@ -385,7 +385,7 @@ export function WorkflowControls({ className, projectId }: WorkflowControlsProps
 
               <div>
                 <Label className="font-mono text-xs text-muted-foreground">quality</Label>
-                <Select value={imageQuality} onValueChange={setImageQuality} disabled={isRunning}>
+                <Select value={imageQuality} onValueChange={(value: string) => setImageQuality(value as "standard" | "hd")} disabled={isRunning}>
                   <SelectTrigger className="bg-background border-border text-white font-mono text-sm h-10 mt-2">
                     <SelectValue />
                   </SelectTrigger>
@@ -398,7 +398,7 @@ export function WorkflowControls({ className, projectId }: WorkflowControlsProps
 
               <div>
                 <Label className="font-mono text-xs text-muted-foreground">aspect_ratio</Label>
-                <Select value={imageSize} onValueChange={setImageSize} disabled={isRunning}>
+                <Select value={imageSize} onValueChange={(value: string) => setImageSize(value as "1024x1024" | "1792x1024" | "1024x1792")} disabled={isRunning}>
                   <SelectTrigger className="bg-background border-border text-white font-mono text-sm h-10 mt-2">
                     <SelectValue />
                   </SelectTrigger>
@@ -419,7 +419,7 @@ export function WorkflowControls({ className, projectId }: WorkflowControlsProps
             <div className="space-y-3">
               <div>
                 <Label className="font-mono text-xs text-muted-foreground">resolution</Label>
-                <Select value={videoResolution} onValueChange={setVideoResolution} disabled={isRunning}>
+                <Select value={videoResolution} onValueChange={(value: string) => setVideoResolution(value as "720p" | "1080p")} disabled={isRunning}>
                   <SelectTrigger className="bg-background border-border text-white font-mono text-sm h-10 mt-2">
                     <SelectValue />
                   </SelectTrigger>

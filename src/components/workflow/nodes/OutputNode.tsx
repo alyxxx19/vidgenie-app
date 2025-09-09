@@ -30,7 +30,7 @@ export function OutputNode({ id, data, selected }: OutputNodeProps) {
   const getNodeClasses = () => {
     const baseClasses = `${NODE_SIZES.default} ${statusColors.bg} border-2 transition-all duration-300 rounded-xl backdrop-blur-sm`;
     
-    let borderClasses = statusColors.border;
+    let borderClasses: string = statusColors.border;
     let effectClasses = '';
 
     // Styles spécifiques selon l'état (couleurs statiques pour éviter les problèmes CSS)

@@ -1,3 +1,5 @@
+import { secureLog } from '@/lib/secure-logger';
+
 export type VideoProvider = 'veo3' | 'fal-ai' | 'runway' | 'pika';
 export type VideoResolution = '720p' | '1080p' | '4k';
 export type VideoDuration = 5 | 8 | 15 | 30 | 60; // en secondes

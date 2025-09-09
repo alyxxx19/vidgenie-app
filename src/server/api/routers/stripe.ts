@@ -110,6 +110,10 @@ export const stripeRouter = createTRPCRouter({
       }
 
       try {
+        if (!stripe) {
+          throw new Error('Stripe is not configured');
+        }
+        
         const subscription = await stripe.subscriptions.retrieve(stripeCustomer.subscriptionId);
         
         return {
@@ -143,6 +147,10 @@ export const stripeRouter = createTRPCRouter({
         });
       }
 
+      if (!stripe) {
+        throw new Error('Stripe is not configured');
+      }
+
       const subscription = await stripe.subscriptions.update(stripeCustomer.subscriptionId, {
         cancel_at_period_end: true,
       });
@@ -171,6 +179,10 @@ export const stripeRouter = createTRPCRouter({
           code: 'BAD_REQUEST',
           message: 'No subscription found',
         });
+      }
+
+      if (!stripe) {
+        throw new Error('Stripe is not configured');
       }
 
       const subscription = await stripe.subscriptions.update(stripeCustomer.subscriptionId, {

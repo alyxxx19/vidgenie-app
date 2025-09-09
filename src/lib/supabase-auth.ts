@@ -84,7 +84,6 @@ export async function getCurrentUser() {
 
   const dbUser = await db.user.findUnique({
     where: { id: user.id },
-    include: { plan: true },
   });
 
   return dbUser;

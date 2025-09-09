@@ -5,6 +5,10 @@ import type { User } from '@prisma/client';
 export class StripeCustomerService {
   // Créer ou récupérer un customer Stripe
   static async getOrCreateCustomer(user: User): Promise<string> {
+    if (!stripe) {
+      throw new Error('Stripe is not configured');
+    }
+    
     // Si l'utilisateur a déjà un customer ID Stripe
     if (user.stripeCustomerId) {
       try {
@@ -39,6 +43,10 @@ export class StripeCustomerService {
       metadata?: Record<string, string>;
     }
   ): Promise<void> {
+    if (!stripe) {
+      throw new Error('Stripe is not configured');
+    }
+    
     await stripe.customers.update(customerId, {
       email: updates.email,
       name: updates.name,
@@ -48,6 +56,10 @@ export class StripeCustomerService {
 
   // Récupérer les détails complets d'un customer
   static async getCustomerDetails(customerId: string) {
+    if (!stripe) {
+      throw new Error('Stripe is not configured');
+    }
+    
     const [customer, subscriptions, paymentMethods] = await Promise.all([
       stripe.customers.retrieve(customerId),
       stripe.subscriptions.list({
@@ -70,6 +82,10 @@ export class StripeCustomerService {
 
   // Supprimer un customer (GDPR compliance)
   static async deleteCustomer(customerId: string): Promise<void> {
+    if (!stripe) {
+      throw new Error('Stripe is not configured');
+    }
+    
     await stripe.customers.del(customerId);
   }
 }

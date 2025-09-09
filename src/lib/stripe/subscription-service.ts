@@ -30,6 +30,10 @@ export class StripeSubscriptionService {
     successUrl,
     cancelUrl,
   }: CreateCheckoutSessionParams) {
+    if (!stripe) {
+      throw new Error('Stripe is not configured');
+    }
+    
     const sessionParams: any = {
       line_items: [
         {
@@ -68,6 +72,10 @@ export class StripeSubscriptionService {
 
   // Récupérer les détails d'une subscription
   static async getSubscription(subscriptionId: string): Promise<SubscriptionData | null> {
+    if (!stripe) {
+      throw new Error('Stripe is not configured');
+    }
+    
     try {
       const subscription = await stripe.subscriptions.retrieve(subscriptionId, {
         expand: ['items.data.price'],
@@ -104,6 +112,10 @@ export class StripeSubscriptionService {
     subscriptionId: string,
     newPriceId: string
   ): Promise<void> {
+    if (!stripe) {
+      throw new Error('Stripe is not configured');
+    }
+    
     const subscription = await stripe.subscriptions.retrieve(subscriptionId);
     
     await stripe.subscriptions.update(subscriptionId, {
@@ -119,6 +131,10 @@ export class StripeSubscriptionService {
 
   // Annuler une subscription (à la fin de la période)
   static async cancelSubscription(subscriptionId: string): Promise<void> {
+    if (!stripe) {
+      throw new Error('Stripe is not configured');
+    }
+    
     await stripe.subscriptions.update(subscriptionId, {
       cancel_at_period_end: true,
     });
@@ -126,6 +142,10 @@ export class StripeSubscriptionService {
 
   // Réactiver une subscription annulée
   static async reactivateSubscription(subscriptionId: string): Promise<void> {
+    if (!stripe) {
+      throw new Error('Stripe is not configured');
+    }
+    
     await stripe.subscriptions.update(subscriptionId, {
       cancel_at_period_end: false,
     });
@@ -136,6 +156,10 @@ export class StripeSubscriptionService {
     customerId: string,
     returnUrl: string
   ): Promise<string> {
+    if (!stripe) {
+      throw new Error('Stripe is not configured');
+    }
+    
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: returnUrl,
@@ -146,6 +170,10 @@ export class StripeSubscriptionService {
 
   // Récupérer l'historique des factures
   static async getInvoiceHistory(customerId: string, limit = 10) {
+    if (!stripe) {
+      throw new Error('Stripe is not configured');
+    }
+    
     const invoices = await stripe.invoices.list({
       customer: customerId,
       limit,

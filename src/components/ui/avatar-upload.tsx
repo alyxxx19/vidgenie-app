@@ -45,7 +45,9 @@ export function AvatarUpload({ currentAvatar, userName, onAvatarUpdate }: Avatar
   const updateAvatarMutation = api.user.updateAvatar.useMutation({
     onSuccess: (result) => {
       toast.success('Avatar mis à jour avec succès');
-      onAvatarUpdate?.(result.avatar);
+      if (result.avatar) {
+        onAvatarUpdate?.(result.avatar);
+      }
       handleClose();
     },
     onError: (error) => {

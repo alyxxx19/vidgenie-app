@@ -49,8 +49,8 @@ export const generateImageWorker = inngest.createFunction(
       const imageBuffer = await imageGenerationService.downloadAndGetSize(imageResult.imageUrl);
       const s3Key = `images/${jobId}.png`;
       return {
-        buffer: imageBuffer,
-        s3Result: await uploadToS3(imageBuffer, s3Key, 'image/png'),
+        bufferSize: Buffer.isBuffer(imageBuffer) ? imageBuffer.length : 0,
+        s3Result: await uploadToS3(s3Key, imageBuffer, 'image/png'),
         s3Key,
       };
     });
@@ -59,7 +59,7 @@ export const generateImageWorker = inngest.createFunction(
     await step.run('create-asset-and-complete', async () => {
       const job = await prisma.generationJob.findUnique({
         where: { id: jobId },
-        select: { userId: true, projectId: true },
+        select: { userId: true, projectId: true, startedAt: true },
       });
 
       if (!job) {
@@ -73,13 +73,13 @@ export const generateImageWorker = inngest.createFunction(
           filename: `${jobId}.png`,
           originalName: `generated-image-${Date.now()}.png`,
           mimeType: 'image/png',
-          fileSize: s3Result.buffer.length,
+          fileSize: s3Result.bufferSize,
           width: imageResult.metadata.width,
           height: imageResult.metadata.height,
           s3Key: s3Result.s3Key,
           s3Bucket: process.env.S3_BUCKET_NAME || 'vidgenie-media-dev',
           s3Region: process.env.S3_REGION || 'eu-west-3',
-          publicUrl: s3Result.s3Result.publicUrl,
+          publicUrl: s3Result.s3Result,
           generatedBy: 'openai/dall-e-3',
           prompt,
           status: 'ready',
@@ -99,14 +99,16 @@ export const generateImageWorker = inngest.createFunction(
           status: 'IMAGE_READY',
           imageAssetId: imageAsset.id,
           completedAt: new Date(),
-          processingTime: Date.now() - new Date().getTime(),
+          processingTime: job.startedAt 
+            ? Date.now() - new Date(job.startedAt).getTime()
+            : undefined,
         },
       });
 
       return { imageAssetId: imageAsset.id };
     });
 
-    return { success: true, imageAssetId: s3Result.s3Result.publicUrl };
+    return { success: true, imageUrl: s3Result.s3Result };
   }
 );
 
@@ -145,13 +147,11 @@ export const generateVideoWorker = inngest.createFunction(
         const webhookUrl = `${process.env.NEXTAUTH_URL}/api/webhooks/veo3`;
         
         return await veo3Client.generateVideo({
-          mode: 'image-conditioned',
           imageUrl: imageAsset.publicUrl!,
           prompt,
-          duration: config.duration || 10,
-          aspectRatio: config.aspectRatio || '9:16',
-          style: config.style || 'cinematic',
-          cameraMovement: config.cameraMovement || 'static',
+          duration: '8s',
+          resolution: config.resolution || '720p',
+          generateAudio: config.generateAudio || false,
           webhookUrl,
         });
       } catch (error) {
@@ -172,10 +172,9 @@ export const generateVideoWorker = inngest.createFunction(
       await prisma.generationJob.update({
         where: { id: jobId },
         data: {
-          providerJobId: veo3Response.jobId,
+          providerJobId: veo3Response.requestId,
           providerData: {
             ...config,
-            estimatedDuration: veo3Response.estimatedDuration,
           },
         },
       });
@@ -187,11 +186,11 @@ export const generateVideoWorker = inngest.createFunction(
       let attempts = 0;
 
       while (attempts < maxAttempts) {
-        const status = await veo3Client.getJobStatus(veo3Response.jobId);
+        const status = await veo3Client.getJobStatus(veo3Response.requestId);
         
-        if (status.status === 'completed' && status.videoUrl) {
+        if (status.status === 'COMPLETED' && status.videoUrl) {
           return status;
-        } else if (status.status === 'failed') {
+        } else if (status.status === 'FAILED') {
           throw new Error(status.error || 'Video generation failed');
         }
 
@@ -217,7 +216,7 @@ export const generateVideoWorker = inngest.createFunction(
 
       const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
       const s3Key = `videos/${jobId}.mp4`;
-      const s3Result = await uploadToS3(videoBuffer, s3Key, 'video/mp4');
+      const s3Result = await uploadToS3(s3Key, videoBuffer, 'video/mp4');
 
       // Créer l'asset vidéo
       return await prisma.asset.create({
@@ -229,24 +228,24 @@ export const generateVideoWorker = inngest.createFunction(
           mimeType: 'video/mp4',
           fileSize: videoBuffer.length,
           duration: config.duration || 10,
-          width: finalStatus.metadata?.width || 1080,
-          height: finalStatus.metadata?.height || 1920,
+          width: 1080,
+          height: 1920,
           s3Key,
           s3Bucket: process.env.S3_BUCKET_NAME || 'vidgenie-media-dev',
           s3Region: process.env.S3_REGION || 'eu-west-3',
-          publicUrl: s3Result.publicUrl,
-          thumbnailUrl: finalStatus.thumbnailUrl,
+          publicUrl: s3Result,
+          thumbnailUrl: null,
           generatedBy: 'google/veo-3',
           prompt,
           status: 'ready',
-          frameRate: finalStatus.metadata?.frameRate || 30,
+          frameRate: 30,
           aiConfig: {
             provider: 'veo3',
             baseImage: imageAsset.publicUrl,
             duration: config.duration,
             style: config.style,
             cameraMovement: config.cameraMovement,
-            veo3JobId: veo3Response.jobId,
+            veo3JobId: veo3Response.requestId,
           },
         },
       });
@@ -261,7 +260,7 @@ export const generateVideoWorker = inngest.createFunction(
           videoAssetId: videoAsset.id,
           completedAt: new Date(),
           processingTime: job.startedAt 
-            ? Date.now() - job.startedAt.getTime()
+            ? Date.now() - new Date(job.startedAt).getTime()
             : undefined,
         },
       });

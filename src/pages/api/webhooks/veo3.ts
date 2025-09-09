@@ -94,7 +94,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
         const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
         const s3Key = `videos/${generationJob.id}.mp4`;
-        const s3Result = await uploadToS3(videoBuffer, s3Key, 'video/mp4');
+        const s3Result = await uploadToS3(s3Key, videoBuffer, 'video/mp4');
 
         // Télécharger la miniature si disponible
         let thumbnailS3Result;
@@ -103,7 +103,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           if (thumbnailResponse.ok) {
             const thumbnailBuffer = Buffer.from(await thumbnailResponse.arrayBuffer());
             const thumbnailS3Key = `thumbnails/${generationJob.id}.jpg`;
-            thumbnailS3Result = await uploadToS3(thumbnailBuffer, thumbnailS3Key, 'image/jpeg');
+            thumbnailS3Result = await uploadToS3(thumbnailS3Key, thumbnailBuffer, 'image/jpeg');
           }
         }
 
@@ -122,8 +122,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             s3Key,
             s3Bucket: process.env.S3_BUCKET_NAME || 'vidgenie-media-dev',
             s3Region: process.env.S3_REGION || 'eu-west-3',
-            publicUrl: s3Result.publicUrl,
-            thumbnailUrl: thumbnailS3Result?.publicUrl,
+            publicUrl: s3Result,
+            thumbnailUrl: thumbnailS3Result,
             thumbnailS3Key: thumbnailS3Result ? `thumbnails/${generationJob.id}.jpg` : undefined,
             frameRate: metadata?.frame_rate || 30,
             generatedBy: 'fal-ai/google-veo-3',
@@ -132,7 +132,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             aiConfig: {
               provider: 'fal-ai-veo3',
               veo3JobId: providerJobId,
-              baseImage: generationJob.imageAsset?.publicUrl,
+              baseImage: generationJob.imageAssetId,
               metadata,
               ...generationJob.providerData as any,
             },

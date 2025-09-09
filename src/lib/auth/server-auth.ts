@@ -17,10 +17,6 @@ export async function getServerUser(request: Request) {
     secureLog.info('[SERVER-AUTH] Starting auth verification');
     
     const cookieStore = cookies();
-    const allCookies = cookieStore.getAll();
-    
-    // Log des cookies pour debug (sans valeurs sensibles)
-    secureLog.info('[SERVER-AUTH] Available cookies:', allCookies.map(c => c.name));
     
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
@@ -34,13 +30,7 @@ export async function getServerUser(request: Request) {
     }
     
     // Create Supabase client for server-side auth
-    const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey, {
-      cookies: {
-        getAll() {
-          return allCookies.map(({ name, value }) => ({ name, value }));
-        },
-      },
-    });
+    const supabase = createClient<Database>(supabaseUrl, supabaseAnonKey);
     
     secureLog.info('[SERVER-AUTH] Calling supabase.auth.getUser()');
     const { data: { user }, error } = await supabase.auth.getUser();

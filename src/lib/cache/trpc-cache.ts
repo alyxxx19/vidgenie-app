@@ -47,8 +47,10 @@ function generateProcedureKey(
  */
 export function withProcedureCache(options: CacheOptions) {
   return experimental_standaloneMiddleware<{
-    user?: { id: string };
-    userId?: string;
+    ctx?: {
+      user?: { id: string };
+      userId?: string;
+    };
   }>().create(async ({ next, path, input, ctx }) => {
     
     // Skip cache si condition remplie

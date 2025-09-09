@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useWorkflowStream } from './useWorkflowStream';
 import { toast } from 'sonner';
 
@@ -186,24 +186,26 @@ export function useWorkflow(): UseWorkflowResult {
   });
 
   // Notifications pour les étapes importantes
-  useState(() => {
+  const [notifiedSteps, setNotifiedSteps] = useState<Set<string>>(new Set());
+  
+  useEffect(() => {
     const completedImageStep = steps.find(s => s.id === 'image_generation' && s.status === 'completed');
     const completedVideoStep = steps.find(s => s.id === 'video_generation' && s.status === 'completed');
     
-    if (completedImageStep && !completedImageStep.notified) {
+    if (completedImageStep && !notifiedSteps.has('image_generation')) {
       toast.success('Image generated!', {
         description: 'Starting video conversion...',
       });
-      completedImageStep.notified = true;
+      setNotifiedSteps(prev => new Set(prev).add('image_generation'));
     }
     
-    if (completedVideoStep && !completedVideoStep.notified) {
+    if (completedVideoStep && !notifiedSteps.has('video_generation')) {
       toast.success('Video generated!', {
         description: 'Finalizing your creation...',
       });
-      completedVideoStep.notified = true;
+      setNotifiedSteps(prev => new Set(prev).add('video_generation'));
     }
-  });
+  }, [steps, notifiedSteps]);
 
   return {
     // État

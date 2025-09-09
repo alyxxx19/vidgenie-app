@@ -79,7 +79,7 @@ export class Veo3Client {
         requestId,
         status: status.status,
         videoUrl,
-        error: status.status === 'FAILED' ? 'Video generation failed' : undefined,
+        error: (status.status as any) === 'FAILED' ? 'Video generation failed' : undefined,
       };
     } catch (error) {
       secureLog.error('Fal.ai Veo3 status check error:', error);

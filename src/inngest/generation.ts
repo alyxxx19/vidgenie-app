@@ -199,7 +199,7 @@ async function generateVideoWithReplicate(
   }
 
   // Run the prediction
-  const prediction = await replicate.run(selectedProvider.model, { input });
+  const prediction = await replicate.run(selectedProvider.model as `${string}/${string}` | `${string}/${string}:${string}`, { input });
   
   // Handle different response formats
   let videoUrl: string;
@@ -392,7 +392,9 @@ export const generationWorker = inngest.createFunction(
       const s3Key = generateAssetKey(job.userId, generatedContent.filename);
       const publicUrl = await uploadToS3(
         s3Key,
-        generatedContent.buffer,
+        Buffer.isBuffer(generatedContent.buffer) 
+          ? generatedContent.buffer 
+          : Buffer.from((generatedContent.buffer as any).data || generatedContent.buffer),
         generatedContent.mimeType
       );
       
@@ -403,7 +405,9 @@ export const generationWorker = inngest.createFunction(
         thumbnailS3Key = generateAssetKey(job.userId, generatedContent.thumbnailFilename);
         thumbnailUrl = await uploadToS3(
           thumbnailS3Key,
-          generatedContent.thumbnailBuffer,
+          Buffer.isBuffer(generatedContent.thumbnailBuffer) 
+            ? generatedContent.thumbnailBuffer 
+            : Buffer.from((generatedContent.thumbnailBuffer as any).data || generatedContent.thumbnailBuffer),
           'image/jpeg'
         );
       }
@@ -415,7 +419,9 @@ export const generationWorker = inngest.createFunction(
           jobId: job.id,
           filename: generatedContent.filename,
           mimeType: generatedContent.mimeType,
-          fileSize: generatedContent.buffer.length,
+          fileSize: Buffer.isBuffer(generatedContent.buffer) 
+            ? generatedContent.buffer.length 
+            : (generatedContent.buffer as any).data?.length || 0,
           duration: generatedContent.duration,
           width: generatedContent.width,
           height: generatedContent.height,

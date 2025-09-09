@@ -438,9 +438,9 @@ export const userRouter = createTRPCRouter({
           select: {
             id: true,
             filename: true,
-            url: true,
-            type: true,
-            size: true,
+            publicUrl: true,
+            mimeType: true,
+            fileSize: true,
             createdAt: true,
             status: true,
           },
@@ -450,7 +450,7 @@ export const userRouter = createTRPCRouter({
           select: {
             id: true,
             title: true,
-            content: true,
+            description: true,
             platforms: true,
             status: true,
             scheduledAt: true,

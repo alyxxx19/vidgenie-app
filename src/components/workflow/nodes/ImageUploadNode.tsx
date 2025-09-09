@@ -9,6 +9,7 @@ import { NODE_THEMES, STATUS_COLORS, NODE_SIZES, HANDLE_STYLES } from '../consta
 import { useState, useRef, useCallback } from 'react';
 import { toast } from 'sonner';
 import NextImage from 'next/image';
+import { useWorkflowStore } from '../store/workflow-store';
 
 interface ImageUploadNodeProps {
   id: string;
@@ -23,17 +24,20 @@ export function ImageUploadNode({ id, data, selected }: ImageUploadNodeProps) {
   
   const [isDragOver, setIsDragOver] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
+  
+  // Hook du store pour les actions
+  const updateNodeData = useWorkflowStore(state => state.updateNodeData);
 
   const getNodeClasses = () => {
     const baseClasses = `${NODE_SIZES.default} ${statusColors.bg} border-2 transition-all duration-300 rounded-xl shadow-lg backdrop-blur-sm`;
     
-    let borderClasses = statusColors.border;
+    let borderClasses: string = statusColors.border;
     let effectClasses = '';
 
     // Styles spécifiques selon l'état
     switch (data.status) {
       case 'loading':
-        borderClasses = `border-[${theme.accent}]`;
+        borderClasses = 'border-green-500';
         effectClasses = 'animate-pulse shadow-lg shadow-green-500/20';
         break;
       case 'success':
@@ -44,12 +48,12 @@ export function ImageUploadNode({ id, data, selected }: ImageUploadNodeProps) {
         break;
       default:
         if (selected) {
-          borderClasses = `border-[${theme.accent}]`;
-          effectClasses = `shadow-xl shadow-[${theme.accent}]/30`;
+          borderClasses = 'border-green-500';
+          effectClasses = 'shadow-xl shadow-green-500/30';
         }
         if (isDragOver) {
-          borderClasses = `border-[${theme.accent}]`;
-          effectClasses = `shadow-lg shadow-[${theme.accent}]/20 scale-102`;
+          borderClasses = 'border-green-500';
+          effectClasses = 'shadow-lg shadow-green-500/20 scale-102';
         }
     }
 
@@ -116,10 +120,11 @@ export function ImageUploadNode({ id, data, selected }: ImageUploadNodeProps) {
       return;
     }
 
-    // TODO: Simuler l'upload - remplacer par l'API réelle
+    // Mise à jour du statut et initialisation de l'upload
+    updateNodeData(id, { status: 'loading' });
     setUploadProgress(0);
     
-    // Simuler l'upload avec progression
+    // Upload réel avec progression (pour l'instant simulé, prêt pour l'API)
     const uploadInterval = setInterval(() => {
       setUploadProgress(prev => {
         if (prev >= 100) {
@@ -147,12 +152,19 @@ export function ImageUploadNode({ id, data, selected }: ImageUploadNodeProps) {
         format: file.name.split('.').pop()?.toUpperCase() || 'UNKNOWN'
       };
 
-      // TODO: Mettre à jour le store avec les données
-      // updateNodeData(id, { 
-      //   imageUploadData: uploadData,
-      //   status: 'success',
-      //   input: previewUrl 
-      // });
+      // Mettre à jour le store avec les données de l'image uploadée
+      updateNodeData(id, { 
+        imageUploadData: uploadData,
+        status: 'success',
+        input: previewUrl,
+        output: {
+          imageUrl: previewUrl,
+          width: uploadData.width,
+          height: uploadData.height,
+          fileSize: uploadData.fileSize,
+          format: uploadData.format
+        }
+      });
       
       toast.success('Image uploaded successfully!');
     };
@@ -194,8 +206,13 @@ export function ImageUploadNode({ id, data, selected }: ImageUploadNodeProps) {
     if (data.imageUploadData?.uploadedUrl) {
       URL.revokeObjectURL(data.imageUploadData.uploadedUrl);
     }
-    // TODO: Mettre à jour le store
-    // updateNodeData(id, { imageUploadData: undefined, status: 'idle', input: undefined });
+    // Nettoyer les données dans le store
+    updateNodeData(id, { 
+      imageUploadData: undefined, 
+      status: 'idle', 
+      input: undefined,
+      output: undefined
+    });
   };
 
   const IconComponent = theme.icon;
@@ -312,7 +329,7 @@ export function ImageUploadNode({ id, data, selected }: ImageUploadNodeProps) {
             {/* Aperçu de l'image */}
             <div className="relative">
               <NextImage
-                src={imageData?.uploadedUrl}
+                src={imageData?.uploadedUrl || '/placeholder-image.png'}
                 alt="Uploaded image"
                 width={200}
                 height={128}

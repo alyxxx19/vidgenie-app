@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useAuth } from '@/lib/auth/auth-context';
 import { api } from '@/app/providers';
@@ -272,7 +272,7 @@ const EnhancedPricingCard = ({
   );
 };
 
-export default function PricingPage() {
+function PricingPageContent() {
   const { user } = useAuth();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -289,7 +289,7 @@ export default function PricingPage() {
 
   // Get params from URL
   useEffect(() => {
-    if (!mounted) return;
+    if (!mounted || !searchParams) return;
     
     const plan = searchParams.get('plan');
     const billing = searchParams.get('billing');
@@ -700,6 +700,29 @@ export default function PricingPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function PricingPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-background">
+        <div className="max-w-7xl mx-auto px-6 pt-16 pb-8">
+          <div className="text-center mb-12">
+            <div className="h-16 bg-card/20 animate-pulse mb-4" />
+            <div className="h-6 bg-card/20 animate-pulse max-w-2xl mx-auto mb-8" />
+            <div className="h-8 bg-card/20 animate-pulse max-w-sm mx-auto" />
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[...Array(4)].map((_, i) => (
+              <div key={i} className="h-96 bg-card/20 animate-pulse" />
+            ))}
+          </div>
+        </div>
+      </div>
+    }>
+      <PricingPageContent />
+    </Suspense>
   );
 }
 

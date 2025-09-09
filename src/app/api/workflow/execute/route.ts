@@ -136,7 +136,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         userApiKeys: {
           openaiKey: userApiKeys.openaiKey,
           imageGenKey: userApiKeys.imageGenKey || userApiKeys.openaiKey, // Fallback to OpenAI for DALL-E
-          vo3Key: userApiKeys.vo3Key
+          vo3Key: userApiKeys.vo3Key,
+          encryptionIV: userApiKeys.encryptionIV
         }
       }
     });
@@ -249,6 +250,7 @@ async function getUserApiKeys(userId: string): Promise<{
   openaiKey?: string;
   imageGenKey?: string;
   vo3Key?: string;
+  encryptionIV?: string;
 } | null> {
   try {
     const userApiKeys = await db.userApiKeys.findUnique({
@@ -262,7 +264,8 @@ async function getUserApiKeys(userId: string): Promise<{
     return {
       openaiKey: userApiKeys.openaiKey || undefined,
       imageGenKey: userApiKeys.imageGenKey || undefined,
-      vo3Key: userApiKeys.vo3Key || undefined
+      vo3Key: userApiKeys.vo3Key || undefined,
+      encryptionIV: userApiKeys.encryptionIV
     };
   } catch (error) {
     secureLog.error('Error fetching user API keys:', error);
@@ -275,7 +278,7 @@ async function getUserApiKeys(userId: string): Promise<{
  */
 function validateApiKeysForWorkflow(
   workflowType: string,
-  userApiKeys: { openaiKey?: string; imageGenKey?: string; vo3Key?: string }
+  userApiKeys: { openaiKey?: string; imageGenKey?: string; vo3Key?: string; encryptionIV?: string }
 ): { valid: boolean; missing: string[] } {
   const missing: string[] = [];
 

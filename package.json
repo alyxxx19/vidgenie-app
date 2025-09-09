@@ -32,6 +32,8 @@
     "test:ci": "jest --ci --coverage --watchAll=false",
     "test:e2e": "playwright test",
     "test:oauth": "jest tests/auth/google-oauth.test.ts",
+    "test:workflows": "DATABASE_URL=\"prisma+postgres://accelerate.prisma-data.net/?api_key=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqd3RfaWQiOjEsInNlY3VyZV9rZXkiOiJza19zUnEyX1J4dGlRazBiZUJreGpqNjMiLCJhcGlfa2V5IjoiMDFLNDVYUktTQ1dRRDNYOVM0V05GTkVSWjciLCJ0ZW5hbnRfaWQiOiJlMzVjMjgxNTFhZTM3ZmQ2NjcyZDJmNzE5NDNhMjVkZThiZTRkZjg3MGFlMTE1MjI5ODc0NDQ4NzZjZTg2ZjFiISwiaW50ZXJuYWxfc2VjcmV0IjoiMWYxMmZkOWUtMTVlMy00MzI5LWI0YjctZjU5ZmFlMDY2MjhlIn0.G4DayjDs6sZBj4Uj09v8cCkcaVgm06pkCo4qktQ6ucg\" ENCRYPTION_KEY=\"vidgenie2024encryptkey32charskey\" npx tsx scripts/test-workflows.ts",
+    "test:performance": "npx tsx scripts/test-performance.ts",
     "test:integration": "jest tests/integration/",
     "inngest:dev": "npx inngest-cli@latest dev",
     "type-check": "tsc --noEmit",

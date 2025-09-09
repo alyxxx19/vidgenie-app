@@ -6,6 +6,8 @@
  * Tracks performance, errors, business metrics, and system health
  */
 
+import { secureLog } from '@/lib/secure-logger';
+
 interface MetricData {
   name: string;
   value: number;

@@ -3,6 +3,8 @@
  * Teste la connectivité et la validité des clés sans exposer d'informations sensibles
  */
 
+import { secureLog } from '@/lib/secure-logger';
+
 export interface ValidationResult {
   isValid: boolean;
   provider: string;
@@ -281,6 +283,16 @@ export class ApiValidationService {
             isValid: true,
             provider: 'veo3',
             message: 'Clé VEO3 valide (erreur de paramètres attendue)'
+          };
+        } else {
+          return {
+            isValid: false,
+            provider: 'veo3',
+            message: 'Erreur de requête VEO3',
+            error: {
+              code: 'BAD_REQUEST',
+              type: 'unknown'
+            }
           };
         }
       } else {

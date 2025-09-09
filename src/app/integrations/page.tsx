@@ -123,7 +123,7 @@ const mockIntegrations: Integration[] = [
 ];
 
 export default function IntegrationsPage() {
-  const { user, isLoading } = useAuth();
+  const { user, profile, isLoading } = useAuth();
   const [selectedCategory, _setSelectedCategory] = useState('all');
   const [isApiDialogOpen, setIsApiDialogOpen] = useState(false);
   const [apiKeys, setApiKeys] = useState({
@@ -405,7 +405,7 @@ export default function IntegrationsPage() {
                             size="sm" 
                             className="flex-1"
                             onClick={() => handleConnect(integration.id)}
-                            disabled={integration.isPremium && user.creditsBalance < 500}
+                            disabled={integration.isPremium && (profile?.credits_balance || 0) < 500}
                           >
                             <LinkIcon className="w-3 h-3 mr-1" />
                             Connecter
@@ -413,7 +413,7 @@ export default function IntegrationsPage() {
                         )}
                       </div>
                       
-                      {integration.isPremium && user.creditsBalance < 500 && (
+                      {integration.isPremium && (profile?.credits_balance || 0) < 500 && (
                         <p className="text-xs text-yellow-600">
                           Plan Premium requis
                         </p>

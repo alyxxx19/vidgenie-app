@@ -57,13 +57,13 @@ export function PromptNode({ id, data, selected }: PromptNodeProps) {
   const getNodeClasses = () => {
     const baseClasses = `${NODE_SIZES.default} ${statusColors.bg} border-2 transition-all duration-300 rounded-xl shadow-lg backdrop-blur-sm`;
     
-    let borderClasses = statusColors.border;
+    let borderClasses: string = statusColors.border;
     let effectClasses = '';
 
     // Styles spécifiques selon l'état
     switch (data.status) {
       case 'loading':
-        borderClasses = `border-[${theme.accent}]`;
+        borderClasses = 'border-blue-500';
         effectClasses = 'animate-pulse shadow-lg shadow-blue-500/20';
         break;
       case 'success':
@@ -74,8 +74,8 @@ export function PromptNode({ id, data, selected }: PromptNodeProps) {
         break;
       default:
         if (selected) {
-          borderClasses = `border-[${theme.accent}]`;
-          effectClasses = `shadow-xl shadow-[${theme.accent}]/30`;
+          borderClasses = 'border-blue-500';
+          effectClasses = 'shadow-xl shadow-blue-500/30';
         }
     }
 

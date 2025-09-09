@@ -28,7 +28,7 @@ import Link from 'next/link';
 export default function ProjectDetailPage() {
   const { user, isLoading: authLoading } = useAuth();
   const params = useParams();
-  const projectId = params.id as string;
+  const projectId = params?.id as string;
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
 
@@ -144,7 +144,7 @@ export default function ProjectDetailPage() {
                 settings
               </Button>
               <Button asChild className="bg-white hover:bg-white/90 text-black font-mono text-xs h-8">
-                <Link href={`/create?project=${project.id}`}>
+                <Link href={`/create?project=${project?.id || ''}`}>
                   <Plus className="w-3 h-3 mr-1" />
                   new_content
                 </Link>
@@ -403,10 +403,10 @@ export default function ProjectDetailPage() {
                   <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-card">
                     <div className="flex items-center gap-3">
                       <div className="w-10 h-10 rounded-full bg-white flex items-center justify-center text-black font-mono font-medium">
-                        {user?.name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'U'}
+                        {user?.email?.charAt(0)?.toUpperCase() || 'U'}
                       </div>
                       <div>
-                        <p className="font-mono text-sm text-white">{user?.name || 'user'}</p>
+                        <p className="font-mono text-sm text-white">{user?.email?.split('@')[0] || 'user'}</p>
                         <p className="text-xs text-muted-foreground font-mono">{user?.email}</p>
                       </div>
                     </div>

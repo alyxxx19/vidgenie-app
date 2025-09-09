@@ -22,7 +22,7 @@ import {
 import Link from 'next/link';
 import { api } from '@/app/providers';
 import { LazyWrapper } from '@/components/lazy/LazyWrapper';
-import { LazyContentCalendar, LazyContentHistory, preloadComponentsByRoute } from '@/components/lazy';
+import { /* LazyContentCalendar, LazyContentHistory, */ preloadComponentsByRoute } from '@/components/lazy';
 import TimeDisplay from '@/components/time-display';
 import DashboardSkeleton from '@/components/dashboard-skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -483,12 +483,10 @@ export default function DashboardPage() {
           <TabsContent value="calendar">
             <Card className="bg-card border border-border">
               <CardContent className="p-6">
-                <LazyWrapper name="calendrier éditorial" retryable={true}>
-                  <LazyContentCalendar
-                    events={calendarEvents}
-                    onDateSelect={_setSelectedDate}
-                  />
-                </LazyWrapper>
+                <div className="text-center text-muted-foreground">
+                  <p>Calendrier éditorial temporairement désactivé</p>
+                  <p className="text-xs mt-2">Component export issues - will be fixed soon</p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>
@@ -496,12 +494,10 @@ export default function DashboardPage() {
           <TabsContent value="history">
             <Card className="bg-card border border-border">
               <CardContent className="p-6">
-                <LazyWrapper name="historique contenu" retryable={true}>
-                  <LazyContentHistory
-                    content={contentHistory}
-                    isLoading={!userAssets}
-                  />
-                </LazyWrapper>
+                <div className="text-center text-muted-foreground">
+                  <p>Historique du contenu temporairement désactivé</p>
+                  <p className="text-xs mt-2">Component export issues - will be fixed soon</p>
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

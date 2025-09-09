@@ -507,7 +507,7 @@ export class BusinessMetricsCollector {
       }),
 
       this.prisma.job.aggregate({
-        _avg: { processingTime: true },
+        _avg: { actualTime: true },
         where: {
           status: 'completed',
           createdAt: {
@@ -519,7 +519,7 @@ export class BusinessMetricsCollector {
 
     return {
       queueLength,
-      avgProcessingTime: avgProcessingTime._avg.processingTime || 0,
+      avgProcessingTime: avgProcessingTime._avg.actualTime || 0,
     };
   }
 

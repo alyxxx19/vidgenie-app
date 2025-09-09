@@ -100,6 +100,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       let enhancedPromptResult: any = { success: false, originalPrompt: prompt.trim() };
       
       if (enhanceEnabled) {
+        if (!promptEnhancer) {
+          throw new Error('Prompt enhancer not available');
+        }
+        
         secureLog.info('[DEV-API] Enhancing prompt with GPT...');
         enhancedPromptResult = await promptEnhancer.enhanceImagePrompt(prompt.trim(), {
           temperature,

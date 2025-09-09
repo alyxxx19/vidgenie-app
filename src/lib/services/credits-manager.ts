@@ -387,11 +387,11 @@ export class CreditsManager {
         stats.dailyUsage[date] = (stats.dailyUsage[date] || 0) + Math.abs(transaction.amount);
         
         // Compter les types d'opérations
-        if (transaction.description.includes('Image')) {
+        if (transaction.description?.includes('Image')) {
           stats.imageGenerations++;
-        } else if (transaction.description.includes('Video')) {
+        } else if (transaction.description?.includes('Video')) {
           stats.videoGenerations++;
-        } else if (transaction.description.includes('GPT') || transaction.description.includes('enhancement')) {
+        } else if (transaction.description?.includes('GPT') || transaction.description?.includes('enhancement')) {
           stats.gptEnhancements++;
         }
       } else {

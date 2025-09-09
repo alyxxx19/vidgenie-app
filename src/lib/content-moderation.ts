@@ -33,7 +33,7 @@ class OpenAIModerationService implements ContentModerationService {
         .filter(([_, flagged]) => flagged)
         .map(([category]) => category);
 
-      const severity = this.calculateSeverity(result.category_scores);
+      const severity = this.calculateSeverity(result.category_scores as unknown as Record<string, number>);
 
       return {
         flagged: result.flagged,

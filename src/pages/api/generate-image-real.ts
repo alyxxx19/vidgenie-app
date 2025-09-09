@@ -16,22 +16,28 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
+  // Variables pour la gestion des crédits
+  let userId: string | null = null;
+  let creditsDeducted = false;
+  let transactionId: string | null = null;
+
+  // Destructurer le body pour accès dans try/catch
+  const { 
+    prompt, 
+    style = 'vivid',
+    quality = 'hd', 
+    size = '1024x1792',
+    enhanceEnabled = true,
+    temperature = 0.7,
+    mood,
+    artStyle,
+    composition,
+    negativePrompt,
+    skipCreditsCheck = false // Pour le mode dev uniquement
+  } = req.body;
+
   try {
     secureLog.info('[REAL-IMAGE-API] Starting real image generation with enhancement...');
-    
-    const { 
-      prompt, 
-      style = 'vivid',
-      quality = 'hd', 
-      size = '1024x1792',
-      enhanceEnabled = true,
-      temperature = 0.7,
-      mood,
-      artStyle,
-      composition,
-      negativePrompt,
-      skipCreditsCheck = false // Pour le mode dev uniquement
-    } = req.body;
 
     if (!prompt || typeof prompt !== 'string' || prompt.trim().length < 10) {
       return res.status(400).json({ 
@@ -42,9 +48,6 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     secureLog.info('[REAL-IMAGE-API] 📝 Original prompt:', prompt.slice(0, 50) + '...');
 
     // ÉTAPE 0: Vérifier et déduire les crédits (sauf en mode dev avec skip)
-    let userId: string | null = null;
-    let creditsDeducted = false;
-    let transactionId: string | null = null;
     
     if (!skipCreditsCheck && process.env.NODE_ENV === 'production') {
       try {
@@ -104,7 +107,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         secureLog.error('[REAL-IMAGE-API] Credit management error:', creditError);
         return res.status(500).json({
           error: creditError.message || 'Credit management failed',
-          details: process.env.NODE_ENV === 'development' ? creditError.stack : undefined,
+          details: process.env.NODE_ENV !== 'production' ? creditError.stack : undefined,
         });
       }
     } else {
@@ -200,6 +203,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       } else {
         throw error;
       }
+    }
+
+    if (!imageResponse.data || imageResponse.data.length === 0) {
+      throw new Error('No data returned from OpenAI');
     }
 
     const imageUrl = imageResponse.data[0]?.url;

@@ -126,7 +126,7 @@ export function getPlanByPriceId(priceId: string): PricingPlan | null {
 
 export function getPriceId(plan: PricingPlan, interval: 'month' | 'year'): string | null {
   const planConfig = PRICING_CONFIG[plan];
-  return interval === 'month' ? planConfig.priceIdMonthly : planConfig.priceIdYearly;
+  return interval === 'month' ? (planConfig.priceIdMonthly || null) : (planConfig.priceIdYearly || null);
 }
 
 export function getPlanPrice(plan: PricingPlan, interval: 'month' | 'year'): number {

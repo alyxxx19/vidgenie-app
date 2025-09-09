@@ -4,7 +4,7 @@ import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from '@/components/ui/toaster';
 import { LazyWrapper } from '@/components/lazy/LazyWrapper';
-import { LazyAccessibilityChecker } from '@/components/lazy';
+// import { LazyAccessibilityChecker } from '@/components/lazy'; // Temporarily commented out due to export issues
 
 const inter = Inter({ 
   subsets: ['latin'],
@@ -39,9 +39,9 @@ export default function RootLayout({
         <Providers>
           {children}
           <Toaster />
-          <LazyWrapper name="accessibility checker" retryable={false}>
+          {/* <LazyWrapper name="accessibility checker" retryable={false}>
             <LazyAccessibilityChecker />
-          </LazyWrapper>
+          </LazyWrapper> */}
         </Providers>
       </body>
     </html>

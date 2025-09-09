@@ -104,7 +104,13 @@ export default function UserSection({ user }: UserSectionProps) {
     undefined,
     {
       enabled: false, // Ne pas exécuter automatiquement
-      onSuccess: (data) => {
+    }
+  );
+
+  const handleExportData = async () => {
+    try {
+      const { data } = await exportUserData();
+      if (data) {
         // Créer un fichier JSON et le télécharger
         const dataStr = JSON.stringify(data, null, 2);
         const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -117,12 +123,11 @@ export default function UserSection({ user }: UserSectionProps) {
         document.body.removeChild(link);
         URL.revokeObjectURL(url);
         toast.success('Données exportées avec succès');
-      },
-      onError: (error) => {
-        toast.error(`Erreur lors de l'export: ${error.message}`);
-      },
+      }
+    } catch (error) {
+      toast.error(`Erreur lors de l'export: ${error instanceof Error ? error.message : 'Erreur inconnue'}`);
     }
-  );
+  };
 
   const requestAccountDeletionMutation = api.user.requestAccountDeletion.useMutation({
     onSuccess: (result) => {
@@ -262,31 +267,32 @@ export default function UserSection({ user }: UserSectionProps) {
   };
 
   const handleSaveSettings = async (section: keyof UserSettings) => {
-    const settingsToSave = settings[section];
-    
     if (section === 'notifications') {
+      const notificationSettings = settings.notifications;
       updateSettingsMutation.mutate({
-        emailNotifications: settingsToSave.emailNotifications,
-        pushNotifications: settingsToSave.pushNotifications,
-        weeklyReport: settingsToSave.weeklyReport,
-        contentReminders: settingsToSave.contentReminders,
-        teamUpdates: settingsToSave.teamUpdates,
-        marketingEmails: settingsToSave.marketingEmails,
+        emailNotifications: notificationSettings.emailNotifications,
+        pushNotifications: notificationSettings.pushNotifications,
+        weeklyReport: notificationSettings.weeklyReport,
+        contentReminders: notificationSettings.contentReminders,
+        teamUpdates: notificationSettings.teamUpdates,
+        marketingEmails: notificationSettings.marketingEmails,
       });
     } else if (section === 'privacy') {
+      const privacySettings = settings.privacy;
       updateSettingsMutation.mutate({
-        profilePublic: settingsToSave.profilePublic,
-        contentAnalytics: settingsToSave.contentAnalytics,
-        dataCollection: settingsToSave.dataCollection,
-        thirdPartyIntegrations: settingsToSave.thirdPartyIntegrations,
+        profilePublic: privacySettings.profilePublic,
+        contentAnalytics: privacySettings.contentAnalytics,
+        dataCollection: privacySettings.dataCollection,
+        thirdPartyIntegrations: privacySettings.thirdPartyIntegrations,
       });
     } else if (section === 'preferences') {
+      const preferenceSettings = settings.preferences;
       updateSettingsMutation.mutate({
-        defaultPlatforms: settingsToSave.defaultPlatforms,
-        autoSchedule: settingsToSave.autoSchedule,
-        defaultVideoLength: settingsToSave.defaultVideoLength,
-        qualityPreference: settingsToSave.qualityPreference,
-        autoSEO: settingsToSave.autoSEO,
+        defaultPlatforms: preferenceSettings.defaultPlatforms,
+        autoSchedule: preferenceSettings.autoSchedule,
+        defaultVideoLength: preferenceSettings.defaultVideoLength,
+        qualityPreference: preferenceSettings.qualityPreference,
+        autoSEO: preferenceSettings.autoSEO,
       });
     }
   };
@@ -312,14 +318,6 @@ export default function UserSection({ user }: UserSectionProps) {
     toast.success('photo de profil mise à jour');
   };
 
-  const handleExportData = async () => {
-    try {
-      toast.info('Préparation de l\'export des données...');
-      exportUserData();
-    } catch (error) {
-      toast.error('Erreur lors de l\'export');
-    }
-  };
 
   const handleDeleteAccount = async () => {
     if (!confirm('⚠️ ATTENTION: Cette action planifiera la suppression définitive de votre compte dans 7 jours.\n\nToutes vos données (contenus, paramètres, historique) seront définitivement perdues.\n\nÊtes-vous absolument sûr de vouloir continuer ?')) {

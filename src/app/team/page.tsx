@@ -353,12 +353,12 @@ export default function TeamPage() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-4">
                   <div className="w-12 h-12 rounded-full bg-purple-600 flex items-center justify-center text-white font-medium">
-                    {user.name?.charAt(0).toUpperCase()}
+                    {user.email?.charAt(0).toUpperCase() || 'U'}
                   </div>
                   
                   <div>
                     <div className="flex items-center gap-2">
-                      <h3 className="font-medium text-lg">{user.name}</h3>
+                      <h3 className="font-medium text-lg">{user.email?.split('@')[0] || 'User'}</h3>
                       <Crown className="w-4 h-4 text-yellow-500" />
                     </div>
                     <p className="text-slate-500">{user.email}</p>

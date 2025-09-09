@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
@@ -21,7 +21,7 @@ interface GoogleSignInButtonProps {
   onSuccess?: () => void;
 }
 
-export function GoogleSignInButton({
+function GoogleSignInButtonContent({
   variant = 'outline',
   size = 'default',
   className,
@@ -38,7 +38,7 @@ export function GoogleSignInButton({
   const searchParams = useSearchParams();
 
   // Check for OAuth errors from URL params
-  const urlError = searchParams.get('error');
+  const urlError = searchParams?.get('error');
 
   const handleGoogleSignIn = async () => {
     if (isLoading || disabled) return;
@@ -103,6 +103,24 @@ export function GoogleSignInButton({
         )}
       </Button>
     </div>
+  );
+}
+
+export function GoogleSignInButton(props: GoogleSignInButtonProps) {
+  return (
+    <Suspense fallback={
+      <Button
+        variant={props.variant || 'outline'}
+        size={props.size || 'default'}
+        disabled={true}
+        className={props.className}
+      >
+        <Loader2 className="h-4 w-4 animate-spin mr-2" />
+        Loading...
+      </Button>
+    }>
+      <GoogleSignInButtonContent {...props} />
+    </Suspense>
   );
 }
 

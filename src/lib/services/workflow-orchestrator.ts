@@ -133,7 +133,7 @@ export class WorkflowOrchestrator extends EventEmitter {
       
       const imageBuffer = await imageGenerationService.downloadAndGetSize(imageResponse.imageUrl);
       const imageS3Key = `images/${params.jobId}.png`;
-      const imageS3Result = await uploadToS3(imageBuffer, imageS3Key, 'image/png');
+      const imageS3Result = await uploadToS3(imageS3Key, imageBuffer, 'image/png');
       
       // Créer l'asset image en BDD
       const imageAsset = await this.db.asset.create({
@@ -149,7 +149,7 @@ export class WorkflowOrchestrator extends EventEmitter {
           s3Key: imageS3Key,
           s3Bucket: process.env.S3_BUCKET_NAME || 'vidgenie-media-dev',
           s3Region: process.env.S3_REGION || 'eu-west-3',
-          publicUrl: imageS3Result.publicUrl,
+          publicUrl: imageS3Result,
           generatedBy: 'openai/gpt-image-1',
           prompt: params.imagePrompt,
           status: 'ready',
@@ -174,6 +174,11 @@ export class WorkflowOrchestrator extends EventEmitter {
 
       // Étape 4: Génération vidéo
       await this.updateStepStatus(params.jobId, 'video_generation', 'processing', 50);
+      
+      // Vérifier que l'image a une URL publique
+      if (!imageAsset.publicUrl) {
+        throw new Error('Image asset missing public URL');
+      }
       
       // Valider la requête VEO3
       const veo3Request = {
@@ -242,7 +247,7 @@ export class WorkflowOrchestrator extends EventEmitter {
       
       const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
       const videoS3Key = `videos/${params.jobId}.mp4`;
-      const videoS3Result = await uploadToS3(videoBuffer, videoS3Key, 'video/mp4');
+      const videoS3Result = await uploadToS3(videoS3Key, videoBuffer, 'video/mp4');
       
       // Créer l'asset vidéo en BDD
       const videoAsset = await this.db.asset.create({
@@ -259,7 +264,7 @@ export class WorkflowOrchestrator extends EventEmitter {
           s3Key: videoS3Key,
           s3Bucket: process.env.S3_BUCKET_NAME || 'vidgenie-media-dev',
           s3Region: process.env.S3_REGION || 'eu-west-3',
-          publicUrl: videoS3Result.publicUrl,
+          publicUrl: videoS3Result,
           generatedBy: 'fal-ai/google-veo-3',
           prompt: params.videoPrompt,
           status: 'ready',

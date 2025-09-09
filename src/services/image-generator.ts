@@ -104,6 +104,10 @@ export class ImageGeneratorService {
       const response = await this.openai.images.generate(dalleOptions);
 
       // Traiter la réponse
+      if (!response.data || response.data.length === 0) {
+        throw new Error('No data returned from OpenAI');
+      }
+
       const images: GeneratedImage[] = response.data.map((imageData, index) => ({
         id: `img_${Date.now()}_${index}`,
         url: imageData.url || '',

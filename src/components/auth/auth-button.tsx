@@ -1,11 +1,11 @@
 'use client';
 
-import { Button, ButtonProps } from '@/components/ui/button';
+import { Button } from '@/components/ui/button';
 import { Loader2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { forwardRef } from 'react';
 
-interface AuthButtonProps extends ButtonProps {
+interface AuthButtonProps extends React.ComponentProps<typeof Button> {
   children?: React.ReactNode;
   type?: "button" | "submit" | "reset";
   className?: string;

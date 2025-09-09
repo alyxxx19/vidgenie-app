@@ -13,7 +13,7 @@ const VideoPromptSettingsSchema = z.object({
   }),
   mood: z.array(z.string()),
   duration: z.number(),
-  variables: z.record(z.string()),
+  variables: z.record(z.string(), z.string()),
   template: z.string().optional(),
 });
 
@@ -68,7 +68,7 @@ export const promptsRouter = createTRPCRouter({
       type: z.enum(['image', 'video', 'image-to-video']).default('image'),
       videoSettings: VideoPromptSettingsSchema.optional(),
       templateKey: z.string().optional(),
-      variables: z.record(z.string()).optional(),
+      variables: z.record(z.string(), z.string()).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const { videoSettings, variables, ...promptData } = input;
@@ -78,8 +78,8 @@ export const promptsRouter = createTRPCRouter({
           ...promptData,
           userId: ctx.user.id,
           usageCount: 0,
-          videoSettings: videoSettings ? JSON.stringify(videoSettings) : null,
-          variables: variables ? JSON.stringify(variables) : null,
+          videoSettings: videoSettings ? JSON.stringify(videoSettings) : undefined,
+          variables: variables ? JSON.stringify(variables) : undefined,
         },
       });
     }),
@@ -96,7 +96,7 @@ export const promptsRouter = createTRPCRouter({
       type: z.enum(['image', 'video', 'image-to-video']).optional(),
       videoSettings: VideoPromptSettingsSchema.optional(),
       templateKey: z.string().optional(),
-      variables: z.record(z.string()).optional(),
+      variables: z.record(z.string(), z.string()).optional(),
     }))
     .mutation(async ({ ctx, input }) => {
       const { id, videoSettings, variables, ...updateData } = input;
@@ -242,7 +242,7 @@ export const promptsRouter = createTRPCRouter({
     .input(z.object({
       templateId: z.string(),
       title: z.string().min(1).max(100),
-      variables: z.record(z.string()).optional(),
+      variables: z.record(z.string(), z.string()).optional(),
       customizations: VideoPromptSettingsSchema.optional(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -284,7 +284,7 @@ export const promptsRouter = createTRPCRouter({
           type: 'video',
           templateKey: template.id,
           videoSettings: JSON.stringify(videoSettings),
-          variables: input.variables ? JSON.stringify(input.variables) : null,
+          variables: input.variables ? JSON.stringify(input.variables) : undefined,
           userId: ctx.user.id,
           usageCount: 0,
         },

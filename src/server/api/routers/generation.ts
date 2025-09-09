@@ -125,7 +125,7 @@ export const generationRouter = createTRPCRouter({
               // Télécharger et uploader l'image vers S3
               const imageBuffer = await imageGenerationService.downloadAndGetSize(imageResponse.imageUrl);
               const s3Key = `images/${generationJob.id}.png`;
-              const s3Result = await uploadToS3(imageBuffer, s3Key, 'image/png');
+              const s3Result = await uploadToS3(s3Key, imageBuffer, 'image/png');
 
               // Créer l'asset
               const imageAsset = await db.asset.create({
@@ -141,7 +141,7 @@ export const generationRouter = createTRPCRouter({
                   s3Key,
                   s3Bucket: process.env.S3_BUCKET_NAME || 'vidgenie-media-dev',
                   s3Region: process.env.S3_REGION || 'eu-west-3',
-                  publicUrl: s3Result.publicUrl,
+                  publicUrl: s3Result,
                   generatedBy: 'openai/dall-e-3',
                   prompt: input.prompt,
                   status: 'ready',
@@ -496,7 +496,7 @@ export const generationRouter = createTRPCRouter({
   // Webhook pour recevoir les notifications de Google Veo 3
   handleVeo3Webhook: protectedProcedure
     .input(z.object({
-      payload: z.record(z.any()),
+      payload: z.record(z.string(), z.any()),
       signature: z.string(),
     }))
     .mutation(async ({ ctx, input }) => {
@@ -556,7 +556,7 @@ export const generationRouter = createTRPCRouter({
 
         const videoBuffer = Buffer.from(await videoResponse.arrayBuffer());
         const s3Key = `videos/${generationJob.id}.mp4`;
-        const s3Result = await uploadToS3(videoBuffer, s3Key, 'video/mp4');
+        const s3Result = await uploadToS3(s3Key, videoBuffer, 'video/mp4');
 
         // Créer l'asset vidéo
         const videoAsset = await db.asset.create({
@@ -573,7 +573,7 @@ export const generationRouter = createTRPCRouter({
             s3Key,
             s3Bucket: process.env.S3_BUCKET_NAME || 'vidgenie-media-dev',
             s3Region: process.env.S3_REGION || 'eu-west-3',
-            publicUrl: s3Result.publicUrl,
+            publicUrl: s3Result,
             thumbnailUrl: thumbnail_url,
             generatedBy: 'fal-ai/google-veo-3',
             prompt: generationJob.videoPrompt,
@@ -581,7 +581,7 @@ export const generationRouter = createTRPCRouter({
             frameRate: 30,
             aiConfig: {
               provider: 'fal-ai-veo3',
-              baseImage: generationJob.imageAsset?.publicUrl,
+              baseImage: generationJob.imageAssetId,
               duration: (generationJob.providerData as any)?.videoConfig?.duration || '8s',
               resolution: (generationJob.providerData as any)?.videoConfig?.resolution || '1080p',
               generateAudio: (generationJob.providerData as any)?.videoConfig?.generateAudio || true,

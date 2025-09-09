@@ -44,6 +44,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     secureLog.info('[TEST-API] OpenAI response received');
 
+    if (!response.data || response.data.length === 0) {
+      return res.status(500).json({ error: 'No data returned from OpenAI' });
+    }
+
     const image = response.data[0];
     if (!image?.url) {
       return res.status(500).json({ error: 'No image URL in response' });

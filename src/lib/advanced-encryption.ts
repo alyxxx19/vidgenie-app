@@ -360,7 +360,7 @@ export function generateCSPNonce(): string {
 export function encryptUserData(data: any, userId: string): string {
   const dataString = JSON.stringify(data);
   const additionalData = `user:${userId}`;
-  return encryptString(dataString, process.env.ENCRYPTION_KEY || '', additionalData);
+  return encryptString(dataString, process.env.ENCRYPTION_KEY || '');
 }
 
 /**
@@ -368,7 +368,7 @@ export function encryptUserData(data: any, userId: string): string {
  */
 export function decryptUserData(encryptedData: string, userId: string): any {
   const additionalData = `user:${userId}`;
-  const decryptedString = decryptString(encryptedData, process.env.ENCRYPTION_KEY || '', additionalData);
+  const decryptedString = decryptString(encryptedData, process.env.ENCRYPTION_KEY || '');
   return JSON.parse(decryptedString);
 }
 

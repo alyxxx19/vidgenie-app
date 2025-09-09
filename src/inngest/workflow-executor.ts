@@ -30,6 +30,7 @@ export interface WorkflowExecuteEvent {
     openaiKey: string;
     imageGenKey: string;
     vo3Key: string;
+    encryptionIV: string;
   };
 }
 
@@ -68,9 +69,9 @@ export const executeWorkflow = inngest.createFunction(
     const decryptedKeys = await step.run('decrypt-api-keys', async () => {
       try {
         return {
-          openaiKey: userApiKeys.openaiKey ? encryption.decrypt(userApiKeys.openaiKey) : null,
-          imageGenKey: userApiKeys.imageGenKey ? encryption.decrypt(userApiKeys.imageGenKey) : null,
-          vo3Key: userApiKeys.vo3Key ? encryption.decrypt(userApiKeys.vo3Key) : null,
+          openaiKey: userApiKeys.openaiKey ? encryption.decrypt(userApiKeys.openaiKey, userApiKeys.encryptionIV) : null,
+          imageGenKey: userApiKeys.imageGenKey ? encryption.decrypt(userApiKeys.imageGenKey, userApiKeys.encryptionIV) : null,
+          vo3Key: userApiKeys.vo3Key ? encryption.decrypt(userApiKeys.vo3Key, userApiKeys.encryptionIV) : null,
         };
       } catch (error) {
         throw new Error(`Failed to decrypt API keys: ${error instanceof Error ? error.message : 'Unknown error'}`);
@@ -282,9 +283,32 @@ export const executeWorkflow = inngest.createFunction(
                 throw new Error('Video generation timeout');
               }
 
-              // TODO: Récupérer l'URL de la vidéo depuis le job complété
-              // Pour l'instant, simuler
-              const videoUrl = 'https://example.com/generated-video.mp4';
+              // Récupérer l'URL de la vidéo depuis le job complété
+              // Pour un JobStatus de type VideoJob, on utilise directement les propriétés du job
+              let videoUrl: string;
+              
+              // Si c'est un objet avec une propriété video URL (fal-ai style)
+              if ((jobStatus as any).videoUrl) {
+                videoUrl = (jobStatus as any).videoUrl;
+              }
+              // Si c'est un objet avec des propriétés output
+              else if ((jobStatus as any).output?.video_url) {
+                videoUrl = (jobStatus as any).output.video_url;
+              }
+              else if ((jobStatus as any).output?.url) {
+                videoUrl = (jobStatus as any).output.url;
+              }
+              // Si c'est directement dans les métadonnées
+              else if (jobStatus.metadata && (jobStatus.metadata as any).videoUrl) {
+                videoUrl = (jobStatus.metadata as any).videoUrl;
+              }
+              else {
+                throw new Error('Video URL not found in completed job. Job data: ' + JSON.stringify(jobStatus));
+              }
+              
+              if (!videoUrl) {
+                throw new Error('Video URL not found in completed job');
+              }
               
               const uploadResult = await videoGenerator.uploadToS3(videoUrl, {
                 generationId: result.job.id,
@@ -392,7 +416,7 @@ export const executeWorkflow = inngest.createFunction(
               workflowType: config.workflowType,
               contentId: savedContent.id,
               totalCost,
-              duration: Date.now() - new Date(event.ts).getTime(),
+              duration: event.ts ? Date.now() - new Date(event.ts).getTime() : 0,
               steps: {
                 promptEnhanced: !!enhancedPrompt,
                 imageGenerated: !!generatedImage,
@@ -415,7 +439,7 @@ export const executeWorkflow = inngest.createFunction(
           videoUrl: generatedVideo?.cdnUrl,
           thumbnailUrl: generatedVideo?.thumbnailUrl || generatedImage?.cdnUrl,
         },
-        totalDuration: Date.now() - new Date(event.ts).getTime()
+        totalDuration: event.ts ? Date.now() - new Date(event.ts).getTime() : 0
       };
 
     } catch (error) {
@@ -429,7 +453,7 @@ export const executeWorkflow = inngest.createFunction(
           metadata: {
             workflowId,
             error: error instanceof Error ? error.message : 'Unknown error',
-            duration: Date.now() - new Date(event.ts).getTime()
+            duration: event.ts ? Date.now() - new Date(event.ts).getTime() : 0
           }
         }
       });
@@ -443,12 +467,37 @@ export const executeWorkflow = inngest.createFunction(
  * Met à jour le statut d'une étape de workflow
  */
 async function updateWorkflowStep(update: WorkflowStepUpdate): Promise<void> {
-  // TODO: Implémenter la mise à jour en temps réel via WebSocket/SSE
-  // Pour l'instant, logger
+  // Logger pour les logs
   secureLog.info(`Workflow ${update.workflowId} - Step ${update.stepId}: ${update.status} (${update.progress}%)`);
   
   if (update.error) {
     secureLog.error(`Workflow ${update.workflowId} - Step ${update.stepId} error:`, update.error);
+  }
+
+  // Mise à jour en temps réel via l'orchestrateur (qui émet les événements SSE)
+  try {
+    const { getWorkflowOrchestrator } = await import('@/lib/services/workflow-orchestrator');
+    const { db } = await import('@/server/api/db');
+    
+    const orchestrator = getWorkflowOrchestrator(db);
+    
+    // Émettre l'événement pour les connexions SSE
+    orchestrator.emit('workflow:update', {
+      workflowId: update.workflowId,
+      stepId: update.stepId,
+      step: {
+        id: update.stepId,
+        status: update.status,
+        progress: update.progress,
+        startedAt: update.startTime,
+        completedAt: update.endTime,
+        error: update.error,
+      },
+      timestamp: new Date(),
+    });
+  } catch (error) {
+    // Ne pas faire échouer le workflow si la notification temps réel échoue
+    secureLog.warn('Failed to send real-time update:', error);
   }
 }
 

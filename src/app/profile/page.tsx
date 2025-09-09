@@ -64,7 +64,7 @@ export default function ProfilePage() {
     { enabled: !!user, retry: false }
   );
   
-  const { data: userActivity, isLoading: activityLoading, error: activityError } = api.user.getUserActivity.useQuery(
+  const { data: userActivity, isLoading: activityLoading, error: activityError, refetch: refetchActivity } = api.user.getUserActivity.useQuery(
     { limit: 5 },
     { enabled: !!user, retry: false }
   );
@@ -220,14 +220,14 @@ export default function ProfilePage() {
               {/* Large Avatar */}
               <div className="relative group">
                 <Avatar className="w-32 h-32 border-2 border-border">
-                  <AvatarImage src={profile.avatar} alt={displayName} />
+                  <AvatarImage src={profile.avatar || undefined} alt={displayName} />
                   <AvatarFallback className="bg-secondary text-foreground text-4xl font-mono">
                     {profile.firstName?.[0] || profile.name?.[0] || 'U'}
                     {profile.lastName?.[0] || ''}
                   </AvatarFallback>
                 </Avatar>
                 <AvatarUpload
-                  currentAvatar={profile.avatar}
+                  currentAvatar={profile.avatar || undefined}
                   userName={displayName}
                   onAvatarUpdate={handleAvatarUpdate}
                 />
@@ -473,7 +473,7 @@ export default function ProfilePage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => api.user.getUserActivity.refetch()}
+                    onClick={() => refetchActivity()}
                     className="text-muted-foreground hover:text-foreground"
                   >
                     <RefreshCcw className="w-4 h-4" />

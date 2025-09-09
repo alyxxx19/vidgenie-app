@@ -4,14 +4,14 @@
  * Utilisé pour remplacer tous les console.log/error/warn dans l'application
  */
 
-interface LogLevel {
+interface LogLevelInterface {
   ERROR: 0;
   WARN: 1;
   INFO: 2;
   DEBUG: 3;
 }
 
-const LOG_LEVEL: LogLevel = {
+const LOG_LEVEL: LogLevelInterface = {
   ERROR: 0,
   WARN: 1,
   INFO: 2,
