@@ -86,7 +86,7 @@ jobs:
           ENCRYPTION_KEY: test-encryption-key-32-chars-long
 
       - name: 'Upload test coverage'
-        uses: codecov/codecov-action@v3
+        uses: codecov/codecov-action@v5
         if: always()
         with:
           files: ./coverage/lcov.info
